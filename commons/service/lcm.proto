@@ -1,0 +1,185 @@
+/*
+ * Copyright 2017-2018 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package service;
+
+service LifecycleManager {
+  rpc DeployTrainingJob (JobDeploymentRequest) returns (JobDeploymentResponse) {}
+  rpc KillTrainingJob (JobKillRequest) returns (JobKillResponse) {}
+  rpc GetTrainingLogStream (TrainerContainerInfosRequest) returns (stream TrainerLogStreamResponse) {}
+  rpc HaltTrainingJob (JobHaltRequest) returns (JobHaltResponse) {}
+
+	// creates an endpoint with a specific id for an event type
+  rpc CreateEventEndpoint (CreateEventEndpointRequest) returns (CreateEventEndpointResponse) {}
+	// deletes a specific endpoint (defined by event type and endpoint id)
+  rpc DeleteEventEndpoint (DeleteEventEndpointRequest) returns (DeleteEventEndpointResponse) {}
+	// gets all endpoints registered for an event type
+	rpc GetEventTypeEndpoints (GetEventTypeEndpointsRequest) returns (GetEventTypeEndpointsResponse) {}
+	// gets a specific endpoint
+	rpc GetEventEndpoint (GetEventEndpointRequest) returns (GetEventEndpointResponse) {}
+
+  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse) {}
+}
+
+
+message ResourceRequirements {
+  double cpus = 1;
+  double gpus = 2;
+  double memory = 3;
+  MemoryUnit memory_unit = 4;
+  int32 learners = 5;
+  string schedpolicy = 6;
+  string topology = 7;
+  string architecture = 8;
+  double storage = 9;
+  MemoryUnit storage_unit = 10;
+
+  // TODO add more fields as required
+
+  enum MemoryUnit {
+    MB = 0;
+    MiB = 1;
+    GB = 2;
+    GiB = 3;
+    TB = 4;
+    TiB = 5;
+  }
+}
+
+message User {
+  string id = 1;
+  repeated string roles = 2;
+  string firstname = 3;
+  string lastname = 4;
+  string email = 5;
+}
+
+enum StatusMessages {
+  NORMAL_OPERATION = 0;
+  INTERNAL_ERROR = 10;
+  INSUFFICIENT_RESOURCES = 20;
+}
+
+
+
+message JobDeploymentRequest {
+  string name = 1;
+  service.ResourceRequirements resources = 4;
+  map<string, string> env_vars = 5;
+  map<string, string> labels = 6;
+  string user_id = 7;
+  string training_id = 8;
+  string framework = 9;
+  string version =10;
+  string evaluation_metrics_spec = 11;
+}
+
+message JobDeploymentResponse {
+  string name = 1;
+  string status = 2; // TODO remove
+}
+
+message JobKillRequest {
+  string name = 1;
+  string training_id = 2;
+  string user_id = 3;
+}
+
+message JobKillResponse {
+  // placeholder for further messages
+}
+
+message JobHaltRequest {
+  string name = 1;
+  string training_id = 2;
+  string user_id = 3;
+}
+
+message JobHaltResponse {
+  // placeholder for further messages
+}
+
+message TrainerContainerInfosRequest {
+  string training_id = 1;
+  string user_id = 2;
+  bool follow = 3;
+  bool metrics = 4;
+  bool summary = 5;
+}
+
+message TrainerLogStreamResponse {
+  bytes data = 1;
+}
+
+message CreateEventEndpointRequest {
+  string training_id = 1;
+  string user_id = 2;
+  string event_type = 3; // "metrics", "status", or "all"
+  string endpoint_url = 4; // endpoint must accept POST request with json content type
+  string endpoint_type = 5; // not currently used
+  string endpoint_id = 6; // user-assigned id associated with the endpoint, descriptive.
+}
+
+message CreateEventEndpointResponse {
+  // placeholder
+}
+
+message GetEventTypeEndpointsRequest {
+  string training_id = 1;
+  string user_id = 2;
+  string event_type = 3;
+}
+
+message GetEventTypeEndpointsResponse {
+  repeated Endpoint endpoints = 1;
+}
+
+message DeleteEventEndpointRequest {
+  string training_id = 1;
+  string user_id = 2;
+  string event_type = 3;
+  string endpoint_id = 4;
+}
+
+message DeleteEventEndpointResponse {
+  // placeholder
+}
+
+message GetEventEndpointRequest {
+  string training_id = 1;
+  string user_id = 2;
+  string event_type = 3;
+  string endpoint_id = 4;
+}
+
+message GetEventEndpointResponse {
+  string url = 1;
+  string endpoint_type = 2; // not currently used
+}
+
+message GetMetricsRequest {
+  string training_id = 1;
+}
+message GetMetricsResponse{
+  string metrics = 1;
+}
+
+message Endpoint {
+  string id = 1;
+  string url = 2;
+}

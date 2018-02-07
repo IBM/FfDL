@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: s3
+spec:
+{{ if .Values.services.expose_node_port }}
+  type: NodePort
+{{ end }}
+  selector:
+    service: storage
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 4572
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  labels:
+    component: elasticsearch
+spec:
+{{ if .Values.services.expose_node_port }}
+  type: NodePort
+{{ end }}
+  selector:
+    service: storage
+  ports:
+  - name: http
+    port: 9200
+    targetPort: 4571
+    protocol: TCP
+
+---
+
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: storage
+spec:
+  serviceName: storage
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        service: storage
+    spec:
+      containers:
+        - name: storage
+          image: localstack/localstack
+{{ if .Values.docker.pullPolicy }}
+          imagePullPolicy: {{.Values.docker.pullPolicy}}
+{{ end }}
+          env:
+          - name: SERVICES
+            value: s3,elasticsearch
+          - name: DEBUG
+            value: "1"
+          ports:
+          - containerPort: 4572
+            protocol: TCP
+          - containerPort: 4571
+            protocol: TCP

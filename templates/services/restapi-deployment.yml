@@ -1,0 +1,57 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ffdl-restapi
+  labels:
+    service: ffdl-restapi
+    environment: {{.Values.env}}
+spec:
+  selector:
+    matchLabels:
+       service: ffdl-restapi
+       environment: {{.Values.env}}
+  replicas: {{.Values.restapi.replicas}}
+  template:
+    metadata:
+      labels:
+        service: ffdl-restapi
+        environment: {{.Values.env}}
+        version: {{.Values.restapi.version}}
+    spec:
+      containers:
+      - name: ffdl-restapi-container
+        image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}/{{.Values.docker.image_prefix}}restapi:{{.Values.trainer.version}}
+{{ if .Values.docker.pullPolicy }}
+        imagePullPolicy: {{.Values.docker.pullPolicy}}
+{{ end }}
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DLAAS_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: DLAAS_ENV
+          value: {{.Values.env}}
+        - name: DLAAS_LOGLEVEL
+          value: {{.Values.log.level}}
+{{ if ne .Values.env "dev" }}
+        - name: EUREKA_APP
+          value: {{.Values.eureka.name}}
+        - name: EUREKA_VIP
+          value: {{.Values.eureka.name}}
+{{ end }}
+        command: ["/bin/sh", "-c"]
+        args: ["DLAAS_PORT=8080 /main"]
+        resources:
+          limits:
+            cpu: {{.Values.restapi.cpus}}
+            memory: {{.Values.restapi.memory}}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          timeoutSeconds: 10
+      imagePullSecrets:
+      - name: bluemix-cr-ng

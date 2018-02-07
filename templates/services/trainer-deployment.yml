@@ -1,0 +1,116 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ffdl-trainer
+  labels:
+    environment: {{.Values.env}}
+    service: ffdl-trainer
+spec:
+  selector:
+    matchLabels:
+      service: ffdl-trainer
+      environment: {{.Values.env}}
+  replicas: {{.Values.trainer.replicas}}
+  template:
+    metadata:
+      labels:
+        service: ffdl-trainer
+        environment: {{.Values.env}}
+        version: {{.Values.trainer.version}}
+    spec:
+      volumes:
+      - name: learner-config-volume
+        configMap:
+          name: learner-config
+{{ if ne .Values.env "dev" }}
+      - name: "mongo-ssl-cert"
+        secret:
+          secretName: trainer-secrets
+          items: [{
+            key: DLAAS_MONGO_CERT,
+            path: mongo/mongo.cert
+         }]
+{{ end }}
+      containers:
+      - name: ffdl-trainer-container
+        image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}/{{.Values.docker.image_prefix}}trainer:{{.Values.trainer.version}}
+{{ if .Values.docker.pullPolicy }}
+        imagePullPolicy: {{.Values.docker.pullPolicy}}
+{{ end }}
+        ports:
+        - containerPort: 8443
+        env:
+        - name: DLAAS_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: DLAAS_ENV
+          value: {{.Values.env}}
+        - name: DLAAS_LOGLEVEL
+          value: {{.Values.log.level}}
+        - name: DLAAS_PUSH_METRICS_ENABLED
+          value: "true"
+{{ if eq .Values.env "dev" }}
+        - name: DLAAS_MONGO_ADDRESS
+          value: mongo.$(DLAAS_POD_NAMESPACE).svc.cluster.local
+{{ else }}
+        - name: DLAAS_MONGO_ADDRESS
+          valueFrom:
+             secretKeyRef:
+               name: trainer-secrets
+               key: DLAAS_MONGO_ADDRESS
+        - name: DLAAS_MONGO_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_MONGO_USERNAME
+        - name: DLAAS_MONGO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_MONGO_PASSWORD
+{{ end }}
+        - name: DLAAS_OBJECTSTORE_TYPE
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_OBJECTSTORE_TYPE
+        - name: DLAAS_OBJECTSTORE_AUTH_URL
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_OBJECTSTORE_AUTH_URL
+        - name: DLAAS_OBJECTSTORE_USER_NAME
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_OBJECTSTORE_USER_NAME
+        - name: DLAAS_OBJECTSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_OBJECTSTORE_PASSWORD
+        volumeMounts:
+        - mountPath: /etc/learner-config
+          name: learner-config-volume
+{{ if ne .Values.env "dev" }}
+        - name: mongo-ssl-cert
+          mountPath: /etc/certs/
+          readOnly: true
+{{ end }}
+        command: ["/bin/sh", "-c"]
+        args: ["DLAAS_PORT=8443 /main"]
+        resources:
+          limits:
+            cpu: {{.Values.trainer.cpus}}
+            memory: {{.Values.trainer.memory}}
+        livenessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - "grpc-health-checker --port 8443 --tls"
+          initialDelaySeconds: 15
+          timeoutSeconds: 2
+      imagePullSecrets:
+      - name: bluemix-cr-ng

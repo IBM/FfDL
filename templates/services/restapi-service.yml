@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ffdl-restapi
+  labels:
+    service: ffdl-restapi
+    environment: {{.Values.env}}
+spec:
+  type: NodePort
+  ports:
+  - name: ffdl
+    port: 80
+    targetPort: 8080
+{{ if .Values.services.expose_node_port }}
+    nodePort: {{.Values.restapi.port}}
+{{ end }}
+  selector:
+    service: ffdl-restapi

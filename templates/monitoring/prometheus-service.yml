@@ -1,0 +1,34 @@
+{{ if .Values.prometheus.deploy }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: prometheus
+  name: prometheus
+spec:
+  selector:
+    app: prometheus
+  type: ClusterIP
+  ports:
+  - name: prometheus
+    protocol: TCP
+    port: {{.Values.prometheus.port}}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: grafana
+  name: grafana
+spec:
+  selector:
+    app: prometheus
+  type: NodePort
+  ports:
+  - name: grafana
+    protocol: TCP
+    port: 80
+    targetPort: {{.Values.grafana.port}}
+{{ end }}

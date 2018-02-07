@@ -1,0 +1,54 @@
+<div class="container-fluid">
+  <form method="post" enctype="multipart/form-data" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <table class="table ffdl_deploy_table">
+      <tr>
+        <th class="manifest-label col-md-3" scope="row"><label for="file">Choose model definition zip to upload</label></th>
+        <td class="manifest-label col-md-3"><input type="file" id="modelzip" name="modelzip" accept=".zip"
+                                                   (change)="onModelzipFileChange($event)"></td>
+        <td><button>Submit Training Job</button></td>
+      </tr>
+      <tr>
+        <th class="manifest-label col-md-3" scope="row"><label for="file">Choose manifest to upload</label></th>
+        <td class="manifest-label col-md-3"><input type="file" id="manifest" name="manifest" accept=".yml, .yaml"
+                                                   (change)="onManifestFileChange($event)"></td>
+      </tr>
+    </table>
+  </form>
+  <h4>Training Jobs</h4>
+  <div *ngIf="trainingsError" class="alert alert-danger" role="alert">
+    An error occurred while loading the training jobs!
+  </div>
+  <div *ngIf="trainings?.length == 0">No records found.</div>
+  <div *ngIf="trainings?.length > 0 ">
+    {{ trainings?.length }} records found
+    <table class="table">
+      <thead class="thead-default">
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody *ngFor="let t of trainings">
+        <tr>
+          <td>{{t.model_id}}</td>
+          <td>{{t.name}}</td>
+          <td>{{t.description}}</td>
+          <td class="{{getStatusColor(t)}}">{{t.training.training_status.status}}</td>
+          <td>
+            <button class="btn btn-primary btn-sm" [routerLink]="['/trainings', t.model_id, 'show']"
+                    tooltip="Show training details" tooltipTrigger="focus" tooltipPlacement="top">
+              <i class="fa fa-info" aria-hidden="true"></i>
+            </button>
+            <button class="btn btn-danger btn-sm" (click)="delete(t.model_id)"
+                    tooltip="Delete training record" tooltipTrigger="focus" tooltipPlacement="top">
+              <i class="fa fa-trash-o" aria-hidden="true"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

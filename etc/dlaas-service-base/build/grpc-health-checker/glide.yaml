@@ -1,0 +1,11 @@
+package: github.ibm.com/deep-learning-platform/grpc-health-checker
+import:
+- package: github.com/spf13/cobra
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: google.golang.org/grpc
+  version: ~1.5.0
+  subpackages:
+  - credentials
+  - health/grpc_health_v1

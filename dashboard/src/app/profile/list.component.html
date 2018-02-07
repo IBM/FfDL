@@ -1,0 +1,23 @@
+<table class="table">
+  <thead class="thead-default">
+        <tr>
+      <th>ID</th>
+      <th>URL</th>
+      <th>Username</th>
+      <th>Password</th>
+      <th></th>
+
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of connections | async">
+          <td>{{c.id}}</td>
+          <td><a href="{{c.url}}">{{c.url}}</a></td>
+          <td>{{c.username}}</td>
+          <td>{{c.password}}</td>
+          <td><button (click)="remove(conn)" class="btn btn-default btn-sm">remove</button></td>
+
+        </tr>
+      </tbody>
+</table>
+

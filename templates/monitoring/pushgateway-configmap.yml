@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: statsd-exporter-configmap
+data:
+  mapping.conf: |-
+    mappings:
+    - match: databroker.*.*.*
+      help: "Total number of failures in databroker when uploading to object store"
+      name: "databroker_upload_failures"
+      labels:
+        store: "$1"
+        attempt: "$3"
+        job: "databroker"
+
+    - match: controller.training.failures.*
+      help: "Total number of failures in controller in training"
+      name: "controller_training_failures"
+      labels:
+        reason: "$1"
+        job: "controller"
+
+    - match: controller.etcd.failures.*.*.*
+      help: "Total number of failures in contoller connecting to etcd"
+      name: "controller_etcd_failures"
+      labels:
+        operation: "$2"
+        attempt: "$3"
+        job: "controller"
+
+    - match: jobmonitor.jobmonitor.*.connectivity.failed
+      help: "Total number of failures in jobmonitor in connectivity"
+      name: "jobmonitor_connectivity_failures"
+      labels:
+        reason: "$1"
+        job: "jobmonitor"
+    
+    - match: jobmonitor.jobmonitor.k8s.*.failed
+      help: "Total number of k8s related failures in jobmonitor"
+      name: "jobmonitor_k8s_failures"
+      labels:
+        reason: "$1"
+        job: "jobmonitor"

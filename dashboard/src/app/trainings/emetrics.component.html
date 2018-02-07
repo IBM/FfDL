@@ -1,0 +1,19 @@
+<div class="column">
+  <div class="col-md-4" style="margin-bottom: 10px">
+    <div class="btn-group" data-toggle="buttons">
+      <label ngbButtonLabel style="vertical-align: middle; margin-top: 5px; margin-right: 3em">
+        <input type="checkbox" ngbButton [(ngModel)]="follow" (click)="followEvent()" style="vertical-align: middle;" name="follow">&nbsp;&nbsp;Follow&nbsp;&nbsp;
+      </label>
+      <button (click)="updateData()">Get More</button>
+    </div>
+    <img id="loading" src="../../assets/img/loading.svg"/>
+  </div>
+  <div class="row">
+    <div id="errorMsg"></div>
+    <div class="col-md-4" *ngFor="let idx of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]">
+      <div style="width: 70%;">
+        <canvas width="150" height="100" id="chart_scalar_{{idx}}"></canvas>
+      </div>
+    </div>
+  </div>
+</div>

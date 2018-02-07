@@ -1,0 +1,22 @@
+{{ if .Values.prometheus.deploy }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: pushgateway
+  name: pushgateway
+spec:
+  selector:
+    app: pushgateway
+  type: ClusterIP
+  ports:
+  - name: push
+    protocol: TCP
+    port: 9091
+  - name: statsd-prom
+    protocol: TCP
+    port: 9102
+  - name: statsd
+    protocol: UDP
+    port: 9125
+{{ end }}

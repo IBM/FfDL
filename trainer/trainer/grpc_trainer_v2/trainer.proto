@@ -1,0 +1,484 @@
+/*
+ * Copyright 2017-2018 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package grpc.trainer.v2;
+
+//import public "trainer/grpc_trainer_v2/evaluation_metrics.proto";
+
+service Trainer {
+    // Creates a new deep learning training job for a given model definition.
+    rpc CreateTrainingJob (CreateRequest) returns (CreateResponse) {
+    }
+
+    // Reads a training job with a given ID.
+    rpc GetTrainingJob (GetRequest) returns (GetResponse) {
+    }
+
+    // Returns all training jobs for a given user.
+    rpc GetAllTrainingsJobs (GetAllRequest) returns (GetAllResponse) {
+    }
+
+    // Deletes a training job with a given ID.
+    rpc DeleteTrainingJob (DeleteRequest) returns (DeleteResponse) {
+    }
+
+    // Halts the training with a given ID without discarding the result.
+    rpc HaltTrainingJob (HaltRequest) returns (HaltResponse) {
+    }
+
+    // Returns the model definition that was used for training as application/zip.
+    rpc GetModelDefinition (ModelDefinitionRequest) returns (stream ZippedDataChunk) {
+    }
+
+    // Returns the trained model as application/zip.
+    rpc GetTrainedModel (TrainedModelRequest) returns (stream ZippedDataChunk) {
+    }
+
+    // Returns the logs from the ZIP file stored in the object store.
+    // Deprecated
+    rpc GetTrainedModelLogs (TrainedModelLogRequest) returns (stream ByteStreamResponse) {
+    }
+
+    rpc GetTrainingLogs (Query) returns (stream LogLine) {}
+
+    // Get evaluation metrics records, based on query
+    rpc GetTrainingEMetrics (Query) returns (stream EMetrics) {}
+
+    // ============ INTERNAL ============
+
+    // To be removed
+    rpc GetTrainedModelLogsFromObjStore (TrainedModelLogRequest) returns (stream ByteStreamResponse) {
+    }
+
+    // For internal use only!
+    rpc GetTrainingStatusID (GetRequest) returns (GetStatusIDResponse) {
+    }
+
+    // For internal use only!
+    // Updates an existing training status
+    // TODO we should not have this but until we fix the status update handling properly, we have no other choice.
+    rpc UpdateTrainingJob (UpdateRequest) returns (UpdateResponse) {
+    }
+
+    // To be removed
+    rpc GetTrainedModelMetrics (TrainedModelMetricsRequest) returns (stream ByteStreamResponse) {
+    }
+
+    // Not implemented, to be removed (for GA)
+    rpc ResumeTrainingJob (ResumeRequest) returns (ResumeResponse) {
+    }
+
+}
+
+message CreateRequest {
+    string user_id = 1;
+    ModelDefinition model_definition = 2;
+    Training training = 3;
+    repeated Datastore datastores = 4;
+
+    // EMExtractionSpec allows the caller to specify evaluation metrics extraction.
+    EMExtractionSpec evaluation_metrics  = 5;
+}
+
+// EMExtractionSpec represents the specification for extracting structured evaluation metrics from training jobs.
+// It is used across all log collectors, so some fields may not be relevent for all log collectors.
+// Note: Don't use enums with this, as need to do untyped YAML convert to string and back
+// Refer to https://github.ibm.com/deep-learning-platform/dlaas-training-metrics-service for complete
+// documentation.
+message EMExtractionSpec {
+    // Loosly typed string representing what kind of log-collector to use.
+    // For Logs-only, specify `type: logger`
+    // For the Regex_extractor log-collector, specify `type: regex_extractor`
+    // For Tensorboard, specify `type: tensorboard`
+    // To invoke the emetrics_file_extractor, you can specify the following synonyms
+    // `type: optivist` || `type: emetrics_file` || `type: file`.
+    string type = 1;
+
+    string image_tag = 6; // Dev only.
+
+    // The filename of the logfile.  (Normally this should be left to default).
+    string in = 2;
+
+    // For the regex_extractor, number of lines to keep in the buffer for regex matching.
+    int32 line_lookahead = 3;
+
+    // (Eventual) Available event types: 'images', 'distributions', 'histograms', 'images'
+    // 'audio', 'scalars', 'tensors', 'graph', 'meta_graph', 'run_metadata'.
+    // For now only scalars are supported.
+    repeated string eventTypes = 4;
+
+    // For the regex_extractor, the `EMExtractionSpec` should contain a `groups` section, which should contain
+    // templates for groups such as `test` and `train`, which group names should be be the keys of this map.
+    map<string, EMGroup>  groups = 5;
+}
+
+// EMGroup represents a group, such as `test` or `train`, that acts as a template for structured evaluation metrics,
+// and which allows the specification of a regular expression (regex) that contains named bindings with
+// sub-expressions, which can then be used as references to specify structured time-related (x-axis) and value-related
+// (y-axis) values.
+message EMGroup {
+    // Python regular expressions, which use the named group feature `(?P<name>...)`, to specify
+    // a name of a matching expression, which can then be used to specify the value that is used in the template
+    // for the `EMetrics` record. To help with verbosity, the regex_extractor allows the following macros: GLOG_STAMP,
+    // TIMESTAMP, FLOAT, INT, INT_ANY, and HEX.  (See dlaas-training-metrics-service README for more details.
+    string regex = 1;
+
+    // Allows the caller to specify a binding for the time field of the meta structure.
+    EMMeta meta = 2;
+
+    // Map of keys and regex references for value-related (y-axis) values.
+    map<string, EMAny> values = 3;
+
+    // Map of keys and regex references for time-related (x-axis) values.
+    map<string, EMAny> etimes = 4;
+}
+
+// Allows the user to bind an extracted value to the time field of the evaluation metrics.
+message EMMeta {
+    // Time that the metric occured: representing the number of millisecond since midnight January 1, 1970.
+    // (ref, for instance $timestamp).  Value will be extracted from timestamps
+    string time = 3;
+}
+
+// Typed value for EMExtractionSpec.  The data type here can't be an enum, due to internal issues with YAML
+// conversion.
+message EMAny {
+    // one of: STRING, JSONSTRING, INT, FLOAT
+    string type = 1;
+
+    // String represenation of the value.
+    string value = 2;
+}
+
+// MetaInfo represents data shared with both log lines and evaluation metrics.
+message MetaInfo {
+    // Unique id identifying the training job
+    string training_id = 1;
+
+    // Unique id identifying the user
+    string user_id = 2;
+
+    // Time that the metric occured: representing the number of millisecond since midnight January 1, 1970.
+    int64 time = 3;
+
+    // Sequential index, 1-based
+    int64 rindex = 4;
+
+    // Optional subid
+    string subid = 5;
+}
+
+// LogLine represents one line of log information, returned by training data endpoints.
+message LogLine {
+    // For MetaInfo, at the minimum training_id and user_id must be specified.
+    MetaInfo meta = 1;
+
+    // Raw line from the logs.
+    string line = 2;
+}
+
+// Any represents a typed value used with the evaluation metrics record.
+message Any {
+    enum DataType {
+        STRING = 0;
+        JSONSTRING = 1;
+        INT = 2;
+        FLOAT = 3;
+    }
+    // Datatype of the value.
+    DataType type = 1;
+
+    // String representation of a value
+    string value = 2;
+}
+
+// EMetrics specifies an evaluation metrics record from the training data.
+message EMetrics {
+    // For MetaInfo, at the minimum training_id and user_id must be specified.
+    MetaInfo meta = 1;
+
+    // Map of temporal keys, normally values for the x-axis on a graph.
+    // Example: {"iteration": 209}
+    map<string, Any> etimes = 2;
+
+    // Group label, such as test, train, or validate
+    string grouplabel = 3;
+
+    // Map of value keys, normally values for the y-axis on a graph.
+    /// Example: {"cross_entropy": 0.4430539906024933,	"accuracy": 0.8999999761581421}
+    map<string, Any> values = 4;
+}
+
+// Query specifies the input query for logs and evaluation metrics.
+message Query {
+    enum SearchType {
+        TERM = 0;
+        NESTED = 1;
+        MATCH = 2;
+        ALL = 3;
+    }
+    // At this time, the SearchType value should normally always be TERM.
+    SearchType searchType = 1;
+
+    // At the minimum, the training_data and user_data must be specified in the meta substructure.
+    MetaInfo meta = 3;
+
+    string since = 4; // representing the number of milliseconds since midnight January 1, 1970, exclusive with pos.
+
+    // Only get this many records
+    int32 pagesize = 5;
+
+    // The starting position.  If positive or zero, count from beginning, if negative, count from end, exclusive with since.
+    int64 pos = 6;
+}
+
+message CreateResponse {
+    string training_id = 1;
+}
+
+message UpdateRequest {
+    string training_id = 1;
+    string user_id = 2;
+    Status status = 3;
+    string status_message = 4;
+    string error_code = 5;
+    float timestamp = 6;
+}
+
+message UpdateResponse {
+    string training_id = 1;
+}
+
+message GetRequest {
+    string training_id = 1;
+    string user_id = 2;
+}
+
+message GetResponse {
+    Job job = 1;
+}
+
+message GetStatusResponse {
+    TrainingStatus status = 1;
+}
+
+message GetStatusIDResponse {
+    Status status = 1;
+}
+
+message GetMetricsStringResponse {
+    string metrics = 1;
+}
+
+message GetTestResponse {
+    string test = 1;
+}
+
+message GetAllRequest {
+    string user_id = 1;
+}
+
+message GetAllResponse {
+    repeated Job jobs = 1;
+}
+
+message HaltRequest {
+    string training_id = 1;
+    string user_id = 2;
+}
+
+message HaltResponse {
+    string training_id = 1;
+    string user_id = 2;
+    Status status = 3;
+}
+
+message ResumeRequest {
+    string training_id = 1;
+    string user_id = 2;
+}
+
+message ResumeResponse {
+    string training_id = 1;
+    string user_id = 2;
+    Status status = 3;
+}
+
+message DeleteRequest {
+    string training_id = 1;
+    string user_id = 2;
+}
+
+message DeleteResponse {
+    string training_id = 1;
+}
+
+message Metrics {
+    string timestamp = 1;
+    string type = 2;
+    int32 iteration = 3;
+    map<string, string> values = 4;
+
+}
+
+message Job {
+    string training_id = 1;
+    string user_id = 2;
+    ModelDefinition model_definition = 3;
+    Training training = 4;
+    TrainingStatus status = 5;
+    repeated Datastore datastores = 6;
+    string job_id = 7;
+    Metrics metrics = 8;
+}
+
+message ModelDefinition {
+    string name = 1;
+    string description = 2;
+    bytes content = 3; // Optional: application/zip as bytes containing the model definition. If not present field location needs to be set.
+    string location = 4; // Optional: data store location where the model definition (code) is located
+    Framework framework = 5;
+}
+
+message Framework {
+    string name = 1;
+    string version = 2;
+    string image_tag = 3; // Optional: tag used for learner testing
+}
+
+message Training {
+    // Command to execute during training
+    string command = 1;
+
+    // Resource requirements for the training
+    ResourceRequirements resources = 2;
+
+    // Input and output data as data store references
+    repeated string input_data = 3;
+    repeated string output_data = 4;
+
+    // whether we want to enable detailed profiling during the training
+    bool profiling = 5;
+}
+
+message TrainingStatus {
+    Status status = 1;
+    string submission_timestamp = 3;
+    string completion_timestamp = 4;
+    string download_start_timestamp = 5;
+    string process_start_timestamp = 6;
+    string store_start_timestamp = 7;
+    string status_message = 8;
+    string error_code = 9;
+}
+
+message Datastore {
+    string id = 1;
+    string type = 2;
+    // additional fields for the given Datastore type
+    map<string, string> fields = 3;
+    // connection information for the given Datastore type
+    map<string, string> connection = 4;
+}
+
+message ResourceRequirements {
+    float cpus = 1;
+    float gpus = 2;
+    float memory = 3;
+    SizeUnit memory_unit = 4;
+    float storage = 5;
+    SizeUnit storage_unit = 6;
+    int32 learners = 7;
+    string schedpolicy = 8;
+    string topology = 9;
+    string architecture = 10;
+}
+
+enum SizeUnit {
+    MB = 0;
+    MiB = 1;
+    GB = 2;
+    GiB = 3;
+}
+
+enum Status {
+    NOT_STARTED = 0;
+    PENDING = 1;
+    HALTED = 5;
+    FAILED = 10;
+    DEPLOY = 20;
+    DOWNLOADING = 30;
+    PROCESSING = 40;
+    STORING = 50;
+    COMPLETED = 60;
+}
+
+message ModelDefinitionRequest {
+    string training_id = 1;
+    string user_id = 2;
+}
+
+message TrainedModelRequest {
+    string training_id = 1;
+    string user_id = 2;
+}
+
+message TrainedModelLogRequest {
+    string training_id = 1;
+    string user_id = 2;
+    bool follow = 5;
+
+    // These are for internal use only, and will be eventually removed!
+    bool is_metrics = 3;
+    bool is_summary = 4;
+}
+
+message TrainedModelMetricsRequest {
+    string training_id = 1;
+    string user_id = 2;
+    bool follow = 3;
+}
+
+message GetLatestMetricsRequest {
+		string training_id = 1;
+		string user_id = 2;
+}
+
+message GetLatestMetricsResponse {
+		string training_id = 1;
+		string user_id = 2;
+		Metrics metrics = 3;
+}
+
+message UpdateTrainedModelMetricsRequest {
+    string training_id = 1;
+    string user_id = 2;
+    Metrics new_metrics = 3;
+}
+
+message UpdateTrainedModelMetricsResponse {
+    string training_id = 1;
+}
+
+message ByteStreamResponse {
+    bytes data = 1;
+}
+
+message ZippedDataChunk {
+    bytes data = 1;
+}

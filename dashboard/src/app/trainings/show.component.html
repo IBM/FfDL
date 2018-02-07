@@ -1,0 +1,70 @@
+<div class="container-fluid">
+  <h3>Training ID: {{training?.model_id}}</h3>
+  <tabset>
+    <tab heading="Details">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-12">
+            <p></p>
+            <table class="table">
+              <tbody>
+              <tr><th scope="row">Name:</th><td>{{ training?.name }}</td></tr>
+              <tr><th scope="row">Status:</th><td class="{{getStatusColor(training?.training.training_status.status)}}">{{training?.training.training_status.status}}</td></tr>
+              <tr><th scope="row">Description:</th><td>{{ training?.description }}</td></tr>
+              <tr>
+                <th scope="row">Framework:</th>
+                <td>{{training?.framework.name}}:{{training?.framework.version}}</td>
+              </tr>
+              <tr>
+                <th scope="row" class="align-top">Command:</th>
+                <td><code>{{ training?.training.command }}</code></td>
+              </tr>
+              <tr>
+                <th scope="row" class="align-top">Resources:</th>
+                <td>{{training?.training.cpus || 1 }} CPUs | {{training?.training.gpus || 0 }} GPUs | {{training?.training.memory || 500 }} {{training?.training.memory_unit || "MiB"}} | {{training?.training.learners || 1 }} Node(s)</td>
+              </tr>
+              <tr>
+                <th scope="row">Submission Time:</th>
+                <td>{{training?.training.training_status.submitted || "N/A" }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Completion Time:</th>
+                <td>{{training?.training?.training_status?.completed || "N/A" }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Training data:</th>
+                <td>
+                  <p><i>Storage ID</i>: <!-- {{training?.training.input_data }} !--> </p>
+                  <!--<p><i>Storage container</i>: {{training }}</p>-->
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </tab>
+    <tab heading="Logs">
+      <div class="container-fluid" >
+        <training-logs [trainingId]="trainingId"></training-logs>
+      </div>
+    </tab>
+    <tab (select)="tabGraphActive()">
+      <ng-template tabHeading>
+        Evaluation Metrics (raw)
+      </ng-template>
+      <div class="container-fluid" >
+        <training-emetrics_raw [trainingId]="trainingId"></training-emetrics_raw>
+      </div>
+    </tab>
+    <tab (select)="tabGraphActive()">
+      <ng-template tabHeading>
+        Scalars
+      </ng-template>
+      <div class="container-fluid">
+        <training-emetrics [trainingId]="trainingId"></training-emetrics>
+      </div>
+    </tab>
+
+  </tabset>
+</div>

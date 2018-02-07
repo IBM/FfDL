@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: learner-config
+data:
+  tensorflow_gpu_1.3-py3_CURRENT: manual
+  caffe_cpu_1.0-ddl_CURRENT: master-7
+  caffe_cpu_1.0-py2_CURRENT: master-39
+  caffe_gpu_1.0-ddl_CURRENT: master-7
+  caffe_gpu_1.0-py2_CURRENT: master-39
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: learner-entrypoint-files
+data:
+  train.sh: |
+    #!/bin/bash
+
+    echo "Training with training/test data at:"
+    echo "  DATA_DIR: $DATA_DIR"
+    echo "  MODEL_DIR: $MODEL_DIR"
+    echo "  TRAINING_JOB: $TRAINING_JOB"
+    echo "  TRAINING_COMMAND: $TRAINING_COMMAND"
+
+    echo "Storing trained model at:"
+    echo "  RESULT_DIR: $RESULT_DIR"
+
+    echo 'Contents of $MODEL_DIR'
+    ls -la $MODEL_DIR
+    echo 'Contents of $DATA_DIR'
+    ls -la $DATA_DIR
+
+    # Switch to model dir
+    cd $MODEL_DIR
+    export PYTHONPATH=$PYTHONPATH:$PWD
+
+    env | sort
+
+    echo "$(date): Running training job"
+    eval "$TRAINING_COMMAND 2>&1"
+    cmd_exit=$?
+
+    echo "Training process finished. Exit code: $cmd_exit"
+
+    if [ ${cmd_exit} -ne 0 ];
+    then
+      echo "Job exited with error code ${cmd_exit}"
+      exit ${cmd_exit}
+    fi

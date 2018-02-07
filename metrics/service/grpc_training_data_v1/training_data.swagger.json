@@ -1,0 +1,385 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "training_data.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/logs/emetrics": {
+      "post": {
+        "summary": "Get evaluation metrics records, based on query",
+        "operationId": "GetEMetrics",
+        "responses": {
+          "200": {
+            "description": "(streaming responses)",
+            "schema": {
+              "$ref": "#/definitions/v1EMetrics"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1Query"
+            }
+          }
+        ],
+        "tags": [
+          "TrainingData"
+        ]
+      }
+    },
+    "/v1/logs/loglines": {
+      "post": {
+        "summary": "Get loglines, based on query",
+        "operationId": "GetLogs",
+        "responses": {
+          "200": {
+            "description": "(streaming responses)",
+            "schema": {
+              "$ref": "#/definitions/v1LogLine"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1Query"
+            }
+          }
+        ],
+        "tags": [
+          "TrainingData"
+        ]
+      }
+    },
+    "/v1/logs/{meta.training_id}/emetrics": {
+      "get": {
+        "summary": "Get evaluation metrics records, based on query",
+        "operationId": "GetEMetrics",
+        "responses": {
+          "200": {
+            "description": "(streaming responses)",
+            "schema": {
+              "$ref": "#/definitions/v1EMetrics"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "meta.training_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "searchType",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "TERM",
+              "NESTED",
+              "MATCH",
+              "ALL"
+            ],
+            "default": "TERM"
+          },
+          {
+            "name": "meta.user_id",
+            "description": "Unique id identifying the user.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "meta.time",
+            "description": "Time that the metric occured: representing the number of millisecond since midnight January 1, 1970.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "meta.rindex",
+            "description": "Sequential index.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "pagesize",
+            "description": "Only get this many records.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pos",
+            "description": "The starting position.  If positive or zero, count from beginning, if negative, count from end.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "TrainingData"
+        ]
+      }
+    },
+    "/v1/logs/{meta.training_id}/loglines": {
+      "get": {
+        "summary": "Get loglines, based on query",
+        "operationId": "GetLogs",
+        "responses": {
+          "200": {
+            "description": "(streaming responses)",
+            "schema": {
+              "$ref": "#/definitions/v1LogLine"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "meta.training_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "searchType",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "TERM",
+              "NESTED",
+              "MATCH",
+              "ALL"
+            ],
+            "default": "TERM"
+          },
+          {
+            "name": "meta.user_id",
+            "description": "Unique id identifying the user.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "meta.time",
+            "description": "Time that the metric occured: representing the number of millisecond since midnight January 1, 1970.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "meta.rindex",
+            "description": "Sequential index.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "pagesize",
+            "description": "Only get this many records.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pos",
+            "description": "The starting position.  If positive or zero, count from beginning, if negative, count from end.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "TrainingData"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "AnyDataType": {
+      "type": "string",
+      "enum": [
+        "STRING",
+        "JSONSTRING",
+        "INT",
+        "FLOAT"
+      ],
+      "default": "STRING"
+    },
+    "QuerySearchType": {
+      "type": "string",
+      "enum": [
+        "TERM",
+        "NESTED",
+        "MATCH",
+        "ALL"
+      ],
+      "default": "TERM"
+    },
+    "v1AddResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      },
+      "title": "***"
+    },
+    "v1Any": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/AnyDataType"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "v1DeleteResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    },
+    "v1EMetrics": {
+      "type": "object",
+      "properties": {
+        "meta": {
+          "$ref": "#/definitions/v1MetaInfo"
+        },
+        "etimes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1Any"
+          },
+          "title": "Repeated, order-dependent list of temporal keys\nExample: {\"iteration\": 209}"
+        },
+        "grouplabel": {
+          "type": "string",
+          "title": "Group label, such as test, train, or validate"
+        },
+        "values": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1Any"
+          },
+          "title": "/ {\"cross_entropy\": 0.4430539906024933,\t\"accuracy\": 0.8999999761581421}"
+        }
+      }
+    },
+    "v1HelloResponse": {
+      "type": "object",
+      "properties": {
+        "msg": {
+          "type": "string"
+        }
+      }
+    },
+    "v1LogLine": {
+      "type": "object",
+      "properties": {
+        "meta": {
+          "$ref": "#/definitions/v1MetaInfo"
+        },
+        "line": {
+          "type": "string"
+        }
+      }
+    },
+    "v1MetaInfo": {
+      "type": "object",
+      "properties": {
+        "training_id": {
+          "type": "string",
+          "title": "Unique id identifying the training job"
+        },
+        "user_id": {
+          "type": "string",
+          "title": "Unique id identifying the user"
+        },
+        "time": {
+          "type": "string",
+          "format": "int64",
+          "description": "Time that the metric occured: representing the number of millisecond since midnight January 1, 1970."
+        },
+        "rindex": {
+          "type": "string",
+          "format": "int64",
+          "title": "Sequential index"
+        }
+      }
+    },
+    "v1Query": {
+      "type": "object",
+      "properties": {
+        "searchType": {
+          "$ref": "#/definitions/QuerySearchType"
+        },
+        "meta": {
+          "$ref": "#/definitions/v1MetaInfo",
+          "title": "The following three options are exclusive"
+        },
+        "since": {
+          "type": "string"
+        },
+        "pagesize": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Only get this many records"
+        },
+        "pos": {
+          "type": "string",
+          "format": "int64",
+          "description": "The starting position.  If positive or zero, count from beginning, if negative, count from end."
+        }
+      },
+      "description": "Playing with semi-generalized query request."
+    }
+  }
+}

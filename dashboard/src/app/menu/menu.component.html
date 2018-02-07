@@ -1,0 +1,46 @@
+<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-primary" *ngIf="showMenu">
+
+	<div>
+		<div>
+			<a class="navbar-brand" href="#" style="padding: 0px"> <img
+				src="../../assets/img/ffdl-blue.png" alt="Fabric for Deep Learning"
+				height="45px">
+			</a>
+		</div>
+		<!-- <div class="navbar-subbrand">Fabric for Deep Learning</div> -->
+		<button class="navbar-toggler d-lg-none" type="button"
+			data-toggle="collapse" data-target="#navbarsExampleDefault"
+			aria-controls="navbarsExampleDefault" aria-expanded="false"
+			aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+	</div>
+
+	<div class="collapse navbar-collapse" id="navbarsExampleDefault">
+    <ul class="navbar-nav mr-auto">
+      <!-- li class="nav-item active">
+        <a class="nav-link" [routerLink]="['/models/create']" routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }">New <span class="sr-only">(current)</span></a>
+      </li -->
+      <!-- li class="nav-item active">
+        <a class="nav-link" [routerLink]="['/trainings/list']" routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }">Models <span class="sr-only">(current)</span></a>
+      </li -->
+      <li class="nav-item active">
+        <a class="nav-link" [routerLink]="['/trainings/list']" routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }">Trainings <span class="sr-only">(current)</span></a>
+      </li>
+      <li class="nav-item" *ngIf="isAdmin()">
+        <a class="nav-link" [routerLink]="['/analytics/main']" routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }">Analytics</a>
+      </li>
+    </ul>
+    <div class="navbar-nav">
+      <a class="nav-link" [routerLink]="" (click)="logout()">Logout</a>
+    </div>
+    <!-- <form class="form-inline mt-2 mt-md-0">
+      <input class="form-control mr-sm-2" type="text" name="trainingId" [(ngModel)]="trainingId" placeholder="Training ID">
+      <button class="btn btn-outline-default my-2 my-sm-0" (click)="searchTraining()" type="submit">Search</button>
+    </form> -->
+  </div>
+</nav>

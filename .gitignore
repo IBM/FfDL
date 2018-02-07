@@ -1,0 +1,17 @@
+/build/
+vendor/
+cli/bin
+lcm/bin
+restapi/bin
+trainer/bin
+jobmonitor/bin
+jobmonitor/logfiles
+metrics/bin
+grpc-health-checker/bin
+*.bk
+.vagrant/
+.DS_Store
+*.log
+lcm/coord/tmp.etcd
+tmp
+.venv/

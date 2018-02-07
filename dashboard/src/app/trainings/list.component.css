@@ -1,0 +1,15 @@
+.manifest-row {
+  vert-align: middle;
+}
+
+.manifest-label {
+  padding-top: 17px;
+  vert-align: bottom;
+}
+
+.ffdl_deploy_table {
+  padding-top: 17px;
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 17px;
+}

@@ -1,0 +1,54 @@
+hash: 8fdfecb3d89a56f1b6dac0d290086fc9a83d09081a02f7ee532d40787781ac2c
+updated: 2017-07-26T14:16:39.394779244+02:00
+imports:
+- name: github.com/golang/protobuf
+  version: 0a4f71a498b7c4812f64969510bcb4eca251e33a
+  subpackages:
+  - proto
+  - ptypes/any
+- name: github.com/inconshreveable/mousetrap
+  version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/spf13/cobra
+  version: 34594c771f2c18301dc152640ad40ece28795373
+- name: github.com/spf13/pflag
+  version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
+- name: golang.org/x/net
+  version: b3756b4b77d7b13260a0a2ec658753cf48922eac
+  subpackages:
+  - context
+  - http2
+  - http2/hpack
+  - idna
+  - internal/timeseries
+  - lex/httplex
+  - trace
+- name: golang.org/x/text
+  version: 836efe42bb4aa16aaa17b9c155d8813d336ed720
+  subpackages:
+  - secure/bidirule
+  - transform
+  - unicode/bidi
+  - unicode/norm
+- name: google.golang.org/genproto
+  version: b0a3dcfcd1a9bd48e63634bd8802960804cf8315
+  subpackages:
+  - googleapis/rpc/status
+- name: google.golang.org/grpc
+  version: 172ccacff3cfbddedcf1ba5ea06cda943bc976c1
+  subpackages:
+  - codes
+  - credentials
+  - grpclb/grpc_lb_v1
+  - grpclog
+  - health
+  - health/grpc_health_v1
+  - internal
+  - keepalive
+  - metadata
+  - naming
+  - peer
+  - stats
+  - status
+  - tap
+  - transport
+testImports: []

@@ -1,0 +1,24 @@
+name: mnist-caffe-model
+description: Caffe MNIST model
+version: "1.0"
+gpus: 0
+cpus: 0.5
+memory: 300MiB
+
+# Object stores that allow the system to retrieve training data.
+data_stores:
+  - id: test-datastore
+    type: s3_datastore
+    training_data:
+      container: mnist_lmdb_data
+    connection:
+      type: s3_datastore
+      auth_url: http://s3.default.svc.cluster.local
+      user_name: test
+      password: test
+
+framework:
+  name: caffe
+  version: "1.0-py2"
+  command: >
+    caffe train -solver lenet_solver.prototxt

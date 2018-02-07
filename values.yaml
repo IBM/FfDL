@@ -1,0 +1,75 @@
+namespace: test
+env: dev
+services:
+  expose_node_port: true
+docker:
+  registry: registry.ng.bluemix.net
+  namespace: dlaas_dev
+  image_prefix: ffdl-
+  pullPolicy: IfNotPresent
+trainer:
+  version: latest
+  port: 0
+  replicas: 1
+  cpus: 100m
+  memory: 64Mi
+restapi:
+  version: latest
+  port: 0
+  replicas: 1
+  cpus: 100m
+  memory: 64Mi
+lcm:
+  version: latest
+  port: 0
+  replicas: 1
+  cpus: 100m
+  memory: 64Mi
+trainingdata:
+  version: latest
+  port: 0
+  replicas: 1
+  cpus: 100m
+  memory: 64Mi
+learner:
+  tag: master-97
+  docker_namespace: dlaas_dev
+  imagePullSecret: bluemix-cr-ng
+  kubeSecret: lcm-secrets
+databroker:
+  tag: latest
+webui:
+  version: latest
+  port: 0
+  cpus: 100m
+  memory: 64Mi
+mongo:
+  address: localhost:27017
+  username: test
+  password: test
+etcd:
+  address: http://etcd:2379
+  username: test
+  password: test
+  prefix: test
+objectstore:
+  type: s3_datastore
+  # auth_url needs to be the FQDN due to a limitation in the local S3 mock
+  auth_url: http://s3.default.svc.cluster.local
+  username: test
+  password: test
+elasticsearch:
+  address: http://elasticsearch:9200
+  username: test
+  password: test
+  scheme: http
+prometheus:
+  deploy: true
+  etcd_urls: localhost:2379
+  cluster_name: FfDL
+  port: 9090
+  alertmanager_port: 9093
+grafana:
+  port: 3000
+log:
+  level: INFO

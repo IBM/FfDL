@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ffdl-trainingdata
+  labels:
+    environment: {{.Values.env}}
+spec:
+{{ if .Values.services.expose_node_port }}
+  type: NodePort
+{{ end }}
+  ports:
+  - name: grpc
+    port: 80
+    targetPort: 8443
+    nodePort: {{.Values.trainingdata.port}}
+  selector:
+    service: ffdl-trainingdata

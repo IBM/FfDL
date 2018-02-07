@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alertmanager
+data:
+  alertmanager.yml: |-
+    global:
+    # The root route on which each incoming alert enters.
+    route:
+      # The root route must not have any matchers as it is the entry point for
+      # all alerts. It needs to have a receiver configured so alerts that do not
+      # match any of the sub-routes are sent to someone.
+      receiver: 'slack_chatbots'
+
+      # The labels by which incoming alerts are grouped together. For example,
+      # multiple alerts coming in for cluster=A and alertname=LatencyHigh would
+      # be batched into a single group.
+      # group_by: ['alertname', 'job']
+      group_by: ['alertname']
+
+      # When a new group of alerts is created by an incoming alert, wait at
+      # least 'group_wait' to send the initial notification.
+      # This way ensures that you get multiple alerts for the same group that start
+      # firing shortly after another are batched together on the first
+      # notification.
+      #group_wait: 30s
+
+      # When the first notification was sent, wait 'group_interval' to send a batch
+      # of new alerts that started firing for that group.
+      #group_interval: 5m
+
+      # If an alert has successfully been sent, wait 'repeat_interval' to
+      # resend them.
+      #repeat_interval: 3h
+
+      # All the above attributes are inherited by all child routes and can
+      # overwritten on each.
+
+      routes:
+      # This routes performs a regular expression match on alert labels to
+      # catch alerts that are related to a list of services.
+
+      - match:
+          criticality: S2
+        receiver: slack_chatbots
+        continue: true
+      - match:
+          criticality: S1
+        receiver: pager_duty
+        continue: true
+
+    # Inhibition rules allow to mute a set of alerts given that another alert is
+    # firing.
+    # We use this to mute any warning-level notifications if the same alert is
+    # already critical.
+    #inhibit_rules:
+    #- source_match:
+    #    severity: 'critical'
+    #  target_match:
+    #    severity: 'warning'
+    #  # Apply inhibition if the alertname is the same.
+    #  equal: ['alertname']
+
+
+    receivers:
+    - name: 'pager_duty'
+      pagerduty_configs:
+      - service_key: '__TODO__'
+
+    - name: 'slack_chatbots'
+      slack_configs:
+      - send_resolved: true
+        api_url: '__TODO__'
+        channel: '#__TODO__'
+        text: "Summary: {{`{{ .CommonAnnotations.summary }}`}}\nDescription: {{`{{ .CommonAnnotations.description }}`}}\nPlaybook: \n"
+        #text: >-
+        #      Summary: {{`{{ .CommonAnnotations.summary }}`}}\n
+        #      Description: {{`{{ .CommonAnnotations.description }}`}}\n
+        #      Details:\n
+        #      Playbook:\n
+        #      Graph:\n
+        #text: "<!channel> \nsummary: {{`{{ .CommonAnnotations.summary }}`}}\ndescription: {{`{{ .CommonAnnotations.description }}`}}"

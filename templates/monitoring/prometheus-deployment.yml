@@ -1,0 +1,75 @@
+{{ if .Values.prometheus.deploy }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      name: prometheus
+      labels:
+        app: prometheus
+        service: dlaas-prometheus
+    spec:
+      containers:
+      - name: prometheus
+        image: quay.io/prometheus/prometheus:v1.7.1
+        args:
+          - '-storage.local.retention=72h'
+          - '-storage.local.memory-chunks=500000'
+          - '-config.file=/etc/prometheus/prometheus.yml'
+          - '-alertmanager.url=http://alertmanager:{{.Values.prometheus.alertmanager_port}}'
+        ports:
+        - name: web
+          containerPort: {{.Values.prometheus.port}}
+        volumeMounts:
+        - name: config-volume-prometheus
+          mountPath: /etc/prometheus
+        - name: config-volume-alert-rules
+          mountPath: /etc/prometheus-rules
+        resources:
+          limits:
+            cpu: 200m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 64Mi
+        readinessProbe:
+            httpGet:
+              path: /api/health
+              port: {{.Values.grafana.port}}
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+
+      - name: grafana
+        image: grafana/grafana
+        env:
+          - name: GF_AUTH_BASIC_ENABLED
+            value: "true"
+          - name: GF_DATABASE_TYPE
+            value: "sqlite3"
+          - name: GF_INSTALL_PLUGINS
+            value: "grafana-piechart-panel"
+        ports:
+        - name: grafana
+          containerPort: {{.Values.grafana.port}}
+        resources:
+          limits:
+            cpu: 100m
+            memory: 400Mi
+          requests:
+            cpu: 100m
+            memory: 400Mi
+
+      volumes:
+      - name: config-volume-prometheus
+        configMap:
+          name: prometheus
+      - name: config-volume-alert-rules
+        configMap:
+          name: prometheus-alertrules
+{{ end }}

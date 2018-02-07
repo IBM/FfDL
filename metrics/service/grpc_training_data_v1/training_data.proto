@@ -1,0 +1,155 @@
+/*
+ * Copyright 2017-2018 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package grpc.training.data.v1;
+
+//import "google/api/annotations.proto";
+
+//// See https://developers.google.com/protocol-buffers/docs/proto3#any
+//// and https://github.com/google/protobuf/blob/master/src/google/protobuf/any.proto
+// import "google/protobuf/any.proto";
+
+// Service to store evaluation metrics
+service TrainingData {
+    // ===== GET ENDPOINTS, for external fetch =============
+
+    // Get loglines, based on query
+    rpc GetLogs (Query) returns (stream LogLine) {}
+
+    // Get evaluation metrics records, based on query
+    rpc GetEMetrics (Query) returns (stream EMetrics) {}
+
+    // ===== UPDATE ENDPOINTS, for internal use only =========
+    // (Strip these from the proto for external client generation!)
+
+    // Add evaluation metrics record
+    rpc AddEMetrics (EMetrics) returns (AddResponse) {
+    }
+
+    // Add log line record
+    rpc AddLogLine (LogLine) returns (AddResponse) {
+    }
+
+    // Delete all evaluation metrics belonging to a training job or user id
+    rpc DeleteEMetrics (Query) returns (DeleteResponse) {
+    }
+
+    // Delete all log lines belonging to a training job or user id
+    rpc DeleteLogLines (Query) returns (DeleteResponse) {
+    }
+
+    // Delete all log lines belonging to a training job or user id
+    rpc DeleteJob (Query) returns (DeleteResponse) {
+    }
+
+    // ===== In case you want it to say "Hello" =========
+    rpc Hello (Empty) returns (HelloResponse) {
+    }
+}
+
+message MetaInfo {
+    // Unique id identifying the training job
+    string training_id = 1;
+
+    // Unique id identifying the user
+    string user_id = 2;
+
+    // Time that the metric occured: representing the number of millisecond since midnight January 1, 1970.
+    int64 time = 3;
+
+    // Sequential index
+    int64 rindex = 4;
+}
+
+message LogLine {
+    MetaInfo meta = 1;
+
+    string line = 2;
+}
+
+message Any {
+    enum DataType {
+        STRING = 0;
+        JSONSTRING = 1;
+        INT = 2;
+        FLOAT = 3;
+    }
+    DataType type = 1;
+    string value = 2;
+}
+
+
+message EMetrics {
+    MetaInfo meta = 1;
+
+    // Repeated, order-dependent list of temporal keys
+    // Example: {"iteration": 209}
+    map<string, Any> etimes = 2;
+
+    // Group label, such as test, train, or validate
+    string grouplabel = 3;
+
+    /// {"cross_entropy": 0.4430539906024933,	"accuracy": 0.8999999761581421}
+    map<string, Any> values = 4;
+}
+
+// Playing with semi-generalized query request.
+message Query {
+    enum SearchType {
+        TERM = 0;
+        NESTED = 1;
+        MATCH = 2;
+        ALL = 3;
+    }
+    SearchType searchType = 1;
+
+    // The following three options are exclusive
+    MetaInfo meta = 3;
+
+    string since = 4; // representing the number of milliseconds since midnight January 1, 1970.
+
+    // Only get this many records
+    int32 pagesize = 5;
+
+    // The starting position.  If positive or zero, count from beginning, if negative, count from end.
+    int64 pos = 6;
+}
+
+message DeleteQuery {
+    // The following two options are exclusive
+    string training_id = 1;
+    string user_id = 2;
+}
+
+
+// ***
+message AddResponse {
+    bool success = 1;
+}
+
+message DeleteResponse {
+    bool success = 1;
+}
+
+message HelloResponse {
+    string msg = 1;
+}
+
+message Empty {
+
+}

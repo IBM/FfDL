@@ -1,0 +1,40 @@
+body {
+  margin: 0;
+}
+
+my-app,
+my-menu {
+  display: block;
+}
+
+.main-container {
+  margin-top: 85px;
+}
+
+.sidebar {
+  padding-top: 10px;
+}
+
+.navbar-subbrand {
+  font-size: smaller;
+  font-style: italic;
+  text-align: left;
+  float: left;
+  color: #cce5ff;
+}
+
+.item {
+  margin-bottom: .6rem;
+}
+
+.chart {
+  display: block;
+  width: 50%;
+}
+
+.zeroPadding {
+  padding: 0 !important;
+  border-width: 0;
+  border-bottom: none;
+}
+

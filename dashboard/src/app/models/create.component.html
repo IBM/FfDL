@@ -1,0 +1,135 @@
+<div class="container-fluid">
+  <p></p>
+  <hr/>
+  <div class="form-group">
+    <label class="custom-file">
+      <input type="file" id="file2" class="custom-file-input"
+             placeholder="Open Manifest from File [optional]"
+             accept=".yml, .yaml"
+             [(ngModel)]="manifestFilePath"
+             (change)="onFileSelect()">
+      <span class="custom-file-control"></span>
+    </label>
+  </div>
+  <accordion>
+    <accordion-group heading="Manifest" [isOpen]="status.isFirstOpen">
+      <form class="form-inline">
+        <fieldset>
+           <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-12">
+                <table class="table">
+                  <tbody class="manifest-row">
+                    <tr>
+                      <th class="manifest-label" scope="row">Name:</th>
+                      <td colspan="6">
+                          <input class="form-control" id="name" placeholder="Name" required="" type="text" size="60">
+                      </td>
+                    </tr>
+                    <tr class="manifest-row">
+                      <th class="manifest-label" scope="row">Description:</th>
+                      <td colspan="6">
+                        <textarea class="form-control" id="description" placeholder="Description" required="" type="text" cols="60"></textarea>
+                      </td>
+                    </tr>
+                    <tr class="manifest-row">
+                      <th class="manifest-label" scope="row">Resources:&nbsp;&nbsp;&nbsp;</th>
+                      <td>
+                        <div class="form-group row">
+                          <label for="cpus" class="col-2 col-form-label">&nbsp;&nbsp;CPUs</label>
+                          <div class="col-5">
+                            <input class="form-control number-spinner" type="number" value="1" min="1" max="6" id="cpus">
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="form-group row">
+                          <label for="gpus" class="col-2 col-form-label">GPUs</label>
+                          <div class="col-5">
+                            <input class="form-control number-spinner" type="number" value="0" min="0" max="6" id="gpus">
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="form-group row">
+                          <label for="memory" class="col-4 col-form-label">Memory&nbsp;(MiB)</label>
+                          <div class="col-8">
+                            <input class="form-control number-spinner" type="number" value="200" min="100" max="1200" step="100" id="memory">
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+              </div>
+            </div>
+          </div>
+        </fieldset>
+      </form>
+    </accordion-group>
+    <accordion-group heading="Data Store">
+      <form class="form-inline">
+        <fieldset>
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-12">
+                <p></p>
+                <table class="table">
+                  <tbody>
+                  <tr>
+                    <th scope="row">ID:</th>
+                    <td><input class="form-control" id="name" placeholder="Name" required="" type="text"></td></tr>
+                  <tr>
+                    <th scope="row">Type:</th>
+                    <td><input class="form-control" id="description" placeholder="Description" required="" type="text"></td></tr>
+                  <tr>
+                    <th scope="row">Training Data Container:</th>
+                    <td><input class="form-control" id="framework" placeholder="Framework" required="" type="text"></td>
+                  </tr>
+                  <tr>
+                    <th scope="row" class="align-top">Connection:</th>
+                    <td><code><input class="form-control" id="framework" placeholder="Framework" required="" type="text"></code></td>
+                  </tr>
+                  </tbody>
+                </table>
+
+              </div>
+            </div>
+          </div>
+        </fieldset>
+      </form>
+    </accordion-group>
+    <accordion-group heading="Framework">
+      <form class="form-inline">
+        <fieldset>
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-12">
+                <p></p>
+                <table class="table">
+                  <tbody>
+                  <tr>
+                    <th scope="row">Framework:</th>
+                    <td><input class="form-control" id="framework" placeholder="Framework" required="" type="text"></td>
+                  </tr>
+                  <tr>
+                    <th scope="row" class="align-top">Command:</th>
+                    <td><code><input class="form-control" id="framework" placeholder="Framework" required="" type="text"></code></td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+      </form>
+    </accordion-group>
+    <accordion-group heading="Evaluation Data">
+      <div class="container-fluid">
+        zz
+      </div>
+    </accordion-group>
+  </accordion>
+</div>
+

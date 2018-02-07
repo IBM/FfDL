@@ -1,0 +1,44 @@
+sudo: required
+
+branches:
+  only:
+    - master
+
+services:
+  - docker
+
+env:
+  - CHANGE_MINIKUBE_NONE_USER=true
+
+before_script:
+  # install Go
+  - (sudo add-apt-repository -y ppa:gophers/archive; sudo apt-get -y update; sudo apt-get -y install golang-1.9-go) > /dev/null 2>&1
+  - export PATH=/usr/lib/go-1.9/bin:$PATH; export GOROOT=/usr/lib/go-1.9/
+  # place repository in GOPATH (a.k.a. do the GOPATH dance)
+  - echo "GOPATH is $GOPATH"; mkdir -p $GOPATH/src/github.ibm.com/ffdl/; mv `pwd` $GOPATH/src/github.ibm.com/ffdl/; cd $GOPATH/src/github.ibm.com/ffdl/*
+  # install Glide
+  - curl https://glide.sh/get | bash > /dev/null
+  # install "nsenter" (needed for k8s container port forwarding)
+  - docker run --rm jpetazzo/nsenter cat /nsenter > /tmp/nsenter 2> /dev/null; sudo cp /tmp/nsenter /usr/local/bin/; sudo chmod +x /usr/local/bin/nsenter; which nsenter
+  # install Minikube (in the background, to speed up the build)
+  - make install-minikube-in-ci > /dev/null &
+  # install Helm
+  - curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash > /dev/null &
+  # install aws CLI
+  - (sudo pip install -q awscli; which aws > /dev/null) &
+
+script:
+  # fail fast
+  - set -e
+  - export MAKE_ARGS=--no-print-directory
+  # compile and build Docker images
+  - glide -q install
+  - make $MAKE_ARGS build
+  - make $MAKE_ARGS docker-build
+  # deploy services
+  - make $MAKE_ARGS deploy
+  # submit a test job
+  - make $MAKE_ARGS test-submit
+
+notifications:
+  email: false

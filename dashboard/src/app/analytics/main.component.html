@@ -1,0 +1,102 @@
+<div>
+  <div class="container-fluid">
+    <div class="row">
+      <nav class="col-sm-3 col-md-2 d-none d-sm-block bg-light sidebar">
+        <h4>Analytics</h4>
+        <ul class="nav nav-pills flex-column">
+          <li class="nav-item">
+            <a class="nav-link" [routerLink]="" (click)="show('dailyJobs')">Daily Jobs</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [routerLink]="" (click)="show('dailyUsers')">Daily Users</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [routerLink]="" (click)="show('cpus')">CPUs/GPUs</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [routerLink]="" (click)="show('frameworks')">Frameworks/Learners</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [routerLink]="" (click)="show('times')">Execution Times</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link">...</a>
+          </li>
+        </ul>
+        <div>
+          <h5>Data Sources</h5>
+          <ul class="list-group">
+            <li style="display: inline-block;"><input type="checkbox" id="source_local"/> Local</li>
+            <li style="display: inline-block;"><input type="checkbox" id="source_cruiser1"/> Staging (cruiser1)</li>
+            <li style="display: inline-block;"><input type="checkbox" id="source_cruiser2"/> Staging (cruiser2)</li>
+          </ul>
+          <div>
+            <h5>Time Range</h5>
+            <input type="text" [(ngModel)]="time_from" style="width: 100px"/> -
+            <input type="text" [(ngModel)]="time_to" style="width: 100px"/>
+          </div>
+          <input type="button" class="btn" (click)="loadCharts()" value="Reload"/>
+        </div>
+      </nav>
+
+      <main class="col-sm-9 ml-sm-auto col-md-10 pt-3" role="main">
+        <img id="loading" src="../../assets/img/loading.svg"/>
+        <div id="errorMsg"></div>
+        <div id="div_dailyJobs" class="content">
+          <h1>Daily Jobs</h1>
+          <div style="width: 70%;">
+            <canvas id="chart_dailyJobs"></canvas>
+          </div>
+        </div>
+        <div id="div_dailyUsers" class="content">
+          <h1>Daily Active Users</h1>
+          <div style="width: 70%;">
+            <canvas id="chart_dailyUsers"></canvas>
+          </div>
+        </div>
+        <div id="div_cpus" class="content">
+          <h1>CPUs/GPUs</h1>
+          <div style="width: 49%; float: left;">
+            CPUs per Job
+            <canvas id="chart_CPUs"></canvas>
+          </div>
+          <div style="width: 49%; float: left;">
+            GPUs per Learner
+            <canvas id="chart_GPUs"></canvas>
+          </div>
+          <div style="width: 49%; float: left;">
+            Sum of GPUs per Job
+            <canvas id="chart_sumGPUs"></canvas>
+          </div>
+          <div style="width: 49%; float: left;">
+            <canvas id="chart_GPUs_timeline"></canvas>
+          </div>
+        </div>
+        <div id="div_frameworks" class="content">
+          <h1>Frameworks/Learners</h1>
+          <div style="width: 49%; float: left;">
+            <canvas id="chart_frameworks"></canvas>
+          </div>
+          <div style="width: 49%; float: left;">
+            <canvas id="chart_learners"></canvas>
+          </div>
+        </div>
+        <div id="div_times" class="content">
+          <h1>Execution Times</h1>
+          <div style="width: 49%; float: left;">
+            Queueing Times
+            <canvas id="chart_queueTimes"></canvas>
+          </div>
+          <div style="width: 49%; float: left;">
+            Downloading Times
+            <canvas id="chart_dlTimes"></canvas>
+          </div>
+          <div style="width: 49%; float: left;">
+            Training Times
+            <canvas id="chart_trainTimes"></canvas>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>

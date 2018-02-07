@@ -1,0 +1,32 @@
+#mySpinbox.spinbox {
+  value: 1;
+  min: 3;
+  max: 22;
+  step: 1;
+  limitToStep: true;
+}
+
+#open-manifest-label {
+  font-style: italic;
+}
+
+.form-control {
+  font-size: smaller;
+  font-style: italic;
+  text-align: left;
+  float: left;
+  color: #000000;
+}
+
+.manifest-row {
+  vert-align: middle;
+}
+
+.manifest-label {
+  padding-top: 17px;
+  vert-align: bottom;
+}
+
+.number-spinner {
+ width: 6em;
+}

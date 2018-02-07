@@ -1,0 +1,39 @@
+{{ if .Values.prometheus.deploy }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: pushgateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pushgateway
+  template:
+    metadata:
+      name: pushgateway
+      labels:
+        app: pushgateway
+        service: dlaas-pushgateway
+    spec:
+      containers:
+      - name: prometheus-pushgateway
+        image: prom/pushgateway
+        ports:
+        - name: push
+          containerPort: 9091
+      - name: statsd-to-prometheus
+        image: prom/statsd-exporter:master
+        ports:
+        - containerPort: 9102
+        - containerPort: 9125
+          protocol: UDP
+        args:
+         - '-statsd.mapping-config=/etc/statsd/mapping.conf'
+        volumeMounts:
+        - name: statsd-volume
+          mountPath: /etc/statsd
+      volumes:
+      - name: statsd-volume
+        configMap:
+          name: statsd-exporter-configmap
+{{ end }}

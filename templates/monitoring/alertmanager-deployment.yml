@@ -1,0 +1,41 @@
+{{ if .Values.prometheus.deploy }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: alertmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      name: alertmanager
+      labels:
+        app: alertmanager
+        service: dlaas-alertmanager
+    spec:
+      containers:
+      - name: alertmanager
+        image: quay.io/prometheus/alertmanager:v0.8.0
+        args:
+          - -config.file=/etc/prometheus/alertmanager.yml
+        ports:
+        - name: alertmanager
+          containerPort: {{.Values.prometheus.alertmanager_port}}
+        volumeMounts:
+        - name: config-volume-alertmanager
+          mountPath: /etc/prometheus
+        resources:
+          limits:
+            cpu: 100m
+            memory: 64Mi
+          requests:
+            cpu: 100m
+            memory: 32Mi
+
+      volumes:
+      - name: config-volume-alertmanager
+        configMap:
+          name: prometheus-alertmanager
+{{ end }}

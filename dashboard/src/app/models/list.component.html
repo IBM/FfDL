@@ -1,0 +1,26 @@
+<h4>Available models</h4>
+<div *ngIf="modelsError">An error occurred while loading the available models!</div>
+<div *ngIf="models?.length == 0">No records found.</div>
+<div *ngIf="models?.length > 0 ">
+  {{ models?.length }} records found
+  <table class="table">
+    <thead class="thead-default">
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Version</th>
+        <th>Description</th>
+        <th>Framework</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let m of models">
+        <td>{{m.id}}</td>
+        <td>{{m.name}}</td>
+        <td>{{m.version}}</td>
+        <td>{{m.description}}</td>
+        <td>{{m.framework}}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

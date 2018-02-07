@@ -1,0 +1,52 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ffdl-ui
+  labels:
+    service: ffdl-ui
+spec:
+  selector:
+    matchLabels:
+      service: ffdl-ui
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        service: ffdl-ui
+        version: {{.Values.webui.version}}
+    spec:
+      containers:
+      - name: ffdl-ui-container
+        image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}/{{.Values.docker.image_prefix}}ui:{{.Values.webui.version}}
+{{ if .Values.docker.pullPolicy }}
+        imagePullPolicy: {{.Values.docker.pullPolicy}}
+{{ end }}
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: {{.Values.webui.cpus}}
+            memory: {{.Values.webui.memory}}
+      imagePullSecrets:
+      - name: bluemix-cr-ng
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: ffdl-ui
+  labels:
+    service: ffdl-ui
+    environment: {{.Values.env}}
+spec:
+{{ if .Values.services.expose_node_port }}
+  type: NodePort
+{{ end }}
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    nodePort: {{.Values.webui.port}}
+  selector:
+    service: ffdl-ui

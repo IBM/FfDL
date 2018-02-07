@@ -1,0 +1,90 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ffdl-trainingdata
+  labels:
+    environment: {{.Values.env}}
+    service: ffdl-trainingdata
+spec:
+  selector:
+    matchLabels:
+      service: ffdl-trainingdata
+      environment: {{.Values.env}}
+  replicas: {{.Values.trainingdata.replicas}}
+  template:
+    metadata:
+      labels:
+        service: ffdl-trainingdata
+        environment: {{.Values.env}}
+        version: {{.Values.trainingdata.version}}
+    spec:
+{{ if ne .Values.env "dev" }}
+      - name: "elasticsearch-ssl-cert"
+        secret:
+          secretName: trainingdata-secrets
+          items: [{
+            key: DLAAS_ELASTICSEARCH_CERT,
+            path: elasticsearch/elasticsearch.cert
+          }]
+{{ end }}
+      containers:
+      - name: ffdl-trainingdata-container
+        image: registry.ng.bluemix.net/{{.Values.docker.namespace}}/{{.Values.docker.image_prefix}}metrics:{{.Values.trainingdata.version}}
+{{ if .Values.docker.pullPolicy }}
+        imagePullPolicy: {{.Values.docker.pullPolicy}}
+{{ end }}
+        ports:
+        - containerPort: 8443
+        env:
+        - name: DLAAS_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: DLAAS_ENV
+          value: {{.Values.env}}
+        - name: DLAAS_LOGLEVEL
+          value: {{.Values.log.level}}
+        - name: DLAAS_ELASTICSEARCH_SCHEME
+          value: {{.Values.elasticsearch.scheme}}
+{{ if eq .Values.env "dev" }}
+        - name: DLAAS_ELASTICSEARCH_ADDRESS
+          value: {{.Values.elasticsearch.address}}
+{{ else }}
+        - name: DLAAS_ELASTICSEARCH_ADDRESS
+          valueFrom:
+            secretKeyRef:
+              name: trainingdata-secrets
+              key: DLAAS_ELASTICSEARCH_ADDRESS
+        - name: DLAAS_ELASTICSEARCH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: trainingdata-secrets
+              key: DLAAS_ELASTICSEARCH_USERNAME
+        - name: DLAAS_ELASTICSEARCH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: trainingdata-secrets
+              key: DLAAS_ELASTICSEARCH_PASSWORD
+{{ end }}
+        volumeMounts:
+{{ if ne .Values.env "dev" }}
+        - name: elasticsearch-ssl-cert
+          mountPath: /etc/certs/
+          readOnly: true
+{{ end }}
+        command: ["/bin/sh", "-c"]
+        args: ["DLAAS_PORT=8443 /main"]
+        resources:
+          limits:
+            cpu: {{.Values.trainingdata.cpus}}
+            memory: {{.Values.trainingdata.memory}}
+#        livenessProbe:
+#          exec:
+#            command:
+#              - /bin/sh
+#              - -c
+#              - "grpc-health-checker --port 8443 --tls"
+#          initialDelaySeconds: 15
+#          timeoutSeconds: 2
+      imagePullSecrets:
+      - name: bluemix-cr-ng

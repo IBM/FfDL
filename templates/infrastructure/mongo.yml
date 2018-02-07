@@ -1,0 +1,44 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: mongo
+spec:
+  serviceName: mongo
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        service: mongo
+        environment: local
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: mongo
+          image: mongo:3.0
+{{ if .Values.docker.pullPolicy }}
+          imagePullPolicy: {{.Values.docker.pullPolicy}}
+{{ end }}
+          command:
+            - mongod
+            - "--smallfiles"
+          ports:
+            - containerPort: 27017
+          resources:
+            limits:
+              cpu: 200m
+              memory: 128Mi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+  labels:
+    environment: local
+spec:
+  ports:
+  - port: 27017
+    targetPort: 27017
+  selector:
+    service: mongo
