@@ -25,7 +25,7 @@ import (
 	"time"
 	"path"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
+	"github.com/IBM/FfDL/commons/logger"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/clientv3util"

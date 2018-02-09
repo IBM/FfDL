@@ -19,10 +19,10 @@ package server
 import (
 	log "github.com/sirupsen/logrus"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/server/operations/models"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/server/operations/events"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/server/operations/training_data"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/restapi/api_v1/server/operations/models"
+	"github.com/IBM/FfDL/restapi/api_v1/server/operations/events"
+	"github.com/IBM/FfDL/restapi/api_v1/server/operations/training_data"
 )
 
 func logWithPostModelParams(params models.PostModelParams) *log.Entry {

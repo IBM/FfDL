@@ -24,7 +24,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
+	"github.com/IBM/FfDL/commons/logger"
 )
 
 func init() {

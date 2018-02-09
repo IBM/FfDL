@@ -26,10 +26,10 @@ import (
 
 	"github.com/go-openapi/loads"
 
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/server"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/server/operations"
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
+	"github.com/IBM/FfDL/restapi/api_v1/server"
+	"github.com/IBM/FfDL/restapi/api_v1/server/operations"
+	"github.com/IBM/FfDL/commons/config"
+	"github.com/IBM/FfDL/commons/logger"
 )
 
 func main() {

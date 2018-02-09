@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
+	"github.com/IBM/FfDL/commons/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 

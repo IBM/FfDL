@@ -11,9 +11,9 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/client/events"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/client/models"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/client/training_data"
+	"github.com/IBM/FfDL/restapi/api_v1/client/events"
+	"github.com/IBM/FfDL/restapi/api_v1/client/models"
+	"github.com/IBM/FfDL/restapi/api_v1/client/training_data"
 )
 
 // Default dlaas HTTP client.

@@ -20,10 +20,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
+	"github.com/IBM/FfDL/commons/config"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/commons/service"
 
 	"github.com/spf13/viper"
 	v1core "k8s.io/api/core/v1"

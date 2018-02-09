@@ -19,8 +19,8 @@ package lcm
 import (
 	log "github.com/sirupsen/logrus"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/commons/service"
 )
 
 func (s *lcmService) logWithTrainerContainerInfosRequest(req *service.TrainerContainerInfosRequest) *log.Entry {

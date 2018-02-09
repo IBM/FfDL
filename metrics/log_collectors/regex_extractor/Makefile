@@ -14,8 +14,7 @@
 # limitations under the License.
 #
 
-REPO ?= registry.ng.bluemix.net/dlaas_dev
-GRPC_GIT=git@github.ibm.com:deep-learning-platform/grpc-parameter-server.git
+REPO ?= docker.io/ffdl
 WHOAMI ?= $(shell whoami)
 IMAGE_TAG ?= user-$(WHOAMI)
 

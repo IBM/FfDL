@@ -19,9 +19,9 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/server/operations/events"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/server/operations/models"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/server/operations/training_data"
+	"github.com/IBM/FfDL/restapi/api_v1/server/operations/events"
+	"github.com/IBM/FfDL/restapi/api_v1/server/operations/models"
+	"github.com/IBM/FfDL/restapi/api_v1/server/operations/training_data"
 )
 
 // NewDlaasAPI creates a new Dlaas instance

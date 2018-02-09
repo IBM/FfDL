@@ -3,14 +3,14 @@ package jobmonitor
 import (
 	"time"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
+	"github.com/IBM/FfDL/commons/config"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/commons/service"
 
 	v1core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	trainerClient "github.ibm.com/ffdl/ffdl-core/trainer/client"
+	trainerClient "github.com/IBM/FfDL/trainer/client"
 )
 
 func (jm *JobMonitor) checkIfJobStarted(logr *logger.LocLoggingEntry) {

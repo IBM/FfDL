@@ -20,7 +20,7 @@ import (
 	flags "github.com/jessevdk/go-flags"
 	graceful "github.com/tylerb/graceful"
 
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/server/operations"
+	"github.com/IBM/FfDL/restapi/api_v1/server/operations"
 )
 
 const (

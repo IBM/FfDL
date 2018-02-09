@@ -22,14 +22,14 @@ import (
 	"strings"
 	"text/template"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
+	"github.com/IBM/FfDL/commons/config"
+	"github.com/IBM/FfDL/commons/service"
 
 	"github.com/spf13/viper"
 
 	"bytes"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
+	"github.com/IBM/FfDL/commons/logger"
 	"gopkg.in/yaml.v2"
 	v1core "k8s.io/api/core/v1"
 	v1resource "k8s.io/apimachinery/pkg/api/resource"

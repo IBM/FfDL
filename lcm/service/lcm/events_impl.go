@@ -20,8 +20,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/commons/service"
 
 	"github.com/coreos/etcd/clientv3"
 	"golang.org/x/net/context"

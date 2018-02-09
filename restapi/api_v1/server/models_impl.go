@@ -27,31 +27,31 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	mw "github.ibm.com/ffdl/ffdl-core/restapi/middleware"
+	mw "github.com/IBM/FfDL/restapi/middleware"
 
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
-	"github.ibm.com/ffdl/ffdl-core/commons/service/client"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/restmodels"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/server/operations/events"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/server/operations/models"
-	trainerClient "github.ibm.com/ffdl/ffdl-core/trainer/client"
+	"github.com/IBM/FfDL/commons/service"
+	"github.com/IBM/FfDL/commons/service/client"
+	"github.com/IBM/FfDL/restapi/api_v1/restmodels"
+	"github.com/IBM/FfDL/restapi/api_v1/server/operations/events"
+	"github.com/IBM/FfDL/restapi/api_v1/server/operations/models"
+	trainerClient "github.com/IBM/FfDL/trainer/client"
 
 	"bufio"
 	"bytes"
 	"io"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/trainer/trainer/grpc_trainer_v2"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
 	"golang.org/x/net/websocket"
 
 	"time"
 
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/server/operations/training_data"
-	trainingDataClient "github.ibm.com/ffdl/ffdl-core/metrics/client"
+	"github.com/IBM/FfDL/restapi/api_v1/server/operations/training_data"
+	trainingDataClient "github.com/IBM/FfDL/metrics/client"
 
-	"github.ibm.com/ffdl/ffdl-core/metrics/service/grpc_training_data_v1"
+	"github.com/IBM/FfDL/metrics/service/grpc_training_data_v1"
 )
 
 const (

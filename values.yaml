@@ -4,7 +4,7 @@ services:
   expose_node_port: true
 docker:
   registry: docker.io
-  namespace: dlaas_dev
+  namespace: ffdl
   image_prefix: ffdl-
   pullPolicy: IfNotPresent
 trainer:
@@ -33,8 +33,7 @@ trainingdata:
   memory: 64Mi
 learner:
   tag: master-97
-  docker_namespace: dlaas_dev
-  imagePullSecret: bluemix-cr-ng
+  docker_namespace: ffdl
   kubeSecret: lcm-secrets
 databroker:
   tag: latest

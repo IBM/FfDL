@@ -4,8 +4,8 @@ UNAME_SHORT = $(shell if [ "$(UNAME)" = "Darwin" ]; then echo 'osx'; else echo '
 SERVICES = metrics lcm trainer restapi jobmonitor
 IMAGES = metrics lcm trainer restapi jobmonitor controller databroker_objectstorage databroker_s3
 THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-DOCKER_REPO = registry.ng.bluemix.net
-DOCKER_NAMESPACE = dlaas_dev
+DOCKER_REPO = docker.io
+DOCKER_NAMESPACE = ffdl
 INVENTORY ?= ansible/envs/local/minikube.ini
 IMAGE_NAME_PREFIX = ffdl-
 IMAGE_TAG ?= latest
@@ -18,7 +18,7 @@ MINIKUBE_RAM ?= 4096
 MINIKUBE_CPUS ?= 3
 MINIKUBE_DRIVER ?= xhyve
 MINIKUBE_BRIDGE ?= $(shell (ifconfig | grep -e "^bridge100:" || ifconfig | grep -e "^bridge0:") | sed 's/\(.*\):.*/\1/')
-UI_REPO = git@github.ibm.com:FfDL/ffdl-dashboard.git
+UI_REPO = git@github.com:IBM/FfDL-dashboard.git
 CLI_CMD = $(shell pwd)/cli/bin/ffdl-$(UNAME_SHORT)
 CLUSTER_NAME ?= mycluster
 
@@ -51,13 +51,11 @@ deploy:           ## Deploy the services to Kubernetes
 	@if ! helm list > /dev/null 2>&1; then echo 'Installing helm/tiller'; helm init > /dev/null 2>&1; sleep 3; fi;
 	@while kubectl get pods --all-namespaces | grep -v RESTARTS | grep -v Running | grep 'alertmanager\|etcd0\|lcm\|restapi\|trainer\|trainingdata\|ui\|mongo\|prometheus\|pushgateway\|storage' > /dev/null; do sleep 1; done
 	@while ! (kubectl get pods --all-namespaces | grep tiller-deploy | grep '1/1' > /dev/null); do sleep 1; done
-	@-kubectl create secret docker-registry bluemix-cr-ng --docker-username token --docker-password `cat etc/secrets/bluemix-pull-token` --docker-server $(DOCKER_REPO) --docker-email ffdl@us.ibm.com > /dev/null 2>&1 || true
-	@if [ "$$CI" = "true" ]; then echo "Logging in to Docker repository"; docker login --username token --password `cat etc/secrets/bluemix-pull-token` $(DOCKER_REPO) > /dev/null 2>&1 ; fi
 	@existing=$$(helm list | grep ffdl | awk '{print $$1}' | head -n 1); \
 		if [ "$$CI" = "true" ]; then export helm_params='--set prometheus.deploy=false'; fi; \
 		(if [ -z "$$existing" ]; then echo "Deploying the stack via Helm. This will take a while."; helm install $$helm_params . > /dev/null; sleep 10; else \
 			echo "Upgrading existing Helm deployment ($$existing). This will take a while."; helm upgrade $$helm_params $$existing . > /dev/null; fi) & pid=$$!; sleep 5; \
-		while kubectl get pods --all-namespaces | grep -v RESTARTS | grep -v Running | grep 'alertmanager\|etcd0\|lcm\|restapi\|trainer\|trainingdata\|ui\|mongo\|prometheus\|pushgateway\|storage' > /dev/null; do sleep 5; done; \
+		while kubectl get pods --all-namespaces | grep -v RESTARTS | grep -v Running | grep 'alertmanager\|etcd0\|lcm\|restapi\|trainer\|trainingdata\|ui\|mongo\|prometheus\|pushgateway\|storage'; do sleep 5; done; \
 		existing=$$(helm list | grep ffdl | awk '{print $$1}' | head -n 1); \
 		for i in $$(seq 1 10); do status=`helm status $$existing | grep STATUS:`; echo $$status; if echo "$$status" | grep "DEPLOYED" > /dev/null; then kill $$pid > /dev/null 2>&1; exit 0; fi; sleep 3; done; \
 		exit 0

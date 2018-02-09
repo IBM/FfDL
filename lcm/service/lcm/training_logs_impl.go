@@ -27,13 +27,13 @@ import (
 	"k8s.io/client-go/kubernetes/typed/core/v1"
 	k8srest "k8s.io/client-go/rest"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
+	"github.com/IBM/FfDL/commons/config"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
-	trainerClient "github.ibm.com/ffdl/ffdl-core/trainer/client"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/commons/service"
+	trainerClient "github.com/IBM/FfDL/trainer/client"
 
-	"github.ibm.com/ffdl/ffdl-core/trainer/trainer/grpc_trainer_v2"
+	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
 )
 
 //GetTrainerStatus gets Trainer Informations

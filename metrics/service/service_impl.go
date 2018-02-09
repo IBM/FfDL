@@ -6,11 +6,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
+	"github.com/IBM/FfDL/commons/config"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/commons/service"
 	"golang.org/x/net/context"
-	tds "github.ibm.com/ffdl/ffdl-core/metrics/service/grpc_training_data_v1"
+	tds "github.com/IBM/FfDL/metrics/service/grpc_training_data_v1"
 	es "gopkg.in/olivere/elastic.v5"
 	"github.com/spf13/viper"
 	"encoding/json"

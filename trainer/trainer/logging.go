@@ -18,7 +18,7 @@ package trainer
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
+	"github.com/IBM/FfDL/commons/logger"
 )
 
 func logEntry() *log.Entry {
