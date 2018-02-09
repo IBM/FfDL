@@ -3,7 +3,7 @@ env: dev
 services:
   expose_node_port: true
 docker:
-  registry: registry.ng.bluemix.net
+  registry: docker.io
   namespace: dlaas_dev
   image_prefix: ffdl-
   pullPolicy: IfNotPresent
