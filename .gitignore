@@ -8,6 +8,7 @@ jobmonitor/bin
 jobmonitor/logfiles
 metrics/bin
 grpc-health-checker/bin
+bin/copy.sh
 *.bk
 .vagrant/
 .DS_Store

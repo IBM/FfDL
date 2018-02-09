@@ -174,7 +174,7 @@ func InitViper() {
 
 		viper.SetDefault(LearnerTagKey, "prod")
 		viper.SetDefault(DataBrokerTagKey, "prod")
-		viper.SetDefault(LearnerRegistryKey, "registry.ng.bluemix.net/dlaas_dev")
+		viper.SetDefault(LearnerRegistryKey, "docker.io/ffdl")
 		viper.SetDefault(LearnerImagePullSecretKey, "bluemix-cr-ng")
 
 		// TLS defaults for microservices

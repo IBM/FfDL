@@ -29,7 +29,7 @@ spec:
 {{ end }}
       containers:
       - name: ffdl-trainingdata-container
-        image: registry.ng.bluemix.net/{{.Values.docker.namespace}}/{{.Values.docker.image_prefix}}metrics:{{.Values.trainingdata.version}}
+        image: docker.io/{{.Values.docker.namespace}}/{{.Values.docker.image_prefix}}metrics:{{.Values.trainingdata.version}}
 {{ if .Values.docker.pullPolicy }}
         imagePullPolicy: {{.Values.docker.pullPolicy}}
 {{ end }}

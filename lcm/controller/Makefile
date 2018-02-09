@@ -15,7 +15,7 @@
 #
 
 
-REPO=registry.ng.bluemix.net/dlaas_dev
+REPO=docker.io/ffdl
 CONTROLLER_IMAGE_NAME=controller
 IMAGE_TAG?=latest
 

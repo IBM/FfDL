@@ -211,7 +211,7 @@ test-submit:      ## Submit test training job
 
 .docker-build:
 	(full_img_name=$(IMAGE_NAME_PREFIX)$(IMAGE_NAME); \
-		cd ./$(IMAGE_DIR)/ && (if [ "$(VM_TYPE)" = "minikube" ]; then eval $(minikube docker-env); fi; \
+		cd ./$(IMAGE_DIR)/ && (if [ "$(VM_TYPE)" = "minikube" ]; then eval $$(minikube docker-env); fi; \
 			docker build -q -t $(DOCKER_REPO)/$(DOCKER_NAMESPACE)/$$full_img_name .))
 
 kubernetes-ip:

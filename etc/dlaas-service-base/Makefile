@@ -15,7 +15,7 @@
 #
 
 
-REPO=registry.ng.bluemix.net/dlaas
+REPO=docker.io/ffdl
 IMAGE_NAME=dlaas-service-base
 IMAGE_TAG_ALPINE?=alpine3.3
 IMAGE_TAG_UBUNTU?=ubuntu16.04
