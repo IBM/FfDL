@@ -22,8 +22,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/trainer/trainer/grpc_trainer_v2"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
 
 	"strconv"
 

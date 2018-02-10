@@ -17,7 +17,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/restmodels"
+	"github.com/IBM/FfDL/restapi/api_v1/restmodels"
 )
 
 // NewCreateEventEndpointParams creates a new CreateEventEndpointParams object

@@ -1,4 +1,4 @@
-[![build status](https://travis.ibm.com/FfDL/ffdl-core.svg?token=zpPz3kK28u4SszG6tybu&branch=master)](https://travis.ibm.com/FfDL/ffdl-core)
+[![build status](https://travis-ci.org/IBM/FfDL.svg?branch=master)](https://travis-ci.org/IBM/FfDL)
 
 # FfDL Core Services
 
@@ -40,7 +40,7 @@ Optional:
 Important:
 
 * `Go` is very specific about directory layouts. Make sure to set your `$GOPATH` and clone this repo to a directory
-`$GOPATH/src/github.ibm.com/ffdl/ffdl-core` before proceeding with the next steps.
+`$GOPATH/src/github.com/IBM/FfDL` before proceeding with the next steps.
 
 * Also, when testing locally with Minikube, make sure to point the `docker` CLI to Minikube's Docker daemon:
 

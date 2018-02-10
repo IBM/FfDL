@@ -23,8 +23,8 @@ import (
 	"github.com/urfave/cli"
 	"github.com/IBM-Bluemix/bluemix-cli-sdk/plugin"
 
-	"github.ibm.com/ffdl/ffdl-core/cli/cmd"
-	"github.ibm.com/ffdl/ffdl-core/cli/metadata"
+	"github.com/IBM/FfDL/cli/cmd"
+	"github.com/IBM/FfDL/cli/metadata"
 
 	"github.com/IBM-Bluemix/bluemix-cli-sdk/bluemix/trace"
 	"github.com/IBM-Bluemix/bluemix-cli-sdk/bluemix/terminal"

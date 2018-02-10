@@ -21,13 +21,13 @@ import (
 	"testing"
 	"time"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
+	"github.com/IBM/FfDL/commons/config"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
-	"github.ibm.com/ffdl/ffdl-core/trainer/trainer/grpc_trainer_v2"
+	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )

@@ -21,7 +21,7 @@ import (
 	"os"
 	"strings"
 
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/client/models"
+	"github.com/IBM/FfDL/restapi/api_v1/client/models"
 
 	"github.com/urfave/cli"
 	"github.com/IBM-Bluemix/bluemix-cli-sdk/bluemix/terminal"

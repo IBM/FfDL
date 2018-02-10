@@ -22,7 +22,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
+	"github.com/IBM/FfDL/commons/config"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -98,10 +98,10 @@ func FileInfoFindGood() string {
 	// Try and skip functions on the stack that are clearly infrastructure related.  Typically the stack will
 	// look something like:
 	// stack[0]: /usr/local/go/src/runtime/extern.go:219
-	// stack[1]: /home/sboag/git/src/github.ibm.com/ffdl/ffdl-core/commons/logger/logger.go:72
-	// stack[2]: /home/sboag/git/src/github.ibm.com/ffdl/ffdl-core/commons/logger/logger.go:120
-	// stack[3]: /home/sboag/git/src/github.ibm.com/ffdl/ffdl-core/commons/logger/logger.go:136
-	// stack[4]: /home/sboag/git/src/github.ibm.com/ffdl/ffdl-core/commons/service/lcm/service_impl.go:656
+	// stack[1]: /home/sboag/git/src/github.com/IBM/FfDL/commons/logger/logger.go:72
+	// stack[2]: /home/sboag/git/src/github.com/IBM/FfDL/commons/logger/logger.go:120
+	// stack[3]: /home/sboag/git/src/github.com/IBM/FfDL/commons/logger/logger.go:136
+	// stack[4]: /home/sboag/git/src/github.com/IBM/FfDL/commons/service/lcm/service_impl.go:656
 	// stack[5]: /usr/local/go/src/runtime/asm_amd64.s:2087
 	// We're only interested in #4 here.
 	// Enable this if you want to view the stack

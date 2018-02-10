@@ -30,16 +30,16 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ventu-io/go-shortid"
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/commons/metricsmon"
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
-	"github.ibm.com/ffdl/ffdl-core/commons/service/client"
+	"github.com/IBM/FfDL/commons/config"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/commons/metricsmon"
+	"github.com/IBM/FfDL/commons/service"
+	"github.com/IBM/FfDL/commons/service/client"
 
-	"github.ibm.com/ffdl/ffdl-core/trainer/trainer/grpc_trainer_v2"
-	trainerClient "github.ibm.com/ffdl/ffdl-core/trainer/client"
-	tdsClient "github.ibm.com/ffdl/ffdl-core/metrics/client"
-	tdsService "github.ibm.com/ffdl/ffdl-core/metrics/service/grpc_training_data_v1"
+	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
+	trainerClient "github.com/IBM/FfDL/trainer/client"
+	tdsClient "github.com/IBM/FfDL/metrics/client"
+	tdsService "github.com/IBM/FfDL/metrics/service/grpc_training_data_v1"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 
@@ -54,7 +54,7 @@ import (
 
 	"errors"
 
-	"github.ibm.com/ffdl/ffdl-core/trainer/storage"
+	"github.com/IBM/FfDL/trainer/storage"
 )
 
 const internalObjectStoreID = "dlaas_internal_os"

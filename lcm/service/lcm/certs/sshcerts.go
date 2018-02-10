@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
+	"github.com/IBM/FfDL/commons/config"
 	"golang.org/x/crypto/ssh"
 	v1core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

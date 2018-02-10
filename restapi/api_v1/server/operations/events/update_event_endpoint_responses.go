@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/restmodels"
+	"github.com/IBM/FfDL/restapi/api_v1/restmodels"
 )
 
 /*UpdateEventEndpointOK Event updated successfully

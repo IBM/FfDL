@@ -24,13 +24,13 @@ import (
 	middleware "github.com/go-openapi/runtime/middleware"
 	graceful "github.com/tylerb/graceful"
 	log "github.com/sirupsen/logrus"
-  mw "github.ibm.com/ffdl/ffdl-core/restapi/middleware"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/server/operations"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/server/operations/models"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/server/operations/events"
+  mw "github.com/IBM/FfDL/restapi/middleware"
+	"github.com/IBM/FfDL/restapi/api_v1/server/operations"
+	"github.com/IBM/FfDL/restapi/api_v1/server/operations/models"
+	"github.com/IBM/FfDL/restapi/api_v1/server/operations/events"
 	"github.com/dre1080/recover"
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/server/operations/training_data"
+	"github.com/IBM/FfDL/commons/service"
+	"github.com/IBM/FfDL/restapi/api_v1/server/operations/training_data"
 )
 
 // This file is safe to edit. Once it exists it will not be overwritten

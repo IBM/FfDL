@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
-	lcmClient "github.ibm.com/ffdl/ffdl-core/commons/service/client"
-	trainerClient "github.ibm.com/ffdl/ffdl-core/trainer/client"
-	"github.ibm.com/ffdl/ffdl-core/trainer/trainer/grpc_trainer_v2"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/commons/service"
+	lcmClient "github.com/IBM/FfDL/commons/service/client"
+	trainerClient "github.com/IBM/FfDL/trainer/client"
+	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
 	"golang.org/x/net/context"
 )
 

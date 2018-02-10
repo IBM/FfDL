@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-GRPC_GIT=git@github.ibm.com:deep-learning-platform/grpc-parameter-server.git
 
 all: build push
 

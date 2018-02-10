@@ -19,13 +19,13 @@ package client
 import (
 	"fmt"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
-	"github.ibm.com/ffdl/ffdl-core/commons/util"
+	"github.com/IBM/FfDL/commons/config"
+	"github.com/IBM/FfDL/commons/util"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
-	"github.ibm.com/ffdl/ffdl-core/trainer/trainer/grpc_trainer_v2"
+	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
 )
 
 const (

@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/urfave/cli"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/client/models"
+	"github.com/IBM/FfDL/restapi/api_v1/client/models"
 	"github.com/IBM-Bluemix/bluemix-cli-sdk/bluemix/terminal"
 	"github.com/IBM-Bluemix/bluemix-cli-sdk/plugin"
 )

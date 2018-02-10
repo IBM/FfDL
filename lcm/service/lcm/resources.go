@@ -24,11 +24,11 @@ import (
 	v1core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
+	"github.com/IBM/FfDL/commons/config"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
-	"github.ibm.com/ffdl/ffdl-core/trainer/trainer/grpc_trainer_v2"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/commons/service"
+	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
 )
 
 func (s *lcmService) currentResourceSnapshot(jdreq *service.JobDeploymentRequest, numLearners int, logr *logger.LocLoggingEntry) bool {

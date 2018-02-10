@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
+	"github.com/IBM/FfDL/commons/config"
 
 	log "github.com/sirupsen/logrus"
 

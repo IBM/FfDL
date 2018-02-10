@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
+	"github.com/IBM/FfDL/commons/logger"
 )
 
 func makeMillisecondTime(timeObj time.Time) int64 {
