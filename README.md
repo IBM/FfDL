@@ -21,34 +21,9 @@ FfDL is a collaboration platform for:
 
 * `docker`: the Docker command-line interface (https://www.docker.com/)
 
-* `aws`: the AWS command-line interface for storing test data in a local S3 mock server
-
-* `wget`: the command-line interface for downloading web resources
-
 * An existing Kubernetes cluster (e.g., [Minikube](https://github.com/kubernetes/minikube) for local testing).
   Once installed, use the command `make minikube` to start Minikube and set up local network routes. Alternatively,
   use the Vagrant based setup to automatically install a local Kubernetes cluster.
-
-Optional:
-
-* `go`: a working [Go](https://golang.org/) environment is required to build the code
-
-* `glide`: the glide package manager for Go (https://glide.sh)
-
-* `npm`: the Node.js package manager (https://www.npmjs.com) for building the Web UI
-
-Important:
-
-* `Go` is very specific about directory layouts. Make sure to set your `$GOPATH` and clone this repo to a directory
-`$GOPATH/src/github.com/IBM/FfDL` before proceeding with the next steps.
-
-* Also, when testing locally with Minikube, make sure to point the `docker` CLI to Minikube's Docker daemon:
-
-   ```
-   eval $(minikube docker-env)
-   ```
-
-* FfDL has only been tested under Mac OS and Linux (we plan to add support for Windows in the near future).
 
 ## Steps
 1. [Quick Start](#1-quick-start)
@@ -124,12 +99,25 @@ The platform ships with a simple Grafana monitoring dashboard. The URL is printe
 ## 4. Development
 
 Use the following instructions if you want to run a full development build, compile the code, and build the
-Docker images locally. First, fetch the dependencies via:
+Docker images locally. 
+
+Install:
+
+* `go`: a working [Go](https://golang.org/) environment is required to build the code
+
+* `glide`: the glide package manager for Go (https://glide.sh)
+
+* `npm`: the Node.js package manager (https://www.npmjs.com) for building the Web UI
+
+* `Go` is very specific about directory layouts. Make sure to set your `$GOPATH` and clone this repo to a directory
+`$GOPATH/src/github.com/IBM/FfDL` before proceeding with the next steps.
+
+
+Then, fetch the dependencies via:
 ```
 glide install
 ```
-
-Then compile the code and build the Docker images via:
+Compile the code and build the Docker images via:
 ```
 make build
 make docker-build
@@ -371,9 +359,16 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 
 ## 8. Troubleshooting
 
+* FfDL has only been tested under Mac OS and Linux 
+
 * The default Minikube driver under Mac OS is VirtualBox, which is known for having issues with networking.
   We generally recommend Mac OS users to install Minikube using the xhyve driver.
+  
+* Also, when testing locally with Minikube, make sure to point the `docker` CLI to Minikube's Docker daemon:
 
+   ```
+   eval $(minikube docker-env)
+   ```
 * If you run into DNS name resolution issues using Minikube, make sure that the system uses only `10.0.0.10`
   as the single nameserver. Using multiple nameservers can result in problems, in particular under Mac OS.
 
