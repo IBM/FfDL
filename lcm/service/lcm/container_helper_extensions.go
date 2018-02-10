@@ -1,7 +1,7 @@
 package lcm
 
 import (
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
+	"github.com/IBM/FfDL/commons/service"
 	"github.com/spf13/viper"
 
 	v1core "k8s.io/api/core/v1"

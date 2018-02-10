@@ -21,15 +21,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
+	"github.com/IBM/FfDL/commons/config"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
-	"github.ibm.com/ffdl/ffdl-core/commons/util"
+	"github.com/IBM/FfDL/commons/service"
+	"github.com/IBM/FfDL/commons/util"
 
 	"github.com/spf13/viper"
 	"golang.org/x/net/context"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
+	"github.com/IBM/FfDL/commons/logger"
 
 	v1resource "k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/intstr"

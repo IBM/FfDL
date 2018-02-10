@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
+	"github.com/IBM/FfDL/commons/logger"
 )
 
 //

@@ -1,7 +1,7 @@
 package lcmconfig
 
 import (
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
+	"github.com/IBM/FfDL/commons/config"
 	k8srest "k8s.io/client-go/rest"
 )
 

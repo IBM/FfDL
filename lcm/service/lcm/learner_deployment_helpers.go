@@ -22,13 +22,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.ibm.com/ffdl/ffdl-core/lcm/service/lcm/certs"
+	"github.com/IBM/FfDL/lcm/service/lcm/certs"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
+	"github.com/IBM/FfDL/commons/config"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
-	"github.ibm.com/ffdl/ffdl-core/commons/util"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/commons/service"
+	"github.com/IBM/FfDL/commons/util"
 
 	"github.com/spf13/viper"
 

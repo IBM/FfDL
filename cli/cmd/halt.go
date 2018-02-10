@@ -20,8 +20,8 @@ import (
 	"github.com/urfave/cli"
 	"github.com/IBM-Bluemix/bluemix-cli-sdk/bluemix/terminal"
 	"github.com/IBM-Bluemix/bluemix-cli-sdk/plugin"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/client/models"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/restmodels"
+	"github.com/IBM/FfDL/restapi/api_v1/client/models"
+	"github.com/IBM/FfDL/restapi/api_v1/restmodels"
 )
 
 // HaltCmd is the struct to get a training job.

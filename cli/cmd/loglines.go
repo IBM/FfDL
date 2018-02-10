@@ -23,8 +23,8 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/client/training_data"
-	dlaasClient "github.ibm.com/ffdl/ffdl-core/restapi/api_v1/client"
+	"github.com/IBM/FfDL/restapi/api_v1/client/training_data"
+	dlaasClient "github.com/IBM/FfDL/restapi/api_v1/client"
 	"encoding/json"
 )
 

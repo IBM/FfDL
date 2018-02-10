@@ -19,10 +19,10 @@ package main
 import (
 	"strconv"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
-	jobM "github.ibm.com/ffdl/ffdl-core/jobmonitor/jobmonitor"
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/commons/metricsmon"
+	"github.com/IBM/FfDL/commons/config"
+	jobM "github.com/IBM/FfDL/jobmonitor/jobmonitor"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/commons/metricsmon"
 
 	"os"
 	"time"

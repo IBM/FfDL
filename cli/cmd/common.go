@@ -32,7 +32,7 @@ import (
 	"github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 
-	dlaasClient "github.ibm.com/ffdl/ffdl-core/restapi/api_v1/client"
+	dlaasClient "github.com/IBM/FfDL/restapi/api_v1/client"
 	"net/http"
 	"github.com/IBM-Bluemix/bluemix-cli-sdk/bluemix/terminal"
 	"time"
