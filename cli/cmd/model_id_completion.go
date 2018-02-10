@@ -19,7 +19,7 @@ package cmd
 import (
 	"github.com/urfave/cli"
 	"fmt"
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/client/models"
+	"github.com/IBM/FfDL/restapi/api_v1/client/models"
 )
 
 // ModelIDCompletion provide bash auto completion options for a model ID.

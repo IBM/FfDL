@@ -16,7 +16,6 @@
 
 
 REPO ?= docker.io/ffdl
-GRPC_GIT=git@github.ibm.com:deep-learning-platform/grpc-parameter-server.git
 WHOAMI ?= $(shell whoami)
 IMAGE_TAG ?= user-$(WHOAMI)
 

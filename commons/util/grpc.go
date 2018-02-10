@@ -2,7 +2,7 @@ package util
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
+	"github.com/IBM/FfDL/commons/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )

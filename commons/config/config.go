@@ -443,7 +443,7 @@ func setLogLevel() {
 }
 
 func getBaseDir() string {
-	baseDir := path.Join(os.Getenv("GOPATH"), "src", "github.ibm.com/ffdl/ffdl-core/commons")
+	baseDir := path.Join(os.Getenv("GOPATH"), "src", "github.com/IBM/FfDL/commons")
 	if _, err := os.Stat(baseDir); err == nil {
 		return baseDir
 	}
@@ -453,7 +453,7 @@ func getBaseDir() string {
 	cwd, _ := os.Getwd()
 	baseDir = ""
 	for i := 0; i < 3; i++ {
-		baseDir = path.Join(cwd, strings.Repeat("../", i)+"vendor", "github.ibm.com", "deep-learning-platform", "dlaas-commons")
+		baseDir = path.Join(cwd, strings.Repeat("../", i)+"vendor", "github.com", "IBM", "FfDL", "commons")
 		if _, err := os.Stat(baseDir); err == nil {
 			return baseDir
 		}

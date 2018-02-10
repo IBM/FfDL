@@ -3,7 +3,7 @@ package metricsmon
 import (
 	"time"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
+	"github.com/IBM/FfDL/commons/config"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/go-kit/kit/metrics/statsd"

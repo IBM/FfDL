@@ -18,7 +18,7 @@ package jobmonitor
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
+	"github.com/IBM/FfDL/commons/logger"
 )
 
 //InitLogger ... initializes new logger with trainingID and userID

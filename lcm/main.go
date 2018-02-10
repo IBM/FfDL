@@ -22,12 +22,12 @@ import (
 	"github.com/spf13/viper"
 
 	log "github.com/sirupsen/logrus"
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/commons/metricsmon"
-	"github.ibm.com/ffdl/ffdl-core/commons/service/client"
-	"github.ibm.com/ffdl/ffdl-core/lcm/service/lcm"
-	"github.ibm.com/ffdl/ffdl-core/commons/util"
+	"github.com/IBM/FfDL/commons/config"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/commons/metricsmon"
+	"github.com/IBM/FfDL/commons/service/client"
+	"github.com/IBM/FfDL/lcm/service/lcm"
+	"github.com/IBM/FfDL/commons/util"
 )
 
 func main() {

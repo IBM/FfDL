@@ -4,9 +4,9 @@ package client
 import (
 	"encoding/json"
 	"strings"
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
-	"github.ibm.com/ffdl/ffdl-core/trainer/trainer/grpc_trainer_v2"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/commons/service"
+	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
 )
 
 // TrainingStatusUpdate captures the details for training status update events

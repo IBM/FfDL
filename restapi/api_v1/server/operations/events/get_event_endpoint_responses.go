@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"github.ibm.com/ffdl/ffdl-core/restapi/api_v1/restmodels"
+	"github.com/IBM/FfDL/restapi/api_v1/restmodels"
 )
 
 // GetEventEndpointOKCode is the HTTP code returned for type GetEventEndpointOK

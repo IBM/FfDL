@@ -73,11 +73,6 @@ spec:
           value: {{.Values.databroker.tag}}
         - name: DLAAS_LEARNER_TAG
           value: {{.Values.learner.tag}}
-        - name: DLAAS_LEARNER_IMAGE_PULL_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: lcm-secrets
-              key: DLAAS_LEARNER_IMAGE_PULL_SECRET
         - name: DLAAS_LEARNER_REGISTRY
           value: {{.Values.docker.registry}}/{{.Values.learner.docker_namespace}}
         - name: DLAAS_ETCD_ADDRESS

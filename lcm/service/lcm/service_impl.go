@@ -24,14 +24,14 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/commons/metricsmon"
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
-	"github.ibm.com/ffdl/ffdl-core/lcm/coord"
-	jobmonitor "github.ibm.com/ffdl/ffdl-core/jobmonitor/jobmonitor"
-	"github.ibm.com/ffdl/ffdl-core/lcm/lcmconfig"
-	"github.ibm.com/ffdl/ffdl-core/trainer/trainer/grpc_trainer_v2"
+	"github.com/IBM/FfDL/commons/config"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/commons/metricsmon"
+	"github.com/IBM/FfDL/commons/service"
+	"github.com/IBM/FfDL/lcm/coord"
+	jobmonitor "github.com/IBM/FfDL/jobmonitor/jobmonitor"
+	"github.com/IBM/FfDL/lcm/lcmconfig"
+	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
 
 	"github.com/cenkalti/backoff"
 	"github.com/coreos/etcd/clientv3"

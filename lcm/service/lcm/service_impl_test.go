@@ -22,15 +22,15 @@ import (
 	"fmt"
 
 	"github.com/stretchr/testify/assert"
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
-	"github.ibm.com/ffdl/ffdl-core/lcm/lcmconfig"
+	"github.com/IBM/FfDL/commons/config"
+	"github.com/IBM/FfDL/lcm/lcmconfig"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
+	"github.com/IBM/FfDL/commons/service"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
+	"github.com/IBM/FfDL/commons/logger"
 	v1core "k8s.io/api/core/v1"
 	// "github.com/coreos/etcd/clientv3"
-	// "github.ibm.com/ffdl/ffdl-core/lcm/coord"
+	// "github.com/IBM/FfDL/lcm/coord"
 )
 
 func init() {

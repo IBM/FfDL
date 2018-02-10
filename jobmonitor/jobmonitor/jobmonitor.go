@@ -15,20 +15,20 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
-	"github.ibm.com/ffdl/ffdl-core/lcm/lcmconfig"
+	"github.com/IBM/FfDL/commons/config"
+	"github.com/IBM/FfDL/lcm/lcmconfig"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
-	"github.ibm.com/ffdl/ffdl-core/commons/service"
-	"github.ibm.com/ffdl/ffdl-core/lcm/coord"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/IBM/FfDL/commons/service"
+	"github.com/IBM/FfDL/lcm/coord"
 
 	v1core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	lcmClient "github.ibm.com/ffdl/ffdl-core/commons/service/client"
-	"github.ibm.com/ffdl/ffdl-core/trainer/client"
-	"github.ibm.com/ffdl/ffdl-core/trainer/trainer/grpc_trainer_v2"
+	lcmClient "github.com/IBM/FfDL/commons/service/client"
+	"github.com/IBM/FfDL/trainer/client"
+	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
 )
 
 // Confuse `go vet' to not check this `Errorf' call. :(

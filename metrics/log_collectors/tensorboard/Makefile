@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-REPO ?= registry.ng.bluemix.net/dlaas_dev
+REPO ?= docker.io/ffdl
 WHOAMI ?= $(shell whoami)
 IMAGE_TAG ?= user-$(WHOAMI)
 

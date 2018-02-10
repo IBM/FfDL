@@ -26,10 +26,10 @@ import (
 	"strings"
 	"time"
 
-	"github.ibm.com/ffdl/ffdl-core/commons/config"
+	"github.com/IBM/FfDL/commons/config"
 
 	log "github.com/sirupsen/logrus"
-	"github.ibm.com/ffdl/ffdl-core/commons/logger"
+	"github.com/IBM/FfDL/commons/logger"
 	"github.com/ncw/swift"
 	"github.com/spf13/viper"
 )
