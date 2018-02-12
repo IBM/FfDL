@@ -38,7 +38,7 @@ FfDL is a collaboration platform for:
 6. [Detailed Testing Instructions](#6-detailed-testing-instructions)
 7. [Clean Up](#7-clean-up)
 8. [Troubleshooting](#8-troubleshooting)
-9. [References](#9-references))
+9. [References](#9-references)
 
 ## 1. Quick Start
 
