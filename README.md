@@ -283,7 +283,7 @@ Then, click `Submit Training Job` to run your job.
 
 ### 6.2. Using Cloud Object Storage
 
-Due to the cost of having multiple Object Storage buckets, we will only demonstrate how to run a TensorFlow Job using Cloud Object Storage.
+In this section we will demonstrate how to run a TensorFlow job with training data stored in Cloud Object Storage.
 
 > Note: This also can be done with other Cloud providers' Object Storage, but we will demonstrate how to use IBM Cloud Object Storage in this instructions.
 
@@ -301,7 +301,7 @@ export AWS_SECRET_ACCESS_KEY=<Your object storage Access Key Secret>
 s3cmd="aws --endpoint-url=$s3_url s3"
 ```
 
-3. Next, let create 2 buckets, one for storing the training data and another one for storing the training result.
+3. Next, let us create 2 buckets, one for storing the training data and another one for storing the training result.
 ```shell
 trainingDataBucket=<unique bucket name for training data storage>
 trainingResultBucket=<unique bucket name for training result storage>
