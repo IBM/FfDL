@@ -1,6 +1,6 @@
 [![build status](https://travis-ci.org/IBM/FfDL.svg?branch=master)](https://travis-ci.org/IBM/FfDL)
 
-# FfDL Core Services
+# Fabric for Deep Learning (FfDL)
 
 This repository contains the core services of the *FfDL* (Fabric for Deep Learning) platform. FfDL is an operating system "fabric" for Deep Learning
 
@@ -40,6 +40,7 @@ FfDL is a collaboration platform for:
   - 6.2 [Using Cloud Object Storage](#62-using-cloud-object-storage)
 7. [Clean Up](#7-clean-up)
 8. [Troubleshooting](#8-troubleshooting)
+9. [References](#9-references)
 
 ## 1. Quick Start
 
@@ -376,3 +377,12 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
   make sure to follow the standard Go directory layout (see [Prerequisites section]{#Prerequisites}).
 
 * To remove FfDL on your Cluster, simply run `make undeploy`
+
+## 9. References
+
+Based on IBM Research work in Deep Learning. 
+
+* B. Bhattacharjee et al., "IBM Deep Learning Service," in IBM Journal of Research and Development, vol. 61, no. 4, pp. 10:1-10:11, July-Sept. 1 2017.   https://arxiv.org/abs/1709.05871
+
+* Scott Boag,  et al. Scalable Multi-Framework Multi-Tenant Lifecycle Management of Deep Learning Training Jobs, In Workshop on ML Systems at NIPS'17, 2017. http://learningsys.org/nips17/assets/papers/paper_29.pdf
+
