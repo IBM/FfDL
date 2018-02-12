@@ -36,7 +36,7 @@ FfDL is a collaboration platform for:
 4. [Development](#4-development)
 5. [Detailed Installation Instructions](#5-detailed-installation-instructions)
 6. [Detailed Testing Instructions](#6-detailed-testing-instructions)
-  - 6.1 [Using FfDL Local Mock S3 Storage](#61-using-ffdl-local-mock-s3-storage)
+  - 6.1 [Using FfDL Local S3 Based Object Storage](#61-using-ffdl-local-s3-based-object-storage)
   - 6.2 [Using Cloud Object Storage](#62-using-cloud-object-storage)
 7. [Clean Up](#7-clean-up)
 8. [Troubleshooting](#8-troubleshooting)
@@ -203,16 +203,16 @@ MNIST handwritten digit images, store them with Object Storage, and use the FfDL
 
 > Note: For Minikube, make sure you have the latest TensorFlow Docker image by running `docker pull tensorflow/tensorflow`
 
-### 6.1. Using FfDL Local Mock S3 Storage
+### 6.1. Using FfDL Local S3 Based Object Storage
 
-1. Run the following commands to obtain the Mock S3 storage endpoint from your cluster.
+1. Run the following commands to obtain the object storage endpoint from your cluster.
 ```shell
 node_ip=$(make --no-print-directory kubernetes-ip)
 s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
 s3_url=http://$node_ip:$s3_port
 ```
 
-2. Next, set up the default Mock S3 storage access ID and KEY. Then create S3 buckets for all the necessary training data and models.
+2. Next, set up the default object storage access ID and KEY. Then create buckets for all the necessary training data and models.
 ```shell
 export AWS_ACCESS_KEY_ID=test; export AWS_SECRET_ACCESS_KEY=test; export AWS_DEFAULT_REGION=us-east-1;
 
@@ -224,7 +224,7 @@ $s3cmd mb s3://dlaas-trained-models
 ```
 
 3. Now, create a temporary repository, download the necessary images for training and labeling our TensorFlow model, and upload those images
-to your S3 tf_training_data bucket.
+to your tf_training_data bucket.
 
 ```shell
 mkdir tmp
@@ -235,8 +235,8 @@ do
 done
 ```
 
-4. Next, let's download all the necessary training and testing images in LMDB format for our Caffe model
-and upload those images to your S3 mnist_lmdb_data bucket.
+4. Next, let's download all the necessary training and testing images in [LMDB format](https://en.wikipedia.org/wiki/Lightning_Memory-Mapped_Database) for our Caffe model
+and upload those images to your mnist_lmdb_data bucket.
 
 ```shell
 for phase in train test;
@@ -250,7 +250,7 @@ do
 done
 ```
 
-5. Now you should have all the necessary training data set in your Mock S3 storage. Let's go ahead to set up your restapi endpoint
+5. Now you should have all the necessary training data set in your object storage. Let's go ahead to set up your restapi endpoint
 and default credentials for Deep Learning as a Service. Once you done that, you can start running jobs using the FfDL CLI(executable
 binary).
 
