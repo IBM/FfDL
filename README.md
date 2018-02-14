@@ -100,7 +100,7 @@ The platform ships with a simple Grafana monitoring dashboard. The URL is printe
 ## 4. Development
 
 Use the following instructions if you want to run a full development build, compile the code, and build the
-Docker images locally. 
+Docker images locally.
 
 Install:
 
@@ -194,7 +194,7 @@ echo "Monitoring dashboard: http://$node_ip:$grafana_port/ (login: admin/admin)"
 echo "Web UI: http://$node_ip:$ui_port/#/login?endpoint=$node_ip:$restapi_port&username=test-user"
 ```
 
-Congratulation, FfDL is now running on your Cluster.
+Congratulation, FfDL is now running on your Cluster. Now you can go to [Step 6](#6-detailed-testing-instructions) to run some sample jobs or go to the [user guide](docs/user-guide.md) to learn about how to run and deploy your custom models.
 
 ## 6. Detailed Testing Instructions
 
@@ -264,6 +264,8 @@ $CLI_CMD train etc/examples/tf-model/manifest.yml etc/examples/tf-model
 ```
 
 Congratulation, you had submitted your first job on FfDL. You can check your FfDL status either from the FfDL UI or simply run `$CLI_CMD list`
+
+> You can learn about how to create your own model definition files and manifest.yaml at [user guild](docs/user-guide.md#2-create-new-models-with-ffdl).
 
 6. Since it's simple and straightforward to submit jobs with different deep learning framework on FfDL, let's try to run a Caffe Job.
 
@@ -360,11 +362,11 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 
 ## 8. Troubleshooting
 
-* FfDL has only been tested under Mac OS and Linux 
+* FfDL has only been tested under Mac OS and Linux
 
 * The default Minikube driver under Mac OS is VirtualBox, which is known for having issues with networking.
   We generally recommend Mac OS users to install Minikube using the xhyve driver.
-  
+
 * Also, when testing locally with Minikube, make sure to point the `docker` CLI to Minikube's Docker daemon:
 
    ```
@@ -380,9 +382,8 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 
 ## 9. References
 
-Based on IBM Research work in Deep Learning. 
+Based on IBM Research work in Deep Learning.
 
 * B. Bhattacharjee et al., "IBM Deep Learning Service," in IBM Journal of Research and Development, vol. 61, no. 4, pp. 10:1-10:11, July-Sept. 1 2017.   https://arxiv.org/abs/1709.05871
 
 * Scott Boag,  et al. Scalable Multi-Framework Multi-Tenant Lifecycle Management of Deep Learning Training Jobs, In Workshop on ML Systems at NIPS'17, 2017. http://learningsys.org/nips17/assets/papers/paper_29.pdf
-
