@@ -25,7 +25,7 @@ FfDL is a collaboration platform for:
   Once installed, use the command `make minikube` to start Minikube and set up local network routes. Alternatively,
   use the Vagrant based setup to automatically install a local Kubernetes cluster.
 
-* The minimum recommended capacity for FfDL should be hould be 4GB Memory and 2 CPUs.
+* The minimum recommended capacity for FfDL is 4GB Memory and 2 CPUs.
 
 ## Steps
 1. [Quick Start](#1-quick-start)
