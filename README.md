@@ -11,7 +11,7 @@ FfDL is a collaboration platform for:
 - Inferencing in the cloud
 - Running Deep Learning hosting in user's private or public cloud
 
-![ffdl-architecture](images/docs/ffdl-architecture.png)
+![ffdl-architecture](docs/images/ffdl-architecture.png)
 
 ## Prerequisites
 
