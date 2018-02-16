@@ -53,7 +53,7 @@ into an existing Kubernetes cluster.
 
 This is the simplest and recommended option for local testing. The following commands will automatically
 spin up a Vagrant box with Kubernetes and the FfDL platform deployed on top of it:
-```shell
+``` shell
 export VM_TYPE=vagrant
 vagrant up
 make deploy
@@ -62,7 +62,7 @@ make deploy
 ### 1.2 Installation using Minikube
 
 If you have Minikube installed on your machine, use these commands to deploy the FfDL platform:
-```shell
+``` shell
 export VM_TYPE=minikube
 make minikube
 make deploy
@@ -73,9 +73,10 @@ make deploy
 To install FfDL to a proper Kubernetes cluster, make sure `kubectl` points to the right namespace,
 then deploy the platform services:
 > Note: For PUBLIC_IP, put down one of your Cluster Public IP that can access your Cluster's NodePorts.
-```shell
+
+``` shell
 export VM_TYPE=none
-export PUBLIC_IP=ClusterPublicIP
+export PUBLIC_IP=<Cluster Public IP>
 make deploy
 ```
 
@@ -85,7 +86,7 @@ To install FfDL to a proper IBM Cloud Kubernetes cluster, make sure `kubectl` po
 and your machine is logged in with `bx login`, then deploy the platform services:
 ``` shell
 export VM_TYPE=ibmcloud
-export CLUSTER_NAME=yourClusterName # Replace yourClusterName with your IBM Cloud Cluster Name
+export CLUSTER_NAME=<Your Cluster Name> # Replace <Your Cluster Name> with your IBM Cloud Cluster Name
 make deploy
 ```
 
@@ -180,10 +181,10 @@ helm status $(helm list | grep ffdl | awk '{print $1}' | head -n 1) | grep STATU
 # If your Cluster is not running on Vagrant, Minikube, or IBM Cloud, replace "ibmcloud" to "none"
 export VM_TYPE=ibmcloud
 
-# Replace yourClusterName with your IBM Cloud Cluster Name if your cluster is on IBM Cloud.
+# Replace <Your Cluster Name> with your IBM Cloud Cluster Name if your cluster is on IBM Cloud.
 # Use export PUBLIC_IP if you are using a none VM_TYPE. A Cluster Public IP that can access your Cluster's NodePorts.
-export CLUSTER_NAME=yourClusterName
-export PUBLIC_IP=ClusterPublicIP
+export CLUSTER_NAME=<Your Cluster Name>
+export PUBLIC_IP=<Cluster Public IP>
 
 ./bin/grafana.init.sh
 ```
