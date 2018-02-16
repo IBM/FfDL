@@ -53,7 +53,7 @@ into an existing Kubernetes cluster.
 
 This is the simplest and recommended option for local testing. The following commands will automatically
 spin up a Vagrant box with Kubernetes and the FfDL platform deployed on top of it:
-```
+``` shell
 export VM_TYPE=vagrant
 vagrant up
 make deploy
@@ -62,7 +62,7 @@ make deploy
 ### 1.2 Installation using Minikube
 
 If you have Minikube installed on your machine, use these commands to deploy the FfDL platform:
-```
+``` shell
 export VM_TYPE=minikube
 make minikube
 make deploy
@@ -72,8 +72,11 @@ make deploy
 
 To install FfDL to a proper Kubernetes cluster, make sure `kubectl` points to the right namespace,
 then deploy the platform services:
-```
+> Note: For PUBLIC_IP, put down one of your Cluster Public IP that can access your Cluster's NodePorts.
+
+``` shell
 export VM_TYPE=none
+export PUBLIC_IP=<Cluster Public IP>
 make deploy
 ```
 
@@ -83,7 +86,7 @@ To install FfDL to a proper IBM Cloud Kubernetes cluster, make sure `kubectl` po
 and your machine is logged in with `bx login`, then deploy the platform services:
 ``` shell
 export VM_TYPE=ibmcloud
-export CLUSTER_NAME=yourClusterName # Replace yourClusterName with your IBM Cloud Cluster Name
+export CLUSTER_NAME=<Your Cluster Name> # Replace <Your Cluster Name> with your IBM Cloud Cluster Name
 make deploy
 ```
 
@@ -102,7 +105,7 @@ The platform ships with a simple Grafana monitoring dashboard. The URL is printe
 ## 4. Development
 
 Use the following instructions if you want to run a full development build, compile the code, and build the
-Docker images locally. 
+Docker images locally.
 
 Install:
 
@@ -175,9 +178,14 @@ helm status $(helm list | grep ffdl | awk '{print $1}' | head -n 1) | grep STATU
 
 ``` shell
 # If your Cluster is running on Vagrant or Minikube, replace "ibmcloud" to "vagrant" | "minikube"
+# If your Cluster is not running on Vagrant, Minikube, or IBM Cloud, replace "ibmcloud" to "none"
 export VM_TYPE=ibmcloud
-# Replace yourClusterName with your IBM Cloud Cluster Name if your cluster is on IBM Cloud.
-export CLUSTER_NAME=yourClusterName
+
+# Replace <Your Cluster Name> with your IBM Cloud Cluster Name if your cluster is on IBM Cloud.
+# Use export PUBLIC_IP if you are using a none VM_TYPE. A Cluster Public IP that can access your Cluster's NodePorts.
+export CLUSTER_NAME=<Your Cluster Name>
+export PUBLIC_IP=<Cluster Public IP>
+
 ./bin/grafana.init.sh
 ```
 
@@ -362,11 +370,11 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 
 ## 8. Troubleshooting
 
-* FfDL has only been tested under Mac OS and Linux 
+* FfDL has only been tested under Mac OS and Linux
 
 * The default Minikube driver under Mac OS is VirtualBox, which is known for having issues with networking.
   We generally recommend Mac OS users to install Minikube using the xhyve driver.
-  
+
 * Also, when testing locally with Minikube, make sure to point the `docker` CLI to Minikube's Docker daemon:
 
    ```
@@ -382,9 +390,8 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 
 ## 9. References
 
-Based on IBM Research work in Deep Learning. 
+Based on IBM Research work in Deep Learning.
 
 * B. Bhattacharjee et al., "IBM Deep Learning Service," in IBM Journal of Research and Development, vol. 61, no. 4, pp. 10:1-10:11, July-Sept. 1 2017.   https://arxiv.org/abs/1709.05871
 
 * Scott Boag,  et al. Scalable Multi-Framework Multi-Tenant Lifecycle Management of Deep Learning Training Jobs, In Workshop on ML Systems at NIPS'17, 2017. http://learningsys.org/nips17/assets/papers/paper_29.pdf
-
