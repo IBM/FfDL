@@ -10,6 +10,8 @@ elif [ "$VM_TYPE" == "minikube" ]; then
 elif [ "$VM_TYPE" == "vagrant" ]; then
 	node_ip_line=$(vagrant ssh master -c 'ifconfig eth1 | grep "inet "' 2> /dev/null)
 	node_ip=$(echo $node_ip_line | sed "s/.*inet \([^ ]*\) .*/\1/")
+elif [ "$VM_TYPE" == "none" ]; then
+	node_ip=$PUBLIC_IP
 fi
 grafana_port=$(kubectl get service grafana -o jsonpath='{.spec.ports[0].nodePort}')
 grafana_url="http://$node_ip:$grafana_port"
