@@ -21,6 +21,7 @@ MINIKUBE_BRIDGE ?= $(shell (ifconfig | grep -e "^bridge100:" || ifconfig | grep 
 UI_REPO = git@github.com:IBM/FfDL-dashboard.git
 CLI_CMD = $(shell pwd)/cli/bin/ffdl-$(UNAME_SHORT)
 CLUSTER_NAME ?= mycluster
+PUBLIC_IP ?= 127.0.0.1
 
 IMAGE_DIR := $(IMAGE_NAME)
 ifneq ($(filter $(IMAGE_NAME),controller ),)
@@ -222,6 +223,8 @@ kubernetes-ip:
 			echo $$(minikube ip); \
 		elif [ "$(VM_TYPE)" = "ibmcloud" ]; then \
 			echo $$(bx cs workers $(CLUSTER_NAME) | grep Ready | awk '{ print $$2;exit }'); \
+		elif [ "$(VM_TYPE)" = "none" ]; then \
+			echo "$(PUBLIC_IP)"; \
 		fi
 
 install-minikube-in-ci:
