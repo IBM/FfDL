@@ -204,7 +204,7 @@ echo "Monitoring dashboard: http://$node_ip:$grafana_port/ (login: admin/admin)"
 echo "Web UI: http://$node_ip:$ui_port/#/login?endpoint=$node_ip:$restapi_port&username=test-user"
 ```
 
-Congratulation, FfDL is now running on your Cluster.
+Congratulation, FfDL is now running on your Cluster. Now you can go to [Step 6](#6-detailed-testing-instructions) to run some sample jobs or go to the [user guide](docs/user-guide.md) to learn about how to run and deploy your custom models.
 
 ## 6. Detailed Testing Instructions
 
@@ -274,6 +274,8 @@ $CLI_CMD train etc/examples/tf-model/manifest.yml etc/examples/tf-model
 ```
 
 Congratulation, you had submitted your first job on FfDL. You can check your FfDL status either from the FfDL UI or simply run `$CLI_CMD list`
+
+> You can learn about how to create your own model definition files and manifest.yaml at [user guild](docs/user-guide.md#2-create-new-models-with-ffdl).
 
 6. Since it's simple and straightforward to submit jobs with different deep learning framework on FfDL, let's try to run a Caffe Job.
 
