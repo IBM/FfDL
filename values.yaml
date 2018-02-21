@@ -1,4 +1,4 @@
-namespace: test
+namespace: default
 env: dev
 services:
   expose_node_port: true

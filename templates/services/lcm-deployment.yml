@@ -34,6 +34,8 @@ spec:
               key: DLAAS_ETCD_CERT,
               path: etcd/etcd.cert
             }]
+      serviceAccount: {{.Values.docker.image_prefix}}lcm
+      serviceAccountName: {{.Values.docker.image_prefix}}lcm
       containers:
       - name: ffdl-lcm-container
         image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}/{{.Values.docker.image_prefix}}lcm:{{.Values.trainer.version}}
