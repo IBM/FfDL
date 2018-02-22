@@ -8,7 +8,6 @@ FfDL is a collaboration platform for:
 - Framework-independent training of Deep Learning models on distributed hardware
 - Open Deep Learning APIs  
 - Common instrumentation
-- Inferencing in the cloud
 - Running Deep Learning hosting in user's private or public cloud
 
 ![ffdl-architecture](docs/images/ffdl-architecture.png)
@@ -25,11 +24,11 @@ FfDL is a collaboration platform for:
   Once installed, use the command `make minikube` to start Minikube and set up local network routes. Alternatively,
   use the Vagrant based setup to automatically install a local Kubernetes cluster.
 
-* Follow the appropriate instructions for deployment on [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) and [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)
+* Follow the appropriate instructions for deployment on [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) or [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)
 
 * The minimum recommended capacity for FfDL is 4GB Memory and 2 CPUs.
 
-* If you already have a tested FfDL deployment, you can jump to [User Guide](docs/user-guide.md) to use FfDL for training your models
+* If you already have a FfDL deployment up and running, you can jump to [User Guide](docs/user-guide.md) to use FfDL for training your models.
 
 ## Steps
 1. [Quick Start](#1-quick-start)
