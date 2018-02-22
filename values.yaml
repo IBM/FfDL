@@ -1,5 +1,6 @@
-namespace: test
+namespace: default
 env: dev
+k8s_1dot8_or_above: true
 services:
   expose_node_port: true
 docker:
