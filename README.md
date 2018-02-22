@@ -49,6 +49,8 @@ FfDL is a collaboration platform for:
 There are multiple installation paths for installing FfDL locally ("1-click-install") or
 into an existing Kubernetes cluster.
 
+> Note: If your Kubernetes Cluster version is 1.7 or below, please go to the [values.yaml](values.yaml) and change `k8s_1dot8_or_above` to **false**.
+
 ### 1.1 Installation using Vagrant
 
 This is the simplest and recommended option for local testing. The following commands will automatically
@@ -147,6 +149,8 @@ kubectl get pods --all-namespaces | grep tiller-deploy
 ```
 
 2. Now let's install all the necessary FfDL components using helm install.
+> Note: If your Kubernetes Cluster version is 1.7 or below, please go to the [values.yaml](values.yaml) and change `k8s_1dot8_or_above` to **false**.
+
 ``` shell
 helm install .
 ```
