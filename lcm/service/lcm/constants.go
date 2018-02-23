@@ -54,6 +54,8 @@ const (
 	caffeFrameworkName           string = "caffe"
 	tfFrameworkName              string = "tensorflow"
 	torchFrameworkName           string = "torch"
+	caffe2FrameworkName          string = "caffe2"
+	pytorchFrameworkName         string = "pytorch"
 	numRetries                          = 5
 	maxGPUsPerNode                      = 4
 	errCodeNormal                       = "000"

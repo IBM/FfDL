@@ -24,6 +24,8 @@ Currently, Fabric for Deep Learning supports following frameworks
 
 * [Tensorflow (with Keras 2)](https://www.tensorflow.org/) version "1.3-py3"
 * [Caffe](http://caffe.berkeleyvision.org/) version "1.0-py2"
+* [Caffe2](https://caffe2.ai/) version "0.8.1"
+* [PyTorch](http://pytorch.org/) version "0.2"
 
 You can deploy models based on these frameworks and then train your models using the FfDL CLI or FfDL UI.
 

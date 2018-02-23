@@ -1,0 +1,26 @@
+name: mnist-pytorch-model
+description: pytorch MNIST model
+version: "1.0"
+gpus: 0
+cpus: 1
+memory: 1000MiB
+
+# Object stores that allow the system to retrieve training data.
+data_stores:
+  - id: test-datastore
+    type: s3_datastore
+    training_data:
+      container: mnist_lmdb_data
+    training_results:
+      container: dlaas-trained-models
+    connection:
+      type: s3_datastore
+      auth_url: http://s3.default.svc.cluster.local
+      user_name: test
+      password: test
+
+framework:
+  name: pytorch
+  version: "0.2"
+  command: >
+    python mnist.py

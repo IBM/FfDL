@@ -8,6 +8,8 @@ data:
   caffe_cpu_1.0-py2_CURRENT: master-39
   caffe_gpu_1.0-ddl_CURRENT: master-7
   caffe_gpu_1.0-py2_CURRENT: master-39
+  caffe2_gpu_0.8.1_CURRENT: master-39
+  pytorch_gpu_0.2_CURRENT: master-39
 
 ---
 
