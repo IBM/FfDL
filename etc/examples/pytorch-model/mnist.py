@@ -96,14 +96,14 @@ with open(os.environ["RESULT_DIR"]+'/processed/test.pt', 'wb') as f:
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 train_loader = torch.utils.data.DataLoader(
-    datasets.MNIST(os.environ["DATA_DIR"], train=True, download=True,
+    datasets.MNIST(os.environ["RESULT_DIR"], train=True, download=False,
                    transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))
                    ])),
     batch_size=args.batch_size, shuffle=True, **kwargs)
 test_loader = torch.utils.data.DataLoader(
-    datasets.MNIST(os.environ["DATA_DIR"], train=False, transform=transforms.Compose([
+    datasets.MNIST(os.environ["RESULT_DIR"], train=False, transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))
                    ])),
