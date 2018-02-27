@@ -4,8 +4,50 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import os
+import gzip
+import codecs
+
 from torchvision import datasets, transforms
 from torch.autograd import Variable
+def get_int(b):
+    return int(codecs.encode(b, 'hex'), 16)
+
+def parse_byte(b):
+    if isinstance(b, str):
+        return ord(b)
+    return b
+
+def read_label_file(path):
+    with open(path, 'rb') as f:
+        data = f.read()
+        assert get_int(data[:4]) == 2049
+        length = get_int(data[4:8])
+        labels = [parse_byte(b) for b in data[8:]]
+        assert len(labels) == length
+        return torch.LongTensor(labels)
+
+
+def read_image_file(path):
+    with open(path, 'rb') as f:
+        data = f.read()
+        assert get_int(data[:4]) == 2051
+        length = get_int(data[4:8])
+        num_rows = get_int(data[8:12])
+        num_cols = get_int(data[12:16])
+        images = []
+        idx = 16
+        for l in range(length):
+            img = []
+            images.append(img)
+            for r in range(num_rows):
+                row = []
+                img.append(row)
+                for c in range(num_cols):
+                    row.append(parse_byte(data[idx]))
+                    idx += 1
+        assert len(images) == length
+        return torch.ByteTensor(images).view(-1, 28, 28)
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
@@ -32,17 +74,36 @@ torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
+files=os.listdir(os.environ["DATA_DIR"])
+for filename in files:
+    if '.gz' in filename:
+        print(filename)
+        file_path=os.environ["DATA_DIR"]+'/'+filename
+        print(file_path)
+        with open(file_path.replace('.gz', ''), 'wb') as out_f, gzip.GzipFile(file_path) as zip_f:
+            out_f.write(zip_f.read())
+
+training_set = (read_image_file(os.environ["DATA_DIR"]+'/train-images-idx3-ubyte'),read_label_file(os.environ["DATA_DIR"]+'/train-labels-idx1-ubyte'))
+test_set = (read_image_file(os.environ["DATA_DIR"]+'/t10k-images-idx3-ubyte'),read_label_file(os.environ["DATA_DIR"]+'/t10k-labels-idx1-ubyte'))
+
+os.makedirs(os.environ["RESULT_DIR"]+'/processed')
+
+with open(os.environ["RESULT_DIR"]+'/processed/training.pt', 'wb') as f:
+    torch.save(training_set, f)
+
+with open(os.environ["RESULT_DIR"]+'/processed/test.pt', 'wb') as f:
+    torch.save(test_set, f)
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 train_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('../data', train=True, download=True,
+    datasets.MNIST(os.environ["DATA_DIR"], train=True, download=True,
                    transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))
                    ])),
     batch_size=args.batch_size, shuffle=True, **kwargs)
 test_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('../data', train=False, transform=transforms.Compose([
+    datasets.MNIST(os.environ["DATA_DIR"], train=False, transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))
                    ])),
@@ -106,7 +167,6 @@ def test():
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
-
 
 for epoch in range(1, args.epochs + 1):
     train(epoch)

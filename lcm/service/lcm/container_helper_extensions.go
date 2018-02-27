@@ -24,13 +24,13 @@ func extendLearnerContainer(learner *v1core.Container, req *service.JobDeploymen
 
 	switch req.Framework {
 	case caffeFrameworkName:
-		learnerImage = "bvlc/caffe:cpu"
+		learnerImage = "bvlc/caffe:" + req.Version
 	case tfFrameworkName:
-		learnerImage = "tensorflow/tensorflow"
+		learnerImage = "tensorflow/tensorflow:" + req.Version
 	case caffe2FrameworkName:
-		learnerImage = "caffe2ai/caffe2:c2v0.8.1.cpu.full.ubuntu14.04"
+		learnerImage = "caffe2ai/caffe2:" + req.Version
 	case pytorchFrameworkName:
-		learnerImage = "pytorch/pytorch"
+		learnerImage = "pytorch/pytorch:" + req.Version
 	default:
 		// TODO!
 	}

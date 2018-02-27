@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 
 """Functions for downloading and reading MNIST data."""
@@ -132,7 +131,7 @@ def read_data_sets(train_images_file, train_labels_file, test_images_file, test_
     TRAIN_LABELS = train_labels_file
     TEST_IMAGES = test_images_file
     TEST_LABELS = test_labels_file
-    VALIDATION_SIZE = 3000
+    VALIDATION_SIZE = 5000
     train_images = extract_images(TRAIN_IMAGES)
     train_labels = extract_labels(TRAIN_LABELS, one_hot=one_hot)
     test_images = extract_images(TEST_IMAGES)

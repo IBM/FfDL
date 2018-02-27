@@ -230,9 +230,9 @@ func fetchImageNameFromEvaluationMetrics(evalMetricsString string,
 				if logCollectorImageShortName == "tensorboard" || logCollectorImageShortName == "tensorboard_extractor" {
 					// TODO: Fix tensorflow/board docker image version matrix nightmare
 					tensorBoardVersion := "1.3-py3"
-					if framework == tfFrameworkName {
-						tensorBoardVersion = version
-					}
+					// if framework == tfFrameworkName {
+					// 	tensorBoardVersion = version
+					// }
 					// Try to match the best version
 					logCollectorImageShortName = fmt.Sprintf("%s_extract_%s", "tensorboard", tensorBoardVersion)
 				}

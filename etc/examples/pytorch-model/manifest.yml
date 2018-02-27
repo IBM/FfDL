@@ -10,9 +10,9 @@ data_stores:
   - id: test-datastore
     type: s3_datastore
     training_data:
-      container: mnist_lmdb_data
+      container: tf_training_data
     training_results:
-      container: dlaas-trained-models
+      container: tf_trained_model
     connection:
       type: s3_datastore
       auth_url: http://s3.default.svc.cluster.local
@@ -21,6 +21,6 @@ data_stores:
 
 framework:
   name: pytorch
-  version: "0.2"
+  version: "latest"
   command: >
-    python mnist.py
+    python mnist.py --epochs 5

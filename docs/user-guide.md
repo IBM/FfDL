@@ -20,12 +20,17 @@
 * You need to have [FfDL](../README.md#5-detailed-installation-instructions) running on your cluster.
 
 ## 1. Supported Deep learning frameworks
-Currently, Fabric for Deep Learning supports following frameworks
+Currently, Fabric for Deep Learning supports following community frameworks
 
-* [Tensorflow (with Keras 2)](https://www.tensorflow.org/) version "1.3-py3"
-* [Caffe](http://caffe.berkeleyvision.org/) version "1.0-py2"
-* [Caffe2](https://caffe2.ai/) version "0.8.1"
-* [PyTorch](http://pytorch.org/) version "0.2"
+| Framework     | Versions      | Processing Unit |
+| ------------- | ------------- | --------------- |
+| [tensorflow](https://hub.docker.com/r/tensorflow/tensorflow/)    | 1.3.0 , 1.3.0-py3 , 1.4.0 , 1.4.0-py3 , latest , latest-py3 | CPU |
+| [tensorflow](https://hub.docker.com/r/tensorflow/tensorflow/)    | 1.3.0-gpu , 1.3.0-gpu-py3 , 1.4.0-gpu , 1.4.0-gpu-py3 , latest-gpu , latest-gpu-py3 | GPU |
+| [caffe](https://hub.docker.com/r/bvlc/caffe/)         | cpu , intel   | CPU |
+| [caffe](https://hub.docker.com/r/bvlc/caffe/)         | gpu           | GPU |
+| [pytorch](https://hub.docker.com/r/pytorch/pytorch/)       | v0.2 , latest | CPU , GPU |
+| [caffe2](https://hub.docker.com/r/caffe2ai/caffe2/)        | c2v0.8.1.cpu.full.ubuntu14.04 , c2v0.8.0.cpu.full.ubuntu16.04 | CPU |
+| [caffe2](https://hub.docker.com/r/caffe2ai/caffe2/)        | c2v0.8.1.cuda8.cudnn7.ubuntu16.04 , latest | GPU |
 
 You can deploy models based on these frameworks and then train your models using the FfDL CLI or FfDL UI.
 
@@ -67,8 +72,8 @@ Here are [example manifest files](../etc/examples/tf-model/manifest.yml) for Caf
     * mount_cos: ```auth_url```, ```user_name``` (AWS Access Key), and ```password``` (AWS Secret Access Key), ```region``` (optional)
 
 * ```framework:``` This field provides deep learning framework specific information.
-  * ```name:``` Name of framework, values can be "caffe", or "tensorflow".
-  * ```version:``` Version of framework.
+  * ```name:``` Name of framework, values can be "caffe", "tensorflow" , "pytorch", or "caffe2".
+  * ```version:``` Version of framework. List of available versions are in [section 1](#1-supported-deep-learning-frameworks). You must pick the version with the correct processing unit in order to run your jobs in GPU/CPU.
   * ```command:``` This field identifies the main program file along with any arguments that FfDL needs to execute. For example, the command to run a TensorFlow training can be as follows ```python mnist_with_summaries.py --train_images_file ${DATA_DIR}/train-images-idx3-ubyte.gz --train_labels_file ${DATA_DIR}/train-labels-idx1-ubyte.gz --test_images_file ${DATA_DIR}/t10k-images-idx3-ubyte.gz --test_labels_file ${DATA_DIR}/t10k-labels-idx1-ubyte.gz --max_steps 400 --learning_rate 0.001``` where `python mnist_with_summaries.py` is the model code to execute while the remainder are arguments to the model. `train_images_file`, `train_labels_file`, `test_images_file`, `test_labels_file` refers to the dataset path in learner,  `max_steps`, `learning_rate` are training parameters and hyperparameters.
 
 **Note**: If the user's model and manifest files refer to some training data, they shouldn't use absolute paths. They should either:
