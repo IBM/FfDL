@@ -1,16 +1,18 @@
-name: mnist-caffe-model
-description: Caffe MNIST model
+name: mnist-pytorch-model
+description: pytorch MNIST model
 version: "1.0"
 gpus: 0
-cpus: 0.5
-memory: 300MiB
+cpus: 1
+memory: 1000MiB
 
 # Object stores that allow the system to retrieve training data.
 data_stores:
   - id: test-datastore
     type: s3_datastore
     training_data:
-      container: mnist_lmdb_data
+      container: tf_training_data
+    training_results:
+      container: tf_trained_model
     connection:
       type: s3_datastore
       auth_url: http://s3.default.svc.cluster.local
@@ -18,7 +20,7 @@ data_stores:
       password: test
 
 framework:
-  name: caffe
-  version: "cpu"
+  name: pytorch
+  version: "latest"
   command: >
-    caffe train -solver lenet_solver.prototxt
+    python mnist.py --epochs 5
