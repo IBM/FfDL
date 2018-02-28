@@ -24,8 +24,8 @@ Currently, Fabric for Deep Learning supports following community frameworks
 
 | Framework     | Versions      | Processing Unit |
 | ------------- | ------------- | --------------- |
-| [tensorflow](https://hub.docker.com/r/tensorflow/tensorflow/)    | 1.3.0 , 1.3.0-py3 , 1.4.0 , 1.4.0-py3 , latest , latest-py3 | CPU |
-| [tensorflow](https://hub.docker.com/r/tensorflow/tensorflow/)    | 1.3.0-gpu , 1.3.0-gpu-py3 , 1.4.0-gpu , 1.4.0-gpu-py3 , latest-gpu , latest-gpu-py3 | GPU |
+| [tensorflow](https://hub.docker.com/r/tensorflow/tensorflow/)    | 1.3.0 , 1.3.0-py3 , 1.4.0 , 1.4.0-py3 , 1.5.0 , 1.5.0-py3 , latest , latest-py3 | CPU |
+| [tensorflow](https://hub.docker.com/r/tensorflow/tensorflow/)    | 1.3.0-gpu , 1.3.0-gpu-py3 , 1.4.0-gpu , 1.4.0-gpu-py3 , 1.5.0-gpu , 1.5.0-gpu-py3 ,latest-gpu , latest-gpu-py3 | GPU |
 | [caffe](https://hub.docker.com/r/bvlc/caffe/)         | cpu , intel   | CPU |
 | [caffe](https://hub.docker.com/r/bvlc/caffe/)         | gpu           | GPU |
 | [pytorch](https://hub.docker.com/r/pytorch/pytorch/)       | v0.2 , latest | CPU , GPU |

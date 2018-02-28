@@ -7,6 +7,10 @@ data:
   tensorflow_cpu_latest-py3_CURRENT: manual
   tensorflow_gpu_latest-gpu-py3_CURRENT: manual
   tensorflow_gpu_latest-gpu_CURRENT: manual
+  tensorflow_gpu_1.5.0-gpu-py3_CURRENT: manual
+  tensorflow_gpu_1.5.0-gpu_CURRENT: manual
+  tensorflow_cpu_1.5.0_CURRENT: manual
+  tensorflow_cpu_1.5.0-py3_CURRENT: manual
   tensorflow_gpu_1.4.0-gpu-py3_CURRENT: manual
   tensorflow_gpu_1.4.0-gpu_CURRENT: manual
   tensorflow_cpu_1.4.0_CURRENT: manual

@@ -16,7 +16,7 @@
 
 To run the TensorFlow job with GPU, simply go to the [tf-model's manifest file](../etc/examples/tf-model/manifest.yml) and do the following changes
 * Change the framework version from `latest` to `latest-gpu` for CUDA 9 Driver or `1.3.0-gpu` for CUDA 8 Driver.
-* Change the `gpus` section to be greater than 0, so the learner can get GPU resource to train the job. The `gpu-manifest.yml` is the example manifest file for running the TensorFlow example with GPU.
+* Change the `gpus` section to be greater than 0, so the learner can get GPU resource to train the job.
 
 The `etc/examples/tf-model/gpu-manifest.yml` is the example manifest file for running the TensorFlow example with GPU. Once you have done the above changes, you can following the same [testing instructions](../README.md#6-detailed-testing-instructions) on the main README to run the sample TensorFlow job on GPU.
 
