@@ -301,7 +301,7 @@ you can simply run `$CLI_CMD logs <MODEL_ID>`
 
 ```shell
 # Replace tf-model with the model you want to zip
-zip etc/examples/tf-model.zip etc/examples/tf-model/*
+pushd etc/examples/tf-model && zip ../tf-model.zip * && popd
 ```
 
 Then, upload `tf-model.zip` and `manifest.yml` (The default TensorFlow model) in the `etc/examples/` repository as shown below.
