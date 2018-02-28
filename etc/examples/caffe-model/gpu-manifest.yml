@@ -1,9 +1,10 @@
-name: mnist-caffe-model
-description: Caffe MNIST model
+name: mnist-caffe-gpu-model
+description: Caffe MNIST model (GPU)
 version: "1.0"
-gpus: 0
-cpus: 0.5
-memory: 300MiB
+gpus: 1
+cpus: 0.005
+learners: 1
+memory: 1000MiB
 
 # Object stores that allow the system to retrieve training data.
 data_stores:
@@ -19,6 +20,6 @@ data_stores:
 
 framework:
   name: caffe
-  version: "cpu"
+  version: "gpu"
   command: >
-    caffe train -solver lenet_solver.prototxt
+    caffe train -gpu all -solver lenet_solver.prototxt
