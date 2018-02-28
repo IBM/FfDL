@@ -14,11 +14,13 @@ FfDL is a collaboration platform for:
 
 ## Prerequisites
 
-* `kubectl`: the Kubernetes command line interface (https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+* `kubectl`: The Kubernetes command line interface (https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 
-* `helm`: the Kubernetes package manager (https://helm.sh)
+* `helm`: The Kubernetes package manager (https://helm.sh)
 
-* `docker`: the Docker command-line interface (https://www.docker.com/)
+* `docker`: The Docker command-line interface (https://www.docker.com/)
+
+* `S3 CLI`: The [command-line interface](https://aws.amazon.com/cli/) to configure your Object Storage
 
 * An existing Kubernetes cluster (e.g., [Minikube](https://github.com/kubernetes/minikube) for local testing).
   Once installed, use the command `make minikube` to start Minikube and set up local network routes. Alternatively,
