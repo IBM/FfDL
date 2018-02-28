@@ -19,7 +19,7 @@ data_stores:
       password: test
 
 framework:
-  name: caffe-gpu
+  name: caffe
   version: "gpu"
   command: >
     caffe train -gpu all -solver lenet_solver.prototxt

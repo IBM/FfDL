@@ -20,7 +20,7 @@ data_stores:
       password: test
 
 framework:
-  name: tensorflow-gpu
+  name: tensorflow
   version: "1.3.0-gpu"
   command: >
     python mnist_with_summaries.py
