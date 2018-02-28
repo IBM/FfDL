@@ -24,13 +24,13 @@ Currently, Fabric for Deep Learning supports following community frameworks
 
 | Framework     | Versions      | Processing Unit |
 | ------------- | ------------- | --------------- |
-| [tensorflow](https://hub.docker.com/r/tensorflow/tensorflow/)    | 1.3.0 , 1.3.0-py3 , 1.4.0 , 1.4.0-py3 , 1.5.0 , 1.5.0-py3 , latest , latest-py3 | CPU |
-| [tensorflow](https://hub.docker.com/r/tensorflow/tensorflow/)    | 1.3.0-gpu , 1.3.0-gpu-py3 , 1.4.0-gpu , 1.4.0-gpu-py3 , 1.5.0-gpu , 1.5.0-gpu-py3 ,latest-gpu , latest-gpu-py3 | GPU |
-| [caffe](https://hub.docker.com/r/bvlc/caffe/)         | cpu , intel   | CPU |
+| [tensorflow](https://hub.docker.com/r/tensorflow/tensorflow/)    | 1.3.0, 1.3.0-py3, 1.4.0, 1.4.0-py3, 1.5.0, 1.5.0-py3, latest, latest-py3 | CPU |
+| [tensorflow](https://hub.docker.com/r/tensorflow/tensorflow/)    | 1.3.0-gpu, 1.3.0-gpu-py3, 1.4.0-gpu, 1.4.0-gpu-py3, 1.5.0-gpu, 1.5.0-gpu-py3, latest-gpu, latest-gpu-py3 | GPU |
+| [caffe](https://hub.docker.com/r/bvlc/caffe/)         | cpu, intel   | CPU |
 | [caffe](https://hub.docker.com/r/bvlc/caffe/)         | gpu           | GPU |
-| [pytorch](https://hub.docker.com/r/pytorch/pytorch/)       | v0.2 , latest | CPU , GPU |
-| [caffe2](https://hub.docker.com/r/caffe2ai/caffe2/)        | c2v0.8.1.cpu.full.ubuntu14.04 , c2v0.8.0.cpu.full.ubuntu16.04 | CPU |
-| [caffe2](https://hub.docker.com/r/caffe2ai/caffe2/)        | c2v0.8.1.cuda8.cudnn7.ubuntu16.04 , latest | GPU |
+| [pytorch](https://hub.docker.com/r/pytorch/pytorch/)       | v0.2, latest | CPU, GPU |
+| [caffe2](https://hub.docker.com/r/caffe2ai/caffe2/)        | c2v0.8.1.cpu.full.ubuntu14.04, c2v0.8.0.cpu.full.ubuntu16.04 | CPU |
+| [caffe2](https://hub.docker.com/r/caffe2ai/caffe2/)        | c2v0.8.1.cuda8.cudnn7.ubuntu16.04, latest | GPU |
 
 You can deploy models based on these frameworks and then train your models using the FfDL CLI or FfDL UI.
 
