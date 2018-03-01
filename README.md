@@ -297,8 +297,14 @@ you can simply run `$CLI_CMD logs <MODEL_ID>`
 
 > If you no longer need any of the MNIST dataset we used in this example, you can simply delete the tmp repository.
 
-7. (Experimental) After you done with step 4, if you want to run your job via the FfDL UI, simply upload
-`tf-model.zip` and `manifest.yml` (The default TensorFlow model) in the `etc/examples/` repository as shown below.
+7. If you want to run your job via the FfDL UI, simply run the below command to create your model zip file.
+
+```shell
+# Replace tf-model with the model you want to zip
+pushd etc/examples/tf-model && zip ../tf-model.zip * && popd
+```
+
+Then, upload `tf-model.zip` and `manifest.yml` (The default TensorFlow model) in the `etc/examples/` repository as shown below.
 Then, click `Submit Training Job` to run your job.
 
 ![ui-example](docs/images/ui-example.png)
