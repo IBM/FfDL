@@ -15,3 +15,5 @@ Makefile
 README.md
 .venv
 tmp
+docs/
+metrics/
