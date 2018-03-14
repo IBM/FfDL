@@ -405,10 +405,27 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 
 * To remove FfDL on your Cluster, simply run `make undeploy`
 
-## 9. References
+## 9. Contributors
+
+Below is an (incomplete) list of people (in alphabetical order) who contributed to this project
+via code, tests, or documentation:
+
+* Scott Boag
+* Parijat Dube
+* Benjamin Herta
+* Waldemar Hummer
+* Vatche Ishakian
+* Michael Kalantar
+* Tommy Li
+* Vinod Muthusamy
+* Florian Rosenberg
+* Animesh Singh
+* Atin Sood
+
+## 10. References
 
 Based on IBM Research work in Deep Learning.
 
 * B. Bhattacharjee et al., "IBM Deep Learning Service," in IBM Journal of Research and Development, vol. 61, no. 4, pp. 10:1-10:11, July-Sept. 1 2017.   https://arxiv.org/abs/1709.05871
 
-* Scott Boag,  et al. Scalable Multi-Framework Multi-Tenant Lifecycle Management of Deep Learning Training Jobs, In Workshop on ML Systems at NIPS'17, 2017. http://learningsys.org/nips17/assets/papers/paper_29.pdf
+* Scott Boag, et al. Scalable Multi-Framework Multi-Tenant Lifecycle Management of Deep Learning Training Jobs, In Workshop on ML Systems at NIPS'17, 2017. http://learningsys.org/nips17/assets/papers/paper_29.pdf
