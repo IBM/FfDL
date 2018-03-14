@@ -1,6 +1,13 @@
 # Maintainers Guide
 
-This guide is intended for maintainers - anybody with commit access 
+Following is the current list of maintainers on this project
+
+The maintainers are listed in alphabetical order.
+
+- Scott Boag ([sboagibm](https://github.com/sboagibm))
+- Waldemar Hummer ([whummer](https://github.com/whummer))
+- Tommy Li ([Tomcli](https://github.com/Tomcli))
+- Animesh Singh ([animeshsingh](https://github.com/animeshsingh))
 
 ## Methodology
 
