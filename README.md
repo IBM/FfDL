@@ -405,24 +405,7 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 
 * To remove FfDL on your Cluster, simply run `make undeploy`
 
-## 9. Contributors
-
-Below is an (incomplete) list of people (in alphabetical order) who contributed to this project
-via code, tests, or documentation:
-
-* Scott Boag
-* Parijat Dube
-* Benjamin Herta
-* Waldemar Hummer
-* Vatche Ishakian
-* Michael Kalantar
-* Tommy Li
-* Vinod Muthusamy
-* Florian Rosenberg
-* Animesh Singh
-* Atin Sood
-
-## 10. References
+## 9. References
 
 Based on IBM Research work in Deep Learning.
 
