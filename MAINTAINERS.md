@@ -1,7 +1,6 @@
 # Maintainers Guide
 
-This guide is intended for maintainers - anybody with commit access to one or
-more Code Pattern repositories.
+This guide is intended for maintainers - anybody with commit access 
 
 ## Methodology
 
