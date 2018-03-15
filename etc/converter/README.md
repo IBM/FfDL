@@ -29,14 +29,28 @@ Since Watson Machine Learning and FfDL use different model definition manifest.y
 
 4. Copy the new YAML file and use it for your FfDL/Watson Machine Learning training job.
 
+5. Note that all the T-shirt size in Watson Machine Learning requires GPU. Thus, you need to run a FfDL on a Kubernetes Cluster enabled with GPU. If you only wants to run on CPU, please change modify the `gpus` section to 0 along with `cpus` and `memory` based on your need. Also change the framework version with the one enabled in CPU. You can find the list of CPU framework version at [user-guide.md](../../docs/user-guide.md#1-supported-deep-learning-frameworks). Below is the T-shirt size table between Watson Machine Learning and FfDL.
+
+| T-shirt Tiers     | GPUs    | RAM (GB) | CPUs |
+| ------------- | ------------- | --------------- | --------------- |
+| k80 | 1 | 24 | 4 |
+| k80x2 | 2 | 48 | 8 |
+| k80x4 | 4 | 96 | 16 |
+| p100 | 1 | 24 | 8 |
+| p100x2 | 2 | 48 | 16 |
+| v100 | 1 | 24 | 26 |
+| v100x2 | 2 | 48 | 52 |
+
 ## Troubleshooting
 
 - For converting to FfDL format, both `training_data_reference` and `training_results_reference` need to be in the same object storage (Could be different bucket) because FfDL only takes one object storage connection.
 
 - In Watson Machine Learning, TensorFlow version only available up to 1.5
 
+- Caffe2 is not available yet in Watson Machine Learning. Thus, the conversion script won't take any caffe2 input.
+
 ## Example Manifest.yml
 
-The example FfDL manifest.yml is the [sample-FfDL.yaml](sample-FfDL.yaml). The description for each field is available at the [user-guide.md](../../docs/user-guide.md).
+The example FfDL manifest.yml is the [sample-FfDL.yaml](sample-FfDL.yaml). The description for each field is available at the [user-guide.md](../../docs/user-guide.md#24-creating-manifest-file).
 
 The example Watson Machine Learning manifest.yml is the [sample-WML.yaml](sample-WML.yaml). The description for each field is available at the [model definition guide](https://dataplatform.ibm.com/docs/content/analyze-data/ml_dlaas_working_with_training_run.html?audience=wdp&linkInPage=true) at Watson Data Platform.
