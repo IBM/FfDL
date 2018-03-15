@@ -49,6 +49,8 @@ Since Watson Machine Learning and FfDL use different model definition manifest.y
 
 - Caffe2 is not available yet in Watson Machine Learning. Thus, the conversion script won't take any caffe2 input.
 
+- The conversion script won't take `small`, `medium`, and `large` T-shirt size because they will be deprecated soon.
+
 ## Example Manifest.yml
 
 The example FfDL manifest.yml is the [sample-FfDL.yaml](sample-FfDL.yaml). The description for each field is available at the [user-guide.md](../../docs/user-guide.md#24-creating-manifest-file).
