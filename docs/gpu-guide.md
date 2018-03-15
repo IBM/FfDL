@@ -4,11 +4,12 @@
 
 ### Prerequisites
 
+* You need to have a Kubernetes cluster configured to use GPUs. Currently tested with Kubernetes configured using [feature gate `Accelerators`](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/). If you are using device plugin, please modify the
+[values.yaml](../values.yaml)'s lcm.version to `device-plugin` and redeploy FfDL.
+
 * You need to have [FfDL](../README.md#5-detailed-installation-instructions) running on your Cluster.
 
-* You need to have a Kubernetes cluster configured to use GPUs. Currently tested with Kubernetes configured using [feature gate `Accelerators`](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/).
-
-* Currently Tensorflow and Caffe tested with GPUs
+* Currently Tensorflow and Caffe are tested with GPUs.
 
 ## Instructions
 
