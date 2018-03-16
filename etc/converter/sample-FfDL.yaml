@@ -1,0 +1,30 @@
+name: sample-training-job
+description: Simple example model
+version: "1.0"
+gpus: 0
+cpus: 1
+learners: 1
+memory: 1000MiB
+
+# Object stores that allow the system to retrieve training data.
+data_stores:
+  - id: example-object-storage
+    type: s3_datastore
+    training_data:
+      container: training-data-bucket-name
+    training_results:
+      container: result-data-bucket-name
+    connection:
+      type: s3_datastore
+      auth_url: <object storage's endpoint_url>
+      user_name: <object storage's access key id>
+      password: <object storage's secret access key>
+
+framework:
+  name: tensorflow
+  version: "latest-gpu-py3"
+  command: python3 example.py
+
+evaluation_metrics:
+  type: tensorboard
+  in: "$JOB_STATE_DIR/logs/tb"

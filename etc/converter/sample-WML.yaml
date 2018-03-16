@@ -1,0 +1,35 @@
+model_definition:
+  name: sample-training-job
+  author:
+    name: DL Developer
+    email: dl@example.com
+  description: Simple example model
+  framework:
+    name: tensorflow
+    version: "1.5"
+    runtimes:
+     name: python
+     version: "3.5"
+  execution:
+    command: python3 example.py
+    compute_configuration:
+      name: k80
+      nodes: 1
+training_data_reference:
+  connection:
+    access_key_id: <object storage's access key id>
+    endpoint_url: <object storage's endpoint_url>
+    secret_access_key: <object storage's secret access key>
+  name: example-object-storage
+  source:
+    bucket: training-data-bucket-name
+  type: s3
+training_results_reference:
+  connection:
+    access_key_id: <object storage's access key id>
+    endpoint_url: <object storage's endpoint_url>
+    secret_access_key: <object storage's secret access key>
+  name: example-object-storage
+  target:
+    bucket: result-data-bucket-name
+  type: s3

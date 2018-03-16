@@ -72,7 +72,7 @@ def restore_from_checkpoint(saver, sess):
 def save_checkpoint(step, saver, sess, model_path):
     path = saver.save(sess, model_path, global_step=step)
     print("Saved checkpoint %s" % path)
-       
+
 def train():
 
     # Import data
@@ -80,15 +80,15 @@ def train():
     #                                     one_hot=True,
     #                                     fake_data=FLAGS.fake_data)
     mnist = input_data.read_data_sets(FLAGS.train_images_file,
-                                      FLAGS.train_labels_file, 
+                                      FLAGS.train_labels_file,
                                       FLAGS.test_images_file,
-                                      FLAGS.test_labels_file, 
+                                      FLAGS.test_labels_file,
                                       one_hot=True)
 
     sess = tf.InteractiveSession()
-    
+
     # Create a multilayer model.
-    
+
     # Input placeholders
     with tf.name_scope('input'):
         x = tf.placeholder(tf.float32, [None, 784], name='x-input')
@@ -180,7 +180,7 @@ def train():
         with tf.name_scope('accuracy'):
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     tf.summary.scalar('accuracy', accuracy)
-    
+
     #     with tf.name_scope('loss'):
     #         # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=mnist.test.images, labels=mnist.test.labels))
     #         loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_, labels=y))
@@ -206,7 +206,7 @@ def train():
             xs, ys = mnist.test.images, mnist.test.labels
             k = 1.0
         return {x: xs, y_: ys, keep_prob: k}
-        
+
     model_path = os.environ["RESULT_DIR"] + "/model.ckpt"
 
     print('Calling tf.train.Saver(...)')
@@ -223,27 +223,30 @@ def train():
             test_writer.add_summary(summary, i)
             print('Accuracy at step %s: %s' % (i, acc))
         else:  # Record train set summaries, and train
-            if i % 100 == 99:  # Record execution stats
-                run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-                run_metadata = tf.RunMetadata()
-                # summary, _, loss_result = sess.run([merged, train_step, loss],
-                summary, _ = sess.run([merged, train_step],
-                                      feed_dict=feed_dict(True),
-                                      options=run_options,
-                                      run_metadata=run_metadata)
-                train_writer.add_run_metadata(run_metadata, 'step%03d' % i)
-                train_writer.add_summary(summary, i)
-                print('Adding run metadata for', i)
-            else:  # Record a summary
-                summary, _ = sess.run([merged, train_step], feed_dict=feed_dict(True))
-                train_writer.add_summary(summary, i)
-                
+            # Commnent the below code since CUPTI library is not Available on basic
+            # TensorFlow images that use CUDA 9.
+            #
+            # if i % 100 == 99:  # Record execution stats
+            #     run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+            #     run_metadata = tf.RunMetadata()
+            #     # summary, _, loss_result = sess.run([merged, train_step, loss],
+            #     summary, _ = sess.run([merged, train_step],
+            #                           feed_dict=feed_dict(True),
+            #                           options=run_options,
+            #                           run_metadata=run_metadata)
+            #     train_writer.add_run_metadata(run_metadata, 'step%03d' % i)
+            #     train_writer.add_summary(summary, i)
+            #     print('Adding run metadata for', i)
+            # else:  # Record a summary
+            summary, _ = sess.run([merged, train_step], feed_dict=feed_dict(True))
+            train_writer.add_summary(summary, i)
+
     save_path = saver.save(sess, model_path)
-                
+
     train_writer.close()
     test_writer.close()
 
-def main(_):   
+def main(_):
     print('train_images_file: ', FLAGS.train_images_file)
     print('train_labels_file: ', FLAGS.train_labels_file)
     print('test_images_file: ', FLAGS.test_images_file)
@@ -251,7 +254,7 @@ def main(_):
     print('learning_rate: ', FLAGS.learning_rate)
     print('tb_log_dir: ', FLAGS.tb_log_dir)
     print('log_dir: ', FLAGS.log_dir)
-            
+
     # if tf.gfile.Exists(FLAGS.log_dir):
     #    tf.gfile.DeleteRecursively(FLAGS.log_dir)
     tf.gfile.MakeDirs(FLAGS.log_dir)
@@ -259,7 +262,7 @@ def main(_):
     # if tf.gfile.Exists(FLAGS.tb_log_dir):
     #    tf.gfile.DeleteRecursively(FLAGS.tb_log_dir)
     tf.gfile.MakeDirs(FLAGS.tb_log_dir)
-    
+
     train()
 
 
@@ -276,7 +279,7 @@ if __name__ == '__main__':
                         help='Keep probability for training dropout.')
     #     parser.add_argument('--data_dir', type=str, default='/tmp/tensorflow/mnist/input_data',
     #                         help='Directory for storing input data')
-    
+
     if 'LC_TEST_ENV' in os.environ:
         is_test_env = os.environ["LC_TEST_ENV"] == "local_test"
     else:
@@ -288,7 +291,7 @@ if __name__ == '__main__':
     else:
         job_directory = os.environ["JOB_STATE_DIR"]
         # job_directory = "/job"
-        
+
     if is_test_env:
         if not os.path.exists(job_directory):
             os.makedirs(job_directory)
@@ -302,7 +305,7 @@ if __name__ == '__main__':
                         help='DLaaS log directory')
     parser.add_argument('--tb_log_dir', type=str, default=log_directory+'/tb',
                         help='Summaries log directory')
-    
+
     parser.add_argument('--train_images_file', type=str, default='bad',
                         help='train_images_file')
     parser.add_argument('--train_labels_file', type=str, default='bad',
@@ -311,7 +314,7 @@ if __name__ == '__main__':
                         help='test_images_file')
     parser.add_argument('--test_labels_file', type=str, default='bad',
                         help='test_labels_file')
-    
+
     FLAGS, unparsed = parser.parse_known_args()
 
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
