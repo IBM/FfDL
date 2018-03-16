@@ -1,6 +1,6 @@
 # Overview
 
-Since Watson Machine Learning and FfDL use different model definition manifest.yml to define their training jobs, we provided a simple script to help you convert between the two different version of the manifest.yml. The [convert-to-WML.py](convert-to-WML.py) and [convert-to-FfDL.py](convert-to-FfDL.py) are the conversion scripts for converting your FfDL training job's manifest.yml to Watson Machine Learning format and vice versa.
+Since Watson Studio Deep Learning and FfDL use different model definition file i.e. manifest.yml to define their training jobs, please us this simple script to help you convert between the two different version of the manifest.yml. The [convert-to-WML.py](convert-to-WML.py) and [convert-to-FfDL.py](convert-to-FfDL.py) are the conversion scripts for converting your FfDL training job's manifest.yml to Watson Studio Deep Learning format and vice versa.
 
 ## Instructions
 
@@ -19,17 +19,17 @@ Since Watson Machine Learning and FfDL use different model definition manifest.y
 	```bash
 	pip install -r requirement.txt
 
-  # Convert FfDL manifest.yml to Watson Machine Learning format
+  # Convert FfDL manifest.yml to Watson Studio Deep Learning format
 	python convert-to-WML.py -i <inputfile> -o <outputfile> -s <samplefile>
 
-  # Convert Watson Machine Learning manifest.yml to FfDL format
+  # Convert Watson Studio Deep Learning manifest.yml to FfDL format
   python convert-to-FfDL.py -i <inputfile> -o <outputfile> -s <samplefile>
 	```
 	Now, a converted <outputfile> file should be created with all the information in your original manifest file.
 
-4. Copy the new YAML file and use it for your FfDL/Watson Machine Learning training job.
+4. Copy the new YAML file and use it for your FfDL/Watson Studio Deep Learning training job.
 
-5. Note that all the T-shirt size in Watson Machine Learning requires GPU. Thus, you need to run a FfDL on a Kubernetes Cluster enabled with GPU. If you only wants to run on CPU, please change modify the `gpus` section to 0 along with `cpus` and `memory` based on your need. Also change the framework version with the one enabled in CPU. You can find the list of CPU framework version at [user-guide.md](../../docs/user-guide.md#1-supported-deep-learning-frameworks). Below is the T-shirt size table between Watson Machine Learning and FfDL.
+5. Note that all the T-shirt size in Watson Studio Deep Learning requires GPU, so that will be the default conversion. If you only want to run on CPU, please modify the `gpus` section to 0 along with `cpus` and `memory` based on your need. Also change the framework version with the one enabled in CPU. You can find the list of CPU framework version at [user-guide.md](../../docs/user-guide.md#1-supported-deep-learning-frameworks). Below is the T-shirt size table between Watson Studio Deep Learning and FfDL.
 
 | T-shirt Tiers     | GPUs    | RAM (GB) | CPUs |
 | ------------- | ------------- | --------------- | --------------- |
@@ -43,11 +43,11 @@ Since Watson Machine Learning and FfDL use different model definition manifest.y
 
 ## Troubleshooting
 
-- For converting to FfDL format, both `training_data_reference` and `training_results_reference` need to be in the same object storage (Could be different bucket) because FfDL only takes one object storage connection.
+- If you are converting Watson Studio Deep Learning yml to FfDL format, both `training_data_reference` and `training_results_reference` need to be in the same object storage (could be different bucket) because FfDL only takes one object storage connection.
 
-- In Watson Machine Learning, TensorFlow version only available up to 1.5
+- In Watson Studio Deep Learning, TensorFlow version is only available up to 1.5
 
-- Caffe2 is not available yet in Watson Machine Learning. Thus, the conversion script won't take any caffe2 input.
+- Caffe2 is not available yet in Watson Studio Deep Learning. Thus, the conversion script won't take any caffe2 input.
 
 - The conversion script won't take `small`, `medium`, and `large` T-shirt size because they will be deprecated soon.
 
