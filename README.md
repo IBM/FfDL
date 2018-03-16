@@ -34,7 +34,7 @@ FfDL is a collaboration platform for:
 
 * If you already have a FfDL deployment up and running, you can jump to [FfDL User Guide](docs/user-guide.md) to use FfDL for training your models.
 
-* If you have used FfDL to train your models, and want to use a scalable GPU enabled hosted service for further training and serving, please follow instructions [here](etc/converter/README.md) to deploy your models to [Watson Studio Deep Learning](https://www.ibm.com/cloud/machine-learning) service
+* If you have used FfDL to train your models, and want to use a scalable GPU enabled hosted service for further training and serving, please follow instructions [here](etc/converter/ffdl-wml.md) to train and serve your models using [Watson Studio Deep Learning](https://www.ibm.com/cloud/machine-learning) service
 
 * If you want to setup your own FfDL deployment, please follow the steps below. 
 
