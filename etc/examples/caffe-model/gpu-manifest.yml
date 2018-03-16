@@ -12,6 +12,8 @@ data_stores:
     type: s3_datastore
     training_data:
       container: mnist_lmdb_data
+    training_results:
+      container: dlaas-trained-models
     connection:
       type: s3_datastore
       auth_url: http://s3.default.svc.cluster.local
