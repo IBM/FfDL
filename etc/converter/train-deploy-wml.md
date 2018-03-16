@@ -1,13 +1,15 @@
-# Training and Serving your Models using WML
+# Training and Serving your Models using Watson Machine Learning
 
 ## Prerequisite
 
-Install [IBM Cloud CLI](https://console.bluemix.net/docs/cli/reference/bluemix_cli/get_started.html#getting-started) and [Machine Learning Plugin](). In addition setup your [AWS S3 command line](https://aws.amazon.com/cli/)
+Install [IBM Cloud CLI](https://console.bluemix.net/docs/cli/reference/bluemix_cli/get_started.html#getting-started) and Machine Learning Plugin. In addition setup your [AWS S3 command line](https://aws.amazon.com/cli/)
 
 ``` shell
-bx plugin install ml_cli_plugin_osx
+# Install Machine Learning Plugin using the IBM Cloud CLI
+bx plugin repo-add Bluemix https://plugins.ng.bluemix.net
+bx plugin install machine-learning -r bluemix
 bx target -o ORG -s SPACE
-``` 
+```
 
 # Steps
 
@@ -19,17 +21,13 @@ bx target -o ORG -s SPACE
     - [1.2 Get your service credentials](#12-get-your-service-credentials)
     - [1.3 Set the Machine Learning plugin it up with your creds obtained in step 2](#13-set-the-machine-learning-plugin-it-up-with-your-creds-obtained-in-step-2)
     - [1.4 Test your WML instance](#14-test-your-wml-instance)
-  - [2. Provision an Object Storage Instance, and upload Training Data](#2-provision-an-object-storage-instance-and-upload-training-data)
-  - [3. Create your Model Training Run](#3-create-your-model-training-run)
-    - [3.1 Create Deep Learning Model Program and put them in a Zip file](#31-create-deep-learning-model-program-and-put-them-in-a-zip-file)
-    - [3.2 Create a Training Run Manifest File](#32-create-a-training-run-manifest-file)
-  - [4. Submit, Monitor and Store a Training Run](#4-submit-monitor-and-store-a-training-run)
-    - [4.1 Submit](#41-submit)
-    - [4.2 Monitor](#42-monitor)
-    - [4.3 Save the Trained Model](#43-save-the-trained-model)
-  - [5. Deploy and Serve Models](#5-deploy-and-serve-models)
-    - [5.1 Deploy stored model to WML](#51-deploy-stored-model-to-wml)
-    - [5.2 Score the deployed model.](#52-score-the-deployed-model)
+  - [2. Submit, Monitor and Store a Training Run](#2-submit-monitor-and-store-a-training-run)
+    - [2.1 Submit](#21-submit)
+    - [2.2 Monitor](#22-monitor)
+    - [2.3 Save the Trained Model](#23-save-the-trained-model)
+  - [3. Deploy and Serve Models](#3-deploy-and-serve-models)
+    - [3.1 Deploy stored model to WML](#31-deploy-stored-model-to-wml)
+    - [3.2 Score the deployed model.](#32-score-the-deployed-model)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -39,148 +37,83 @@ bx target -o ORG -s SPACE
 ### 1.1 Create an instance of WML service and associated key using BX command line
 
 ``` shell
-bx cf create-service pm-20 lite Animesh-WML
-bx cf create-service-key Animesh-WML Animesh-WML-Key
-``` 
+bx cf create-service pm-20 lite watson-machine-learning
+bx cf create-service-key watson-machine-learning WML-Key
+```
 
 ### 1.2 Get your service credentials
 ``` shell
-bx cf service-key Animesh-WML Animesh-WML-Key
+bx cf service-key watson-machine-learning WML-Key
 ```
 
-### 1.3 Set the Machine Learning plugin it up with your creds obtained in step 2
+### 1.3 Set the Machine Learning plugin it up with your creds obtained in step 1.2
 
 ``` shell
-export ML_INSTANCE=11111111-aaaa-2222-bbbb-333333333333
-export ML_USERNAME=44444444-cccc-5555-dddd-666666666666
-export ML_PASSWORD=77777777-eeee-8888-ffff-999999999999
+export ML_INSTANCE=<instance_id from credentials>
+export ML_USERNAME=<username from credentials>
+export ML_PASSWORD=<password from credentials>
 export ML_ENV=<url from credentials>
  ```
 ### 1.4 Test your WML instance
 
 ``` shell
-AnimeshMacBook:~ animeshsingh$ bx ml list training-runs
-Fetching the list of training runs ...
-SI No   Name   guid   status   framework   version   submitted-at   
-
-0 records found.
-OK
-List all training-runs successful
+bx ml list training-runs
+# Fetching the list of training runs ...
+# SI No   Name   guid   status   framework   version   submitted-at   
+#
+# 0 records found.
+# OK
+# List all training-runs successful
  ```
- 
-## 2. Provision an Object Storage Instance, and upload Training Data
 
-Provision an [Object Storage instance](https://console.bluemix.net/catalog/services/cloud-object-storage). You then need to upload data in your Object storage. Here we are getting the data sets from [THE MNIST DATABASE of handwritten digits](http://yann.lecun.com/exdb/mnist/)
+## 2. Submit, Monitor and Store a Training Run
 
-``` shell
-export AWS_ACCESS_KEY_ID=test
-export AWS_SECRET_ACCESS_KEY=test
-
-# Create your training data and result buckets
-aws --endpoint-url=http://s3-api.us-geo.objectstorage.softlayer.net s3 mb <trainingDataBucket>
-aws --endpoint-url=http://s3-api.us-geo.objectstorage.softlayer.net s3 mb <trainingResultBucket>
-
-aws --endpoint-url=http://s3-api.us-geo.objectstorage.softlayer.net s3 cp t10k-labels-idx1-ubyte.gz s3://test-data-animesh/
-aws --endpoint-url=http://s3-api.us-geo.objectstorage.softlayer.net s3 cp train-labels-idx1-ubyte.gz s3://test-data-animesh/
-aws --endpoint-url=http://s3-api.us-geo.objectstorage.softlayer.net s3 cp t10k-images-idx3-ubyte.gz s3://test-data-animesh/
-aws --endpoint-url=http://s3-api.us-geo.objectstorage.softlayer.net s3 cp train-images-idx3-ubyte.gz s3://test-data-animesh/
-
-aws --endpoint-url=http://s3-api.us-geo.objectstorage.softlayer.net s3 ls s3://test-data-animesh
-2018-03-10 00:14:49    1648877 t10k-images-idx3-ubyte.gz
-2018-03-10 00:13:12       4542 t10k-labels-idx1-ubyte.gz
-2018-03-10 00:15:22    9912422 train-images-idx3-ubyte.gz
-2018-03-10 00:14:31      28881 train-labels-idx1-ubyte.gz
-``` 
-
-## 3. Create your Model Training Run
-### 3.1 Create Deep Learning Model Program and put them in a Zip file
-
-In this step we create a sample deep learning tensorflow program to train a model. For this, you must use the input_data.py and convolutional_network.py files, which you can find in the tf-model.zip file in this repository. This is for [THE MNIST DATABASE of handwritten digits](http://yann.lecun.com/exdb/mnist/)
-
-In the convolutional_network.py file, there is one part which is important for IBM Watson Machine Learning service to score the model properly. The model should be trained to the RESULT_DIR/model directory after training is complete.
-
-``` shell
-zip tf-model.zip convolutional_network.py input_data.py
-
-``` 
-
-### 3.2 Create a Training Run Manifest File
-
-Create a Training Run Manifest File. Please use the sample tf-train.yml from this repository. Make sure to point to your Object Storage instance
-``` shell
-model_definition:
-  name: tf-mnist-showtest1
-  author:
-    name: DL Developer
-    email: dl@example.com
-  description: Simple MNIST model implemented in TF
-  framework:
-    name: tensorflow
-    version: 1.2
-  execution:
-    command: python3 convolutional_network.py --trainImagesFile ${DATA_DIR}/train-images-idx3-ubyte.gz
-      --trainLabelsFile ${DATA_DIR}/train-labels-idx1-ubyte.gz --testImagesFile ${DATA_DIR}/t10k-images-idx3-ubyte.gz
-      --testLabelsFile ${DATA_DIR}/t10k-labels-idx1-ubyte.gz --learningRate 0.001
-      --trainingIters 20000
-    compute_configuration:
-      name: small
-training_data_reference:
-  name: training_data_reference_name
-  connection:
-    endpoint_url: "https://s3-api.us-geo.objectstorage.service.networklayer.com"
-    aws_access_key_id: "722432c254bc4eaa96e05897bf2779e2"
-    aws_secret_access_key: "286965ac10ecd4de8b44306288c7f5a3e3cf81976a03075c"
-  source:
-    bucket: training-data
-  type: s3
-training_results_reference:
-  name: training_results_reference_name
-  connection:
-    endpoint_url: "https://s3-api.us-geo.objectstorage.service.networklayer.com"
-    aws_access_key_id: "722432c254bc4eaa96e05897bf2779e2"
-    aws_secret_access_key: "286965ac10ecd4de8b44306288c7f5a3e3cf81976a03075c"
-  target:
-    bucket: training-results
-  type: s3
-``` 
-
-## 4. Submit, Monitor and Store a Training Run
-
-### 4.1 Submit
+Please zip all your model definition files in a zip file before you proceed to the next step.
+```shell
+zip sample-job.zip <model definition file1> <file2> ...
+```
+### 2.1 Submit
 
 Submit Training Run
 ``` shell
-bx ml train tf-model.zip tf-train.yaml
-``` 
+bx ml train sample-job.zip manifest-WML.yaml
+```
 
-### 4.2 Monitor
+### 2.2 Monitor
 
 Monitor Training Run
 
 ``` shell
 bx ml list training-runs
-bx ml show training-runs training-HrlzIHskg
-``` 
+bx ml show training-runs <training-guid>
+```
 Sample Output
 ``` shell
-Fetching the training runs details with MODEL-ID 'training-HrlzIHskg' ...
-ModelId        training-HrlzIHskg
-url            /v3/models/training-HrlzIHskg
-Name           tf-mnist-showtest1
-State          running
-Submitted_at   2017-11-17T17:01:39Z
+Fetching the training run details with MODEL-ID 'training-4tqYllRiR' ...
+ModelId                  training-4tqYllRiR   
+url                      /v3/models/training-4tqYllRiR   
+Name                     tf_mnist_with_summaries_tutorial   
+Training definition ID   6f7705bb-85ee-496b-984c-14b5d6bc756e   
+Command                  python mnist_with_summaries.py --train_images_file ${DATA_DIR}/train-images-idx3-ubyte.gz --train_labels_file ${DATA_DIR}/train-labels-idx1-ubyte.gz --test_images_file ${DATA_DIR}/t10k-images-idx3-ubyte.gz --test_labels_file ${DATA_DIR}/t10k-labels-idx1-ubyte.gz --max_steps 400   
+
+Source bucket            tf_training_data   
+Target bucket            tf_trained_model   
+Framework name           tensorflow   
+Framework version        1.5   
+State                    pending   
+Submitted_at             2018-03-16T18:51:14Z   
 OK
-Show trained-runs details successful
-``` 
+Show training-runs details successful
+```
 To continously monitor the logs logs of Training Run
 
 ``` shell
-bx ml monitor training-runs training-HrlzIHskg
+bx ml monitor training-runs <training-guid>
 ```
 
 When a training run has completed successfully (or failed) all files written to $RESULT_DIR and the logs from the run should be written to the Cloud Object Storage bucket specified in the setting training_results_reference within the training manifest file, under a folder with the same name as the model id.
 
-### 4.3 Save the Trained Model
+### 2.3 Save the Trained Model
 
 Once a training run has completed successfully, the trained model can be permanently stored into the repository from from where it can be later deployed for scoring. To do this use the command bx ml store training-runs <model-id>:
 
@@ -194,27 +127,27 @@ OK
 Model store successful. Model-ID is '19db0ae7-3a9d-44e7-8e9d-fce3f4f8e0eb'.
 ```
 
-You can inspect the trained model and logs in the object store. These appear in the training-HrlzIHskg folder in the test_results bucket.
+You can inspect the trained model and logs in the object store. These appear in the <training-guid> folder in the test_results bucket.
 
 You can list the files you have in "test_results"
 
 ``` shell
 aws --endpoint-url=<ibm-cos-endpoint-url> --profile ibm_cos s3 ls s3://test_data/
-training-HrlzIHskg/learner-1/load-data.log
-training-HrlzIHskg/learner-1/load-model.log
-training-HrlzIHskg/learner-1/training-log.txt
-training-HrlzIHskg/model/saved_model.pb
-training-HrlzIHskg/model/variables/variables.data-00000-of-00001
-training-HrlzIHskg/model/variables/variables.index
-training-HrlzIHskg/saved_model.tar.gz
-You can download the saved model by running the command below
+# training-HrlzIHskg/learner-1/load-data.log
+# training-HrlzIHskg/learner-1/load-model.log
+# training-HrlzIHskg/learner-1/training-log.txt
+# training-HrlzIHskg/model/saved_model.pb
+# training-HrlzIHskg/model/variables/variables.data-00000-of-00001
+# training-HrlzIHskg/model/variables/variables.index
+# training-HrlzIHskg/saved_model.tar.gz
 
+# You can download the saved model by running the command below
 aws --endpoint-url=<ibm-cos-endpoint-url> --profile ibm_cos s3 cp s3://test_data/saved_model.tar.gz saved_model.tar.gz
-``` 
+```
 
-## 5. Deploy and Serve Models
+## 3. Deploy and Serve Models
 
-### 5.1 Deploy stored model to WML
+### 3.1 Deploy stored model to WML
 
 
 ``` shell
@@ -226,15 +159,15 @@ Deploying the model with MODEL-ID 'a8379aaa-ea31-4c22-824d-89a01315dd6d'...
 DeploymentId       9d6a656c-e9d4-4d89-b335-f9da40e52179   
 Scoring endpoint   https://2000ab8b-7e81-41b3-ad07-b70f849594f5.wml-fvt.ng.bluemix.net/v3/published_models/a8379aaa-ea31-4c22-824d-89a01315dd6d/deployments/9d6a656c-e9d4-4d89-b335-f9da40e52179/online   
 Name               test34   
-Type               tensorflow-1.2   
-Runtime            python-3.5   
-Created at         2017-11-28T12:46:19.770Z   
+Type               tensorflow-1.5    
+Runtime            python-2.7   
+Created at         2018-03-16T19:25:15.498Z   
 OK
 Deploy model successful
 
 ```
 
-### 5.2 Score the deployed model. 
+### 3.2 Score the deployed model.
 
 To score the model, the scoring_payload.json file must use the following format:
 ``` shell

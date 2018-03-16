@@ -226,20 +226,20 @@ def train():
             # Commnent the below code since CUPTI library is not Available on basic
             # TensorFlow images that use CUDA 9.
             #
-            # if i % 100 == 99:  # Record execution stats
-            #     run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-            #     run_metadata = tf.RunMetadata()
-            #     # summary, _, loss_result = sess.run([merged, train_step, loss],
-            #     summary, _ = sess.run([merged, train_step],
-            #                           feed_dict=feed_dict(True),
-            #                           options=run_options,
-            #                           run_metadata=run_metadata)
-            #     train_writer.add_run_metadata(run_metadata, 'step%03d' % i)
-            #     train_writer.add_summary(summary, i)
-            #     print('Adding run metadata for', i)
-            # else:  # Record a summary
-            summary, _ = sess.run([merged, train_step], feed_dict=feed_dict(True))
-            train_writer.add_summary(summary, i)
+            if i % 100 == 99:  # Record execution stats
+                run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+                run_metadata = tf.RunMetadata()
+                # summary, _, loss_result = sess.run([merged, train_step, loss],
+                summary, _ = sess.run([merged, train_step],
+                                      feed_dict=feed_dict(True),
+                                      options=run_options,
+                                      run_metadata=run_metadata)
+                train_writer.add_run_metadata(run_metadata, 'step%03d' % i)
+                train_writer.add_summary(summary, i)
+                print('Adding run metadata for', i)
+            else:  # Record a summary
+                summary, _ = sess.run([merged, train_step], feed_dict=feed_dict(True))
+                train_writer.add_summary(summary, i)
 
     save_path = saver.save(sess, model_path)
 

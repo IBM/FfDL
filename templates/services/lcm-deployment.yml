@@ -40,7 +40,7 @@ spec:
 {{ end }}
       containers:
       - name: ffdl-lcm-container
-        image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}/{{.Values.docker.image_prefix}}lcm:{{.Values.trainer.version}}
+        image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}/{{.Values.docker.image_prefix}}lcm:{{.Values.lcm.version}}
 {{ if .Values.docker.pullPolicy }}
         imagePullPolicy: {{.Values.docker.pullPolicy}}
 {{ end }}
