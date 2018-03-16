@@ -1,6 +1,6 @@
-# Overview
+# Deploy FfDL Models to Watson Studio, and vice versa
 
-Since Watson Studio Deep Learning and FfDL use different model definition file i.e. manifest.yml to define their training jobs, please us this simple script to help you convert between the two different version of the manifest.yml. The [convert-to-WML.py](convert-to-WML.py) and [convert-to-FfDL.py](convert-to-FfDL.py) are the conversion scripts for converting your FfDL training job's manifest.yml to Watson Studio Deep Learning format and vice versa.
+Since Watson Studio Deep Learning and FfDL use different model definition file i.e. manifest.yml to define their training jobs, please use this simple script to help you convert between the two different version of the manifest.yml. The [convert-to-WML.py](convert-to-WML.py) and [convert-to-FfDL.py](convert-to-FfDL.py) are the conversion scripts for converting your FfDL training job's manifest.yml to Watson Studio Deep Learning format and vice versa.
 
 ## Instructions
 
