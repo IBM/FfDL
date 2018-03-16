@@ -30,9 +30,14 @@ FfDL is a collaboration platform for:
 
 * The minimum recommended capacity for FfDL is 4GB Memory and 2 CPUs.
 
-* If you already have a FfDL deployment up and running, you can jump to [User Guide](docs/user-guide.md) to use FfDL for training your models.
-
 ## Steps
+
+* If you already have a FfDL deployment up and running, you can jump to [FfDL User Guide](docs/user-guide.md) to use FfDL for training your models.
+
+* If you have used FfDL to train your models, and want to use a scalable GPU enabled hosted service for further training and serving, please follow instructions here to deploy your models to Watson Studio
+
+* If you want to setup your own FfDL deployment, please follow the steps below. 
+
 1. [Quick Start](#1-quick-start)
   - 1.1 [Installation using Vagrant](#11-installation-using-vagrant)
   - 1.2 [Installation using Minikube](#12-installation-using-minikube)
