@@ -2,7 +2,7 @@
 
 ## Steps
 1. [Convert FfDL Model defition to Watson Studio Deep Learning Service definition](#1-convert-ffdl-model-defition-to-watson-studio-deep-learning-service-definition)
-2. [Train and Serve using Watson Studio Deep Learning Service](#2-monitoring)
+2. [Train and Serve using Watson Studio Deep Learning Service](train-deploy-wml.md)
 
 ## 1. Convert FfDL Model definition to Watson Studio Deep Learning service definition
 
