@@ -1,4 +1,4 @@
-# Train Models using GPUs
+# Train Deep Learning Models using GPUs
 
 ***This is still under development, any of the following instructions may have significant changes in the future.***
 
