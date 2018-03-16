@@ -1,11 +1,10 @@
 # Using Watson Studio Deep Learning Service to train and serve your FfDL Models 
 
 ## Steps
-1. [Convert FfDL Model defition to Watson Studio Deep Learning Service definition](#1-Convert FfDL Model defition to Watson Studio Deep Learning Service definition)
+1. [Convert FfDL Model defition to Watson Studio Deep Learning Service definition](#1-convert-ffdl-model-defition-to-watson-studio-deep-learning-service-definition)
 2. [Train and Serve using Watson Studio Deep Learning Service](#2-monitoring)
 
 ## 1. Convert FfDL Model definition to Watson Studio Deep Learning service definition
-
 
 Since Watson Studio Deep Learning and FfDL use different model definition file i.e. manifest.yml to define their training jobs, please use this simple script to help you convert between the two different version of the manifest.yml. The [convert-to-WML.py](convert-to-WML.py) and [convert-to-FfDL.py](convert-to-FfDL.py) are the conversion scripts for converting your FfDL training job's manifest.yml to Watson Studio Deep Learning format and vice versa.
 
