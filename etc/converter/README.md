@@ -1,4 +1,4 @@
-# Deploy FfDL Models to Watson Studio, and vice versa
+# Use FfDL Model files with Watson Studio Deep Learning Service, and vice versa
 
 Since Watson Studio Deep Learning and FfDL use different model definition file i.e. manifest.yml to define their training jobs, please use this simple script to help you convert between the two different version of the manifest.yml. The [convert-to-WML.py](convert-to-WML.py) and [convert-to-FfDL.py](convert-to-FfDL.py) are the conversion scripts for converting your FfDL training job's manifest.yml to Watson Studio Deep Learning format and vice versa.
 
@@ -10,7 +10,7 @@ Since Watson Studio Deep Learning and FfDL use different model definition file i
 	cd FfDL/converter
 	```
 
-2. Use the following commands to install the necessary Python packages and run the Python Job to build your custom Watson Machine Learning/FfDL `manifest.yml`.
+2. Use the following commands to install the necessary Python packages and run the Python Job to build your custom Watson Studio Deep Learning/FfDL `manifest.yml`.
 
 * ```<inputfile>:``` The manifest file you want to convert.
 * ```<outputfile>:``` The filename for the converted manifest file. Default is `manifest-WML.yaml`/`manifest-FfDL.yaml`.
@@ -55,4 +55,4 @@ Since Watson Studio Deep Learning and FfDL use different model definition file i
 
 The example FfDL manifest.yml is the [sample-FfDL.yaml](sample-FfDL.yaml). The description for each field is available at the [user-guide.md](../../docs/user-guide.md#24-creating-manifest-file).
 
-The example Watson Machine Learning manifest.yml is the [sample-WML.yaml](sample-WML.yaml). The description for each field is available at the [model definition guide](https://dataplatform.ibm.com/docs/content/analyze-data/ml_dlaas_working_with_training_run.html?audience=wdp&linkInPage=true) at Watson Data Platform.
+The example Watson Studio Deep Learning manifest.yml is the [sample-WML.yaml](sample-WML.yaml). The description for each field is available at the [model definition guide](https://dataplatform.ibm.com/docs/content/analyze-data/ml_dlaas_working_with_training_run.html?audience=wdp&linkInPage=true) at Watson Studio.
