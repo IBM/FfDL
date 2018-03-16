@@ -1,4 +1,4 @@
-# Model Training and Serving using WML
+# Training and Serving your Models using WML
 
 ## Prerequisite
 
