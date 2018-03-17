@@ -26,13 +26,22 @@ FfDL is a collaboration platform for:
   Once installed, use the command `make minikube` to start Minikube and set up local network routes. Alternatively,
   use the Vagrant based setup to automatically install a local Kubernetes cluster.
 
-* Follow the appropriate instructions for deployment on [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) or [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)
+* Follow the appropriate instructions for standing up your Kubernetes cluster using [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) or [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)
 
 * The minimum recommended capacity for FfDL is 4GB Memory and 2 CPUs.
 
-* If you already have a FfDL deployment up and running, you can jump to [User Guide](docs/user-guide.md) to use FfDL for training your models.
+## Usage Scenarios
+
+* If you already have a FfDL deployment up and running, you can jump to [FfDL User Guide](docs/user-guide.md) to use FfDL for training your models. 
+
+* If you have FfDL confiugured to use GPUs, and want to train using GPUs, follow steps [here](docs/gpu-guide.md)
+
+* If you have used FfDL to train your models, and want to use a GPU enabled public cloud hosted service for further training and serving, please follow instructions [here](etc/converter/ffdl-wml.md) to train and serve your models using [Watson Studio Deep Learning](https://www.ibm.com/cloud/machine-learning) service
+
+* If you are starting and want to setup your own FfDL deployment, please follow the steps below. 
 
 ## Steps
+
 1. [Quick Start](#1-quick-start)
   - 1.1 [Installation using Vagrant](#11-installation-using-vagrant)
   - 1.2 [Installation using Minikube](#12-installation-using-minikube)

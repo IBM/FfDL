@@ -1,22 +1,30 @@
-# Convert FfDL Model Definition File to Watson Studio Deep Learning Service format, and vice versa
+# Using Watson Studio Deep Learning Service to train and serve your FfDL Models
+
+## Steps
+1. [Convert FfDL Model defition to Watson Studio Deep Learning Service definition](#1-convert-ffdl-model-definition-to-watson-studio-deep-learning-service-definition)
+2. [Train and Serve using Watson Studio Deep Learning Service](train-deploy-wml.md)
+
+## 1. Convert FfDL Model definition to Watson Studio Deep Learning service definition
 
 Since Watson Studio Deep Learning and FfDL use different model definition file i.e. manifest.yml to define their training jobs, please use this simple script to help you convert between the two different version of the manifest.yml. The [convert-to-WML.py](convert-to-WML.py) and [convert-to-FfDL.py](convert-to-FfDL.py) are the conversion scripts for converting your FfDL training job's manifest.yml to Watson Studio Deep Learning format and vice versa.
 
-## Instructions
+### Instructions
 
 1. Clone and go into this directory
-	```bash
+	```shell
 	git clone https://github.com/IBM/FfDL
-	cd FfDL/converter
+	cd FfDL/etc/converter
 	```
 
-2. Use the following commands to install the necessary Python packages and run the Python Job to build your custom Watson Studio Deep Learning/FfDL `manifest.yml`.
+2. Since Watson Machine Learning only takes Cloud Object Storage, if you are using a Local S3 Object Storage on your cluster, please refer to the user-guide [Cloud Object Store](../../docs/user-guide.md#32-cloud-object-store) to provision your cloud object storage, upload data to cloud object storage, and configure your FfDL's `manifest.yml` to use the cloud object storage endpoint and buckets.
+
+3. Use the following commands to install the necessary Python packages and run the Python Job to build your custom Watson Studio Deep Learning/FfDL `manifest.yml`.
 
 * ```<inputfile>:``` The manifest file you want to convert.
 * ```<outputfile>:``` The filename for the converted manifest file. Default is `manifest-WML.yaml`/`manifest-FfDL.yaml`.
 * ```<samplefile>:``` The sample manifest format file with all the default values. Default is `sample-WML.yaml`/`sample-FfDL.yaml`.
 
-	```bash
+	```shell
 	pip install -r requirement.txt
 
   # Convert FfDL manifest.yml to Watson Studio Deep Learning format
@@ -29,7 +37,7 @@ Since Watson Studio Deep Learning and FfDL use different model definition file i
 
 4. Copy the new YAML file and use it for your FfDL/Watson Studio Deep Learning training job.
 
-5. Note that all the T-shirt size in Watson Studio Deep Learning requires GPU, so that will be the default conversion. If you only want to run on CPU, please modify the `gpus` section to 0 along with `cpus` and `memory` based on your need. Also change the framework version with the one enabled in CPU. You can find the list of CPU framework version at [user-guide.md](../../docs/user-guide.md#1-supported-deep-learning-frameworks). Below is the T-shirt size table between Watson Studio Deep Learning and FfDL.
+5. Note that all the T-shirt size in Watson Studio Deep Learning requires GPU, so that will be the default conversion. If you only want to run on CPU, please modify the `gpus` section to 0 along with `cpus` and `memory` based on your need. Then, change the framework version with the one enabled in CPU. You can find the list of CPU framework version at [user-guide.md](../../docs/user-guide.md#1-supported-deep-learning-frameworks). Below is the T-shirt size table between Watson Studio Deep Learning and FfDL.
 
 | T-shirt Tiers     | GPUs    | RAM (GB) | CPUs |
 | ------------- | ------------- | --------------- | --------------- |
@@ -40,6 +48,10 @@ Since Watson Studio Deep Learning and FfDL use different model definition file i
 | p100x2 | 2 | 48 | 16 |
 | v100 | 1 | 24 | 26 |
 | v100x2 | 2 | 48 | 52 |
+
+## 2. Train and Serve using Watson Studio Deep Learning Service
+
+Please follow the [Train and Serve using Watson Studio Deep Learning Service](train-deploy-wml.md) instructions.
 
 ## Troubleshooting
 
