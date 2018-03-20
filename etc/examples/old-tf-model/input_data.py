@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 
 """Functions for downloading and reading MNIST data."""
