@@ -43,10 +43,9 @@ FfDL is a collaboration platform for:
 ## Steps
 
 1. [Quick Start](#1-quick-start)
-  - 1.1 [Installation using Vagrant](#11-installation-using-vagrant)
-  - 1.2 [Installation using Minikube](#12-installation-using-minikube)
-  - 1.3 [Installation using Kubernetes Cluster](#13-installation-using-kubernetes-cluster)
-  - 1.4 [Installation using IBM Cloud Kubernetes Cluster](#14-installation-using-ibm-cloud-kubernetes-cluster)
+  - 1.1 [Installation using Minikube](#11-installation-using-minikube)
+  - 1.2 [Installation using Kubernetes Cluster](#12-installation-using-kubernetes-cluster)
+  - 1.3 [Installation using IBM Cloud Kubernetes Cluster](#13-installation-using-ibm-cloud-kubernetes-cluster)
 2. [Test](#2-test)
 3. [Monitoring](#3-monitoring)
 4. [Development](#4-development)
@@ -65,17 +64,7 @@ into an existing Kubernetes cluster.
 
 > Note: If your Kubernetes Cluster version is 1.7 or below, please go to the [values.yaml](values.yaml) and change `k8s_1dot8_or_above` to **false**.
 
-### 1.1 Installation using Vagrant
-
-This is the simplest and recommended option for local testing. The following commands will automatically
-spin up a Vagrant box with Kubernetes and the FfDL platform deployed on top of it:
-``` shell
-export VM_TYPE=vagrant
-vagrant up
-make deploy
-```
-
-### 1.2 Installation using Minikube
+### 1.1 Installation using Minikube
 
 If you have Minikube installed on your machine, use these commands to deploy the FfDL platform:
 ``` shell
@@ -84,7 +73,7 @@ make minikube
 make deploy
 ```
 
-### 1.3 Installation using Kubernetes Cluster
+### 1.2 Installation using Kubernetes Cluster
 
 To install FfDL to a proper Kubernetes cluster, make sure `kubectl` points to the right namespace,
 then deploy the platform services:
@@ -96,7 +85,7 @@ export PUBLIC_IP=<Cluster Public IP>
 make deploy
 ```
 
-### 1.4 Installation using IBM Cloud Kubernetes Cluster
+### 1.3 Installation using IBM Cloud Kubernetes Cluster
 
 To install FfDL to a proper IBM Cloud Kubernetes cluster, make sure `kubectl` points to the right namespace
 and your machine is logged in with `bx login`, then deploy the platform services:
@@ -195,8 +184,8 @@ helm status $(helm list | grep ffdl | awk '{print $1}' | head -n 1) | grep STATU
 > Note: If you are using a IBM Cloud Cluster, make sure you are logged in with `bx login`.
 
 ``` shell
-# If your Cluster is running on Vagrant or Minikube, replace "ibmcloud" to "vagrant" | "minikube"
-# If your Cluster is not running on Vagrant, Minikube, or IBM Cloud, replace "ibmcloud" to "none"
+# If your Cluster is running on Minikube, replace "ibmcloud" to "minikube"
+# If your Cluster is not running on Minikube or IBM Cloud, replace "ibmcloud" to "none"
 export VM_TYPE=ibmcloud
 
 # Replace <Your Cluster Name> with your IBM Cloud Cluster Name if your cluster is on IBM Cloud.
