@@ -21,7 +21,7 @@ data_stores:
 
 framework:
   name: tensorflow
-  version: "latest"
+  version: "1.5.0"
   command: >
     python mnist_with_summaries.py
     --train_images_file ${DATA_DIR}/train-images-idx3-ubyte.gz
