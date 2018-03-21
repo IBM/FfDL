@@ -44,7 +44,7 @@ def createJob(sample,data):
 		sample['training_data_reference']['connection']['access_key_id'] = data['data_stores'][0]['connection']['user_name']
 		sample['training_data_reference']['connection']['secret_access_key'] = data['data_stores'][0]['connection']['password']
 		sample['training_data_reference']['source']['bucket'] = data['data_stores'][0]['training_data']['container']
-		sample['training_results_reference']['name'] = data['data_stores'][0]['id']
+		sample['training_results_reference']['name'] = ''.join([data['data_stores'][0]['id'],"-results"])
 		sample['training_results_reference']['connection']['endpoint_url'] = data['data_stores'][0]['connection']['auth_url']
 		sample['training_results_reference']['connection']['access_key_id'] = data['data_stores'][0]['connection']['user_name']
 		sample['training_results_reference']['connection']['secret_access_key'] = data['data_stores'][0]['connection']['password']
