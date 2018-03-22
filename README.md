@@ -403,7 +403,7 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 
 * To remove FfDL on your Cluster, simply run `make undeploy`
 
-* Since the current implementation of FfDL will need write access for its mounted volume, if you are using Kubernetes 1.9.4 or above, please modify the feature gate `ReadOnlyAPIDataVolumes=false`. 
+* Since the current implementation of FfDL needs write access for its mounted volume, if you are using Kubernetes 1.9.4 or above, please modify the feature gate `ReadOnlyAPIDataVolumes=false`. 
 
 ## 9. References
 
