@@ -32,13 +32,13 @@ FfDL is a collaboration platform for:
 
 ## Usage Scenarios
 
-* If you already have a FfDL deployment up and running, you can jump to [FfDL User Guide](docs/user-guide.md) to use FfDL for training your models. 
+* If you already have a FfDL deployment up and running, you can jump to [FfDL User Guide](docs/user-guide.md) to use FfDL for training your models.
 
 * If you have FfDL confiugured to use GPUs, and want to train using GPUs, follow steps [here](docs/gpu-guide.md)
 
 * If you have used FfDL to train your models, and want to use a GPU enabled public cloud hosted service for further training and serving, please follow instructions [here](etc/converter/ffdl-wml.md) to train and serve your models using [Watson Studio Deep Learning](https://www.ibm.com/cloud/machine-learning) service
 
-* If you are starting and want to setup your own FfDL deployment, please follow the steps below. 
+* If you are starting and want to setup your own FfDL deployment, please follow the steps below.
 
 ## Steps
 
@@ -402,8 +402,6 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
   make sure to follow the standard Go directory layout (see [Prerequisites section]{#Prerequisites}).
 
 * To remove FfDL on your Cluster, simply run `make undeploy`
-
-* Since the current implementation of FfDL needs write access for its mounted volume, if you are using Kubernetes 1.9.4 or above, please modify the feature gate `ReadOnlyAPIDataVolumes=false`. 
 
 ## 9. References
 
