@@ -35,7 +35,7 @@ func extendLearnerContainer(learner *v1core.Container, req *service.JobDeploymen
 		// TODO!
 	}
 
-	extCmd := "export PATH=/:$PATH; cp " + learnerEntrypointFilesPath + "/*.sh /; chmod +x /*.sh; "
+	extCmd := "export PATH=/usr/local/bin/:$PATH; cp " + learnerEntrypointFilesPath + "/*.sh /usr/local/bin/; chmod +x /usr/local/bin/*.sh;"
 	extMount := v1core.VolumeMount{
 		Name:      learnerEntrypointFilesVolume,
 		MountPath: learnerEntrypointFilesPath,
