@@ -215,10 +215,18 @@ $(addprefix pull-, $(TEST_IMAGES)): pull-%: %
 
 $(TEST_IMAGES): ;
 
+tag-dockerhub-images-to-latest: $(addprefix tag-, $(TEST_IMAGES))
+
+$(addprefix tag-, $(TEST_IMAGES)): tag-%: %
+	@TRAVIS_IMAGES=$< make .tag-dockerhub-latest
+
 # Helper targets
 
 .pull-dockerhub-images:
 	docker pull $(TRAVIS_IMAGES):$(TRAVIS_IMAGES_VERSION)
+
+.tag-dockerhub-latest:
+	docker tag $(TRAVIS_IMAGES):$(TRAVIS_IMAGES_VERSION) $(TRAVIS_IMAGES):latest
 
 .build-service:
 	(cd ./$(SERVICE_NAME)/ && (test ! -e main.go || CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w" -a -installsuffix cgo -o bin/$(BINARY_NAME)))
