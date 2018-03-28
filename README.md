@@ -23,8 +23,7 @@ FfDL is a collaboration platform for:
 * `S3 CLI`: The [command-line interface](https://aws.amazon.com/cli/) to configure your Object Storage
 
 * An existing Kubernetes cluster (e.g., [Minikube](https://github.com/kubernetes/minikube) for local testing).
-  Once installed, use the command `make minikube` to start Minikube and set up local network routes. Alternatively,
-  use the Vagrant based setup to automatically install a local Kubernetes cluster.
+  Once installed, use the command `make minikube` to start Minikube and set up local network routes. 
 
 * Follow the appropriate instructions for standing up your Kubernetes cluster using [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) or [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)
 
@@ -32,13 +31,13 @@ FfDL is a collaboration platform for:
 
 ## Usage Scenarios
 
-* If you already have a FfDL deployment up and running, you can jump to [FfDL User Guide](docs/user-guide.md) to use FfDL for training your models.
+* If you already have a FfDL deployment up and running, you can jump to [FfDL User Guide](docs/user-guide.md) to use FfDL for training your deep learning models.
 
 * If you have FfDL confiugured to use GPUs, and want to train using GPUs, follow steps [here](docs/gpu-guide.md)
 
-* If you have used FfDL to train your models, and want to use a GPU enabled public cloud hosted service for further training and serving, please follow instructions [here](etc/converter/ffdl-wml.md) to train and serve your models using [Watson Studio Deep Learning](https://www.ibm.com/cloud/machine-learning) service
+* If you have used FfDL to train your models, and want to use a GPU enabled public cloud hosted service for further training and serving, please follow instructions [here](etc/converter/ffdl-wml.md) to train and serve your models using [Watson Studio Deep Learning](https://www.ibm.com/cloud/deep-learning) service
 
-* If you are starting and want to setup your own FfDL deployment, please follow the steps below.
+* If you are getting started and want to setup your own FfDL deployment, please follow the steps below.
 
 ## Steps
 
@@ -59,8 +58,7 @@ FfDL is a collaboration platform for:
 
 ## 1. Quick Start
 
-There are multiple installation paths for installing FfDL locally ("1-click-install") or
-into an existing Kubernetes cluster.
+There are multiple installation paths for installing FfDL locally ("1-click-install") or into an existing Kubernetes cluster.
 
 > Note: If your Kubernetes Cluster version is 1.7 or below, please go to the [values.yaml](values.yaml) and change `k8s_1dot8_or_above` to **false**.
 
