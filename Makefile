@@ -22,6 +22,10 @@ UI_REPO = git@github.com:IBM/FfDL-dashboard.git
 CLI_CMD = $(shell pwd)/cli/bin/ffdl-$(UNAME_SHORT)
 CLUSTER_NAME ?= mycluster
 PUBLIC_IP ?= 127.0.0.1
+TRAVIS_IMAGES_VERSION ?= 0.0.1-master
+TEST_IMAGES = $(addprefix $(DOCKER_NAMESPACE)/, $(TEST_IMAGES_SUBFIX))
+TEST_IMAGES_SUBFIX = ffdl-lcm ffdl-trainer ffdl-metrics ffdl-databroker_s3 ffdl-ui ffdl-restapi ffdl-jobmonitor ffdl-controller tensorboard_extract_1.3-py3 log_collector ffdl-databroker_objectstorage tensorboard_extract
+
 
 IMAGE_DIR := $(IMAGE_NAME)
 ifneq ($(filter $(IMAGE_NAME),controller ),)
@@ -203,7 +207,18 @@ test-submit:      ## Submit test training job
 				kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c load-data; \
 				exit 1);
 
+pull-dockerhub-images:  ## Pull FfDL images from dockerhub
+pull-dockerhub-images: $(addprefix pull-, $(TEST_IMAGES))
+
+$(addprefix pull-, $(TEST_IMAGES)): pull-%: %
+	@TRAVIS_IMAGES=$< make .pull-dockerhub-images
+
+$(TEST_IMAGES): ;
+
 # Helper targets
+
+.pull-dockerhub-images:
+	docker pull $(TRAVIS_IMAGES):$(TRAVIS_IMAGES_VERSION)
 
 .build-service:
 	(cd ./$(SERVICE_NAME)/ && (test ! -e main.go || CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w" -a -installsuffix cgo -o bin/$(BINARY_NAME)))
@@ -233,7 +248,7 @@ install-minikube-in-ci:
 		chmod +x kubectl && sudo mv kubectl /usr/local/bin/
 	@curl -s -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && \
 		chmod +x minikube && sudo mv minikube /usr/local/bin/
-	@sudo minikube start --vm-driver=none --feature-gates=ReadOnlyAPIDataVolumes=false
+	@sudo minikube start --vm-driver=none
 	@minikube update-context
 	@JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; \
 		until kubectl get nodes -o jsonpath="$$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
