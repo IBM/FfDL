@@ -145,6 +145,9 @@ func getResources(s *lcmService, logr *logger.LocLoggingEntry) (bool, *allocatab
 		}
 	}
 
+	// Set the resourceGPU to "nvidia.com/gpu" if you want to run your GPU workloads using device plugin.
+	resourceGPU := "alpha.kubernetes.io/nvidia-gpu"
+
 	//By querying nodes, determine the number of allocatable resources
 	for _, node := range nodes.Items {
 		availableResources := node.Status.Allocatable
@@ -153,7 +156,7 @@ func getResources(s *lcmService, logr *logger.LocLoggingEntry) (bool, *allocatab
 		cpu, _ := strconv.ParseFloat(cpuQty.AsDec().String(), 64)
 		memQty := availableResources[v1core.ResourceMemory]
 		mem, _ := strconv.ParseFloat(memQty.AsDec().String(), 64)
-		gpuQty := availableResources[v1core.ResourceNvidiaGPU]
+		gpuQty := availableResources[resourceGPU]
 		gpu, _ := strconv.ParseFloat(gpuQty.AsDec().String(), 64)
 
 		cpusAllocatable += cpu
@@ -171,7 +174,7 @@ func getResources(s *lcmService, logr *logger.LocLoggingEntry) (bool, *allocatab
 			cpu, _ := strconv.ParseFloat(cpuQty.AsDec().String(), 64)
 			memQty := resourcesRequested[v1core.ResourceMemory]
 			mem, _ := strconv.ParseFloat(memQty.AsDec().String(), 64)
-			gpuQty := resourcesRequested[v1core.ResourceNvidiaGPU]
+			gpuQty := resourcesRequested[resourceGPU]
 			gpu, _ := strconv.ParseFloat(gpuQty.AsDec().String(), 64)
 
 			cpusRequested += cpu

@@ -23,7 +23,7 @@ FfDL is a collaboration platform for:
 * `S3 CLI`: The [command-line interface](https://aws.amazon.com/cli/) to configure your Object Storage
 
 * An existing Kubernetes cluster (e.g., [Minikube](https://github.com/kubernetes/minikube) for local testing).
-  Once installed, use the command `make minikube` to start Minikube and set up local network routes. 
+  Once installed, use the command `make minikube` to start Minikube and set up local network routes.
 
 * Follow the appropriate instructions for standing up your Kubernetes cluster using [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) or [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)
 
@@ -107,36 +107,7 @@ The platform ships with a simple Grafana monitoring dashboard. The URL is printe
 
 ## 4. Development
 
-Use the following instructions if you want to run a full development build, compile the code, and build the
-Docker images locally.
-
-Install:
-
-* `go`: a working [Go](https://golang.org/) environment is required to build the code
-
-* `glide`: the glide package manager for Go (https://glide.sh)
-
-* `npm`: the Node.js package manager (https://www.npmjs.com) for building the Web UI
-
-* `Go` is very specific about directory layouts. Make sure to set your `$GOPATH` and clone this repo to a directory
-`$GOPATH/src/github.com/IBM/FfDL` before proceeding with the next steps.
-
-
-Then, fetch the dependencies via:
-```
-glide install
-```
-Compile the code and build the Docker images via:
-```
-make build
-make docker-build
-```
-
-Make sure `kubectl` points to the right target context/namespace, then deploy the services to your Kubernetes
-environment (using `helm`):
-```
-make deploy
-```
+Please refer to the [developer guide](docs/developer-guide.md) for more details.
 
 ## 5. Detailed Installation Instructions
 
