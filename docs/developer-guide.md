@@ -39,7 +39,7 @@ Please modify the `resourceGPU` under [lcm/service/lcm/container_helper.go](../l
 
 ## Enable custom learner images with development build
 
-Please uncomment the following section under [trainer/trainer/frameworks.go](../trainer/trainer/frameworks.go#L39) and rebuild the trainer image to enable custom learner images from any users. Alternatively, you can use the pre-built images `ffdl/ffdl-trainer:custom` on DockerHub.
+Please uncomment the following section under [trainer/trainer/frameworks.go](../trainer/trainer/frameworks.go#L39) and rebuild the trainer image to enable custom learner images from any users. Alternatively, you can use the pre-built images `ffdl/ffdl-trainer:customizable` on DockerHub.
 
 ``` go
 if fwName == "custom" {
