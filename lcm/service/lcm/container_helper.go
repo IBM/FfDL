@@ -527,7 +527,7 @@ func constructLearnerContainer(req *service.JobDeploymentRequest, learnerID int,
 	cmd := wrapCommand(command, learnerContainerName, PodLevelJobDir)
 
 	// Set the resourceGPU to "nvidia.com/gpu" if you want to run your GPU workloads using device plugin.
-	resourceGPU := "alpha.kubernetes.io/nvidia-gpu"
+	var resourceGPU v1core.ResourceName = v1core.ResourceNvidiaGPU
 
 	learnerContainer := v1core.Container{
 		Name:            learnerContainerName,
