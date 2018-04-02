@@ -35,6 +35,11 @@ func validateFrameworks(fw *grpc_trainer_v2.Framework) (bool, string) {
 		return false, "framework version is required"
 	}
 
+	// Uncomment the below condition to enable users to apply any custom learner.
+	// if fwName == "custom" {
+	// 	return true, ""
+	// }
+
 	loc := config.GetCurrentLearnerConfigLocation(fwName, fwVersion)
 	if loc == "" {
 		return false, fmt.Sprintf("%s version %s not supported", fwName, fwVersion)
