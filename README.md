@@ -237,7 +237,7 @@ done
 ```
 
 5. Now you should have all the necessary training data set in your object storage. Let's go ahead to set up your restapi endpoint
-and default credentials for Deep Learning as a Service. Once you done that, you can start running jobs using the FfDL CLI(executable
+and default credentials for Deep Learning as a Service. Once you done that, you can start running jobs using the FfDL CLI (executable
 binary).
 
 ```shell
@@ -251,7 +251,7 @@ $CLI_CMD train etc/examples/tf-model/manifest.yml etc/examples/tf-model
 
 Congratulation, you had submitted your first job on FfDL. You can check your FfDL status either from the FfDL UI or simply run `$CLI_CMD list`
 
-> You can learn about how to create your own model definition files and manifest.yaml at [user guild](docs/user-guide.md#2-create-new-models-with-ffdl).
+> You can learn about how to create your own model definition files and `manifest.yaml` at [user guild](docs/user-guide.md#2-create-new-models-with-ffdl).
 
 6. Since it's simple and straightforward to submit jobs with different deep learning framework on FfDL, let's try to run a Caffe Job.
 
@@ -262,7 +262,7 @@ $CLI_CMD train etc/examples/caffe-model/manifest.yml etc/examples/caffe-model
 Congratulation, now you know how to deploy jobs with different deep learning framework. To learn more about your job execution results,
 you can simply run `$CLI_CMD logs <MODEL_ID>`
 
-> If you no longer need any of the MNIST dataset we used in this example, you can simply delete the tmp repository.
+> If you no longer need any of the MNIST dataset we used in this example, you can simply delete the `tmp` repository.
 
 7. If you want to run your job via the FfDL UI, simply run the below command to create your model zip file.
 
@@ -334,7 +334,7 @@ fi
 ```
 
 6. Now you should have all the necessary training data set in your training data bucket. Let's go ahead to set up your restapi endpoint
-and default credentials for Deep Learning as a Service. Once you done that, you can start running jobs using the FfDL CLI(executable
+and default credentials for Deep Learning as a Service. Once you done that, you can start running jobs using the FfDL CLI (executable
 binary).
 
 ```shell
