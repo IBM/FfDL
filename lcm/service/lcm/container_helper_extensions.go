@@ -31,11 +31,13 @@ func extendLearnerContainer(learner *v1core.Container, req *service.JobDeploymen
 		learnerImage = "caffe2ai/caffe2:" + req.Version
 	case pytorchFrameworkName:
 		learnerImage = "pytorch/pytorch:" + req.Version
+	case customFrameworkName:
+		learnerImage = req.Version
 	default:
 		// TODO!
 	}
 
-	extCmd := "export PATH=" + learnerEntrypointFilesPath + ":$PATH; chmod +x " + learnerEntrypointFilesPath + "/*.sh; "
+	extCmd := "export PATH=/usr/local/bin/:$PATH; cp " + learnerEntrypointFilesPath + "/*.sh /usr/local/bin/; chmod +x /usr/local/bin/*.sh;"
 	extMount := v1core.VolumeMount{
 		Name:      learnerEntrypointFilesVolume,
 		MountPath: learnerEntrypointFilesPath,

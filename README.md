@@ -23,8 +23,7 @@ FfDL is a collaboration platform for:
 * `S3 CLI`: The [command-line interface](https://aws.amazon.com/cli/) to configure your Object Storage
 
 * An existing Kubernetes cluster (e.g., [Minikube](https://github.com/kubernetes/minikube) for local testing).
-  Once installed, use the command `make minikube` to start Minikube and set up local network routes. Alternatively,
-  use the Vagrant based setup to automatically install a local Kubernetes cluster.
+  Once installed, use the command `make minikube` to start Minikube and set up local network routes.
 
 * Follow the appropriate instructions for standing up your Kubernetes cluster using [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) or [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)
 
@@ -32,13 +31,13 @@ FfDL is a collaboration platform for:
 
 ## Usage Scenarios
 
-* If you already have a FfDL deployment up and running, you can jump to [FfDL User Guide](docs/user-guide.md) to use FfDL for training your models. 
+* If you already have a FfDL deployment up and running, you can jump to [FfDL User Guide](docs/user-guide.md) to use FfDL for training your deep learning models.
 
 * If you have FfDL confiugured to use GPUs, and want to train using GPUs, follow steps [here](docs/gpu-guide.md)
 
-* If you have used FfDL to train your models, and want to use a GPU enabled public cloud hosted service for further training and serving, please follow instructions [here](etc/converter/ffdl-wml.md) to train and serve your models using [Watson Studio Deep Learning](https://www.ibm.com/cloud/machine-learning) service
+* If you have used FfDL to train your models, and want to use a GPU enabled public cloud hosted service for further training and serving, please follow instructions [here](etc/converter/ffdl-wml.md) to train and serve your models using [Watson Studio Deep Learning](https://www.ibm.com/cloud/deep-learning) service
 
-* If you are starting and want to setup your own FfDL deployment, please follow the steps below. 
+* If you are getting started and want to setup your own FfDL deployment, please follow the steps below.
 
 ## Steps
 
@@ -59,8 +58,7 @@ FfDL is a collaboration platform for:
 
 ## 1. Quick Start
 
-There are multiple installation paths for installing FfDL locally ("1-click-install") or
-into an existing Kubernetes cluster.
+There are multiple installation paths for installing FfDL locally ("1-click-install") or into an existing Kubernetes cluster.
 
 > Note: If your Kubernetes Cluster version is 1.7 or below, please go to the [values.yaml](values.yaml) and change `k8s_1dot8_or_above` to **false**.
 
@@ -109,36 +107,7 @@ The platform ships with a simple Grafana monitoring dashboard. The URL is printe
 
 ## 4. Development
 
-Use the following instructions if you want to run a full development build, compile the code, and build the
-Docker images locally.
-
-Install:
-
-* `go`: a working [Go](https://golang.org/) environment is required to build the code
-
-* `glide`: the glide package manager for Go (https://glide.sh)
-
-* `npm`: the Node.js package manager (https://www.npmjs.com) for building the Web UI
-
-* `Go` is very specific about directory layouts. Make sure to set your `$GOPATH` and clone this repo to a directory
-`$GOPATH/src/github.com/IBM/FfDL` before proceeding with the next steps.
-
-
-Then, fetch the dependencies via:
-```
-glide install
-```
-Compile the code and build the Docker images via:
-```
-make build
-make docker-build
-```
-
-Make sure `kubectl` points to the right target context/namespace, then deploy the services to your Kubernetes
-environment (using `helm`):
-```
-make deploy
-```
+Please refer to the [developer guide](docs/developer-guide.md) for more details.
 
 ## 5. Detailed Installation Instructions
 
@@ -402,8 +371,6 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
   make sure to follow the standard Go directory layout (see [Prerequisites section]{#Prerequisites}).
 
 * To remove FfDL on your Cluster, simply run `make undeploy`
-
-* Since the current implementation of FfDL needs write access for its mounted volume, if you are using Kubernetes 1.9.4 or above, please modify the feature gate `ReadOnlyAPIDataVolumes=false`. 
 
 ## 9. References
 

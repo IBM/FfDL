@@ -233,7 +233,7 @@ install-minikube-in-ci:
 		chmod +x kubectl && sudo mv kubectl /usr/local/bin/
 	@curl -s -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && \
 		chmod +x minikube && sudo mv minikube /usr/local/bin/
-	@sudo minikube start --vm-driver=none --feature-gates=ReadOnlyAPIDataVolumes=false
+	@sudo minikube start --vm-driver=none
 	@minikube update-context
 	@JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; \
 		until kubectl get nodes -o jsonpath="$$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
