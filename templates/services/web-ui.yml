@@ -27,8 +27,6 @@ spec:
           limits:
             cpu: {{.Values.webui.cpus}}
             memory: {{.Values.webui.memory}}
-      imagePullSecrets:
-      - name: bluemix-cr-ng
 
 ---
 
