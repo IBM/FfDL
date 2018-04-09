@@ -22,9 +22,9 @@ UI_REPO = git@github.com:IBM/FfDL-dashboard.git
 CLI_CMD = $(shell pwd)/cli/bin/ffdl-$(UNAME_SHORT)
 CLUSTER_NAME ?= mycluster
 PUBLIC_IP ?= 127.0.0.1
-TRAVIS_IMAGES_VERSION ?= 0.0.1-master
-TEST_IMAGES = $(addprefix $(DOCKER_NAMESPACE)/, $(TEST_IMAGES_SUBFIX))
-TEST_IMAGES_SUBFIX = ffdl-lcm ffdl-trainer ffdl-metrics ffdl-databroker_s3 ffdl-ui ffdl-restapi ffdl-jobmonitor ffdl-controller tensorboard_extract_1.3-py3 log_collector ffdl-databroker_objectstorage tensorboard_extract
+TRAVIS_IMAGE_VERSION ?= 0.0.1-master
+TEST_IMAGES = $(addprefix $(DOCKER_NAMESPACE)/, $(TEST_IMAGES_SUFFIX))
+TEST_IMAGES_SUFFIX = ffdl-lcm ffdl-trainer ffdl-metrics ffdl-databroker_s3 ffdl-ui ffdl-restapi ffdl-jobmonitor ffdl-controller tensorboard_extract_1.3-py3 log_collector ffdl-databroker_objectstorage tensorboard_extract
 
 
 IMAGE_DIR := $(IMAGE_NAME)
@@ -223,10 +223,10 @@ $(addprefix tag-, $(TEST_IMAGES)): tag-%: %
 # Helper targets
 
 .pull-dockerhub-images:
-	docker pull $(TRAVIS_IMAGE):$(TRAVIS_IMAGES_VERSION)
+	docker pull $(TRAVIS_IMAGE):$(TRAVIS_IMAGE_VERSION)
 
 .tag-dockerhub-latest:
-	docker tag $(TRAVIS_IMAGE):$(TRAVIS_IMAGES_VERSION) $(TRAVIS_IMAGE):latest
+	docker tag $(TRAVIS_IMAGE):$(TRAVIS_IMAGE_VERSION) $(TRAVIS_IMAGE):latest
 
 .build-service:
 	(cd ./$(SERVICE_NAME)/ && (test ! -e main.go || CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w" -a -installsuffix cgo -o bin/$(BINARY_NAME)))
