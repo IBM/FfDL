@@ -27,18 +27,12 @@ before_script:
   # install aws CLI
   - (sudo pip install -q awscli; which aws > /dev/null) &
 
-script:
-  # fail fast
-  - set -e
-  - export MAKE_ARGS=--no-print-directory
-  # compile and build Docker images
-  - glide -q install
-  - make $MAKE_ARGS build
-  - make $MAKE_ARGS docker-build
-  # deploy services
-  - make $MAKE_ARGS deploy
-  # submit a test job
-  - make $MAKE_ARGS test-submit
+jobs:
+  include:
+    - stage: test
+      script: ./etc/travis/test-images-local.sh
+    - if: type IN (push, api, cron)
+      script: ./etc/travis/test-images-dockerhub.sh
 
 notifications:
   email: false
