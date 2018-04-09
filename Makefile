@@ -211,22 +211,22 @@ pull-dockerhub-images:  ## Pull FfDL images from dockerhub
 pull-dockerhub-images: $(addprefix pull-, $(TEST_IMAGES))
 
 $(addprefix pull-, $(TEST_IMAGES)): pull-%: %
-	@TRAVIS_IMAGES=$< make .pull-dockerhub-images
+	@TRAVIS_IMAGE=$< make .pull-dockerhub-images
 
 $(TEST_IMAGES): ;
 
 tag-dockerhub-images-to-latest: $(addprefix tag-, $(TEST_IMAGES))
 
 $(addprefix tag-, $(TEST_IMAGES)): tag-%: %
-	@TRAVIS_IMAGES=$< make .tag-dockerhub-latest
+	@TRAVIS_IMAGE=$< make .tag-dockerhub-latest
 
 # Helper targets
 
 .pull-dockerhub-images:
-	docker pull $(TRAVIS_IMAGES):$(TRAVIS_IMAGES_VERSION)
+	docker pull $(TRAVIS_IMAGE):$(TRAVIS_IMAGES_VERSION)
 
 .tag-dockerhub-latest:
-	docker tag $(TRAVIS_IMAGES):$(TRAVIS_IMAGES_VERSION) $(TRAVIS_IMAGES):latest
+	docker tag $(TRAVIS_IMAGE):$(TRAVIS_IMAGES_VERSION) $(TRAVIS_IMAGE):latest
 
 .build-service:
 	(cd ./$(SERVICE_NAME)/ && (test ! -e main.go || CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w" -a -installsuffix cgo -o bin/$(BINARY_NAME)))

@@ -1,3 +1,4 @@
+#!/bin/bash
 # fail fast
 set -e
 export MAKE_ARGS=--no-print-directory
