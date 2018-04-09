@@ -3,7 +3,7 @@ description: Convolutional network model using tensorflow
 version: "1.0"
 gpus: 0
 cpus: 0.5
-memory: 500MiB
+memory: 1000MiB
 
 # Object stores that allow the system to retrieve training data.
 data_stores:
