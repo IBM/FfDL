@@ -121,10 +121,10 @@ var (
 func getHelperSpec(specName string) int {
 	result, err := strconv.Atoi(os.Getenv(specName))
 	if err != nil {
-			return 100 // Default spec for helper pod
-    }
-	return result
+		return 100 // Default spec for helper pod
 	}
+	return result
+}
 
 func constructControllerContainer(learnerNodeBasePath, learnerNodeStatusPath, summaryMetricsPath, jobBasePath string, jobVolumeMount v1core.VolumeMount, etcdVolumeName string, logr *logger.LocLoggingEntry, mountTrainingDataStoreInLearner, mountResultsStoreInLearner bool) v1core.Container {
 
