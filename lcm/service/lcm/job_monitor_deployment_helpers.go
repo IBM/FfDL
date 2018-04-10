@@ -139,6 +139,7 @@ func defineJobMonitorDeployment(req *service.JobDeploymentRequest, envVars []v1c
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: jmName,
+			Namespace: config.GetPodNamespace(),
 		},
 		Spec: v1beta1.DeploymentSpec{
 			Strategy: v1beta1.DeploymentStrategy{
@@ -161,6 +162,7 @@ func defineJobMonitorDeployment(req *service.JobDeploymentRequest, envVars []v1c
 						"app":         jmName,
 						"training_id": req.TrainingId,
 					},
+					Namespace: config.GetPodNamespace(),
 				},
 				Spec: v1core.PodSpec{
 					Volumes: []v1core.Volume{

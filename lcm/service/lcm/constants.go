@@ -70,21 +70,6 @@ const (
 )
 
 const (
-	//Total CPU for helpers = 2.5
-	//Total RAM for helpers = 4 GB
-	storeResultsMilliCPU=20
-	storeResultsMemInMB=100
-	loadModelMilliCPU=20
-	loadModelMemInMB=50
-	loadTrainingDataMilliCPU=20
-	loadTrainingDataMemInMB=300
-	logCollectorMilliCPU=60
-	logCollectorMemInMB=300
-	controllerMilliCPU=20
-	controllerMemInMB=100
-)
-
-const (
 	reason                          = "reason"
 	framework                       = "framework"
 	progress                        = "progress"

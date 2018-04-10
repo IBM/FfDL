@@ -5,6 +5,7 @@ metadata:
   labels:
     name: prometheus
   name: prometheus
+  namespace: {{.Values.namespace}}
 spec:
   selector:
     app: prometheus
@@ -22,6 +23,7 @@ metadata:
   labels:
     name: grafana
   name: grafana
+  namespace: {{.Values.namespace}}
 spec:
   selector:
     app: prometheus

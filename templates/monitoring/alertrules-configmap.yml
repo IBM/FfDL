@@ -1,79 +1,80 @@
-apiVersion: v1  
-kind: ConfigMap  
-metadata:  
-  name: prometheus-alertrules  
-data:  
-  alert.rules: |-  
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alertrules
+  namespace: {{.Values.namespace}}
+data:
+  alert.rules: |-
 
-    ALERT ControllerJobFailures  
+    ALERT ControllerJobFailures
       IF increase(controller_training_failures[2m])  >= 1
-      LABELS { criticality = "S2" }  
-      ANNOTATIONS {  
-        summary = "Controller indicates failing learnings",  
-        description = "Controller seems to have a rate > 1 of failed learnings over last 2 mins",  
-      }  
-    
-    ALERT ControllerETCDFailures  
-      IF increase(controller_etcd_failures{attempt="4"}[2m])  >= 1
-      LABELS { criticality = "S2" }  
-      ANNOTATIONS {  
-        summary = "Controller indicates failure to connect to etcd",  
-        description = "Controller seems to have a rate > 1 in connecting to etcd over last 2 mins after 5 attempts",  
-      } 
-    
-    ALERT SwiftObjectStoreFailures  
-      IF increase(databroker_upload_failures{store="swift", attempt="4"}[2m]) > 1
-      LABELS { criticality = "S2" }  
-      ANNOTATIONS {  
-        summary = "Swift upload/download failures",  
-        description = "Databroker has had more than 1 failures after 5 attempts while uploading/downloading data",  
-      }  
-
-    ALERT S3ObjectStoreFailures  
-      IF increase(databroker_upload_failures{store="s3", attempt="4"}[2m]) > 1
-      LABELS { criticality = "S2" }  
-      ANNOTATIONS {  
-        summary = "S3 upload/download failures",  
-        description = "Databroker has had more than 1 failures after 5 attempts while uploading/downloading data",  
+      LABELS { criticality = "S2" }
+      ANNOTATIONS {
+        summary = "Controller indicates failing learnings",
+        description = "Controller seems to have a rate > 1 of failed learnings over last 2 mins",
       }
 
-    ALERT LCMRestarts  
+    ALERT ControllerETCDFailures
+      IF increase(controller_etcd_failures{attempt="4"}[2m])  >= 1
+      LABELS { criticality = "S2" }
+      ANNOTATIONS {
+        summary = "Controller indicates failure to connect to etcd",
+        description = "Controller seems to have a rate > 1 in connecting to etcd over last 2 mins after 5 attempts",
+      }
+
+    ALERT SwiftObjectStoreFailures
+      IF increase(databroker_upload_failures{store="swift", attempt="4"}[2m]) > 1
+      LABELS { criticality = "S2" }
+      ANNOTATIONS {
+        summary = "Swift upload/download failures",
+        description = "Databroker has had more than 1 failures after 5 attempts while uploading/downloading data",
+      }
+
+    ALERT S3ObjectStoreFailures
+      IF increase(databroker_upload_failures{store="s3", attempt="4"}[2m]) > 1
+      LABELS { criticality = "S2" }
+      ANNOTATIONS {
+        summary = "S3 upload/download failures",
+        description = "Databroker has had more than 1 failures after 5 attempts while uploading/downloading data",
+      }
+
+    ALERT LCMRestarts
       IF increase(lcm_restart_total[2m]) > 1
-      LABELS { criticality = "S2" }  
-      ANNOTATIONS {  
-        summary = "LCM restarts because of failures",  
-        description = "LCM has restarted more than 1 in last 2mins because of failures",  
+      LABELS { criticality = "S2" }
+      ANNOTATIONS {
+        summary = "LCM restarts because of failures",
+        description = "LCM has restarted more than 1 in last 2mins because of failures",
       }
 
 
     ALERT LCMTrainingsFailure
       IF sum(increase(lcm_trainings_launch_failed[2m])) by (reason, instance, job) > 1
-      LABELS { criticality = "S2" }  
-      ANNOTATIONS {  
+      LABELS { criticality = "S2" }
+      ANNOTATIONS {
         summary = "LCM failed to launch trainging because of {{`{{$labels.reason}}`}}",
         description = "LCM failed to launch more than 1 trainings for last 2 mins because of {{`{{$labels.reason}}`}}",
       }
 
     ALERT JobMonitorConnectivityFailure
         IF sum(increase(jobmonitor_connectivity_failures[2m])) by (reason, instance, job) > 1
-        LABELS { criticality = "S2" }  
-        ANNOTATIONS {  
+        LABELS { criticality = "S2" }
+        ANNOTATIONS {
           summary = "JobMonitor failed to launch training because of {{`{{$labels.reason}}`}}",
           description = "JobMonitor failed to launch more than 1 trainings for last 2 mins because of {{`{{$labels.reason}}`}}",
-        } 
+        }
 
     ALERT JobMonitorK8sAPIFailure
         IF sum(increase(jobmonitor_k8s_failures[2m])) by (reason, instance, job) > 1
-        LABELS { criticality = "S2" }  
-        ANNOTATIONS {  
+        LABELS { criticality = "S2" }
+        ANNOTATIONS {
           summary = "JobMonitor failed to launch training because of {{`{{$labels.reason}}`}}",
           description = "JobMonitor failed to launch more than 1 trainings for last 2 mins because of {{`{{$labels.reason}}`}}",
-        } 
+        }
 
     ALERT TrainerRatelimitingInvoked
         IF increase(trainer_ratelimitinvocations_total[2m]) > 5
-        LABELS { criticality = "S2" }  
-        ANNOTATIONS {  
-          summary = "Invoked rate limiting on trainer for more than 5 times in a 2 minute window",  
-          description = "Trainer is running into rate limiting issues",  
+        LABELS { criticality = "S2" }
+        ANNOTATIONS {
+          summary = "Invoked rate limiting on trainer for more than 5 times in a 2 minute window",
+          description = "Trainer is running into rate limiting issues",
         }

@@ -5,6 +5,7 @@ metadata:
   labels:
     environment: {{.Values.env}}
     service: ffdl-trainer
+  namespace: {{.Values.namespace}}
 spec:
   selector:
     matchLabels:
@@ -50,6 +51,8 @@ spec:
           value: {{.Values.log.level}}
         - name: DLAAS_PUSH_METRICS_ENABLED
           value: "true"
+        - name: FFDL_NAMESPACE
+          value: {{.Values.namespace}}
 {{ if eq .Values.env "dev" }}
         - name: DLAAS_MONGO_ADDRESS
           value: mongo.$(DLAAS_POD_NAMESPACE).svc.cluster.local

@@ -5,6 +5,7 @@ metadata:
   labels:
     environment: {{.Values.env}}
     service: ffdl-trainingdata
+  namespace: {{.Values.namespace}}
 spec:
   selector:
     matchLabels:
@@ -46,6 +47,8 @@ spec:
           value: {{.Values.log.level}}
         - name: DLAAS_ELASTICSEARCH_SCHEME
           value: {{.Values.elasticsearch.scheme}}
+        - name: FFDL_NAMESPACE
+          value: {{.Values.namespace}}
 {{ if eq .Values.env "dev" }}
         - name: DLAAS_ELASTICSEARCH_ADDRESS
           value: {{.Values.elasticsearch.address}}

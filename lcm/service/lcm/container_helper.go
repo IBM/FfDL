@@ -21,6 +21,8 @@ import (
 	"path"
 	"strings"
 	"text/template"
+	"os"
+	"strconv"
 
 	"github.com/IBM/FfDL/commons/config"
 	"github.com/IBM/FfDL/commons/service"
@@ -101,6 +103,28 @@ const PodLevelJobDir = "/job"
 
 // PodLevelLogDir represents the place to store the per-learner logs.
 const PodLevelLogDir = PodLevelJobDir + "/logs"
+
+// Helper pods spec
+var (
+	storeResultsMilliCPU = getHelperSpec("storeResultsMilliCPU")
+	storeResultsMemInMB = getHelperSpec("storeResultsMemInMB")
+	loadModelMilliCPU = getHelperSpec("loadModelMilliCPU")
+	loadModelMemInMB = getHelperSpec("loadModelMemInMB")
+	loadTrainingDataMilliCPU = getHelperSpec("loadTrainingDataMilliCPU")
+	loadTrainingDataMemInMB = getHelperSpec("loadTrainingDataMemInMB")
+	logCollectorMilliCPU = getHelperSpec("logCollectorMilliCPU")
+	logCollectorMemInMB = getHelperSpec("logCollectorMemInMB")
+	controllerMilliCPU = getHelperSpec("controllerMilliCPU")
+	controllerMemInMB = getHelperSpec("controllerMemInMB")
+)
+
+func getHelperSpec(specName string) int {
+	result, err := strconv.Atoi(os.Getenv(specName))
+	if err != nil {
+			return 100 // Default spec for helper pod
+    }
+	return result
+	}
 
 func constructControllerContainer(learnerNodeBasePath, learnerNodeStatusPath, summaryMetricsPath, jobBasePath string, jobVolumeMount v1core.VolumeMount, etcdVolumeName string, logr *logger.LocLoggingEntry, mountTrainingDataStoreInLearner, mountResultsStoreInLearner bool) v1core.Container {
 
