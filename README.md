@@ -23,7 +23,7 @@ FfDL is a collaboration platform for:
 * `S3 CLI`: The [command-line interface](https://aws.amazon.com/cli/) to configure your Object Storage
 
 * An existing Kubernetes cluster (e.g., [Minikube](https://github.com/kubernetes/minikube) for local testing).
-  Once installed, use the command `make minikube` to start Minikube and set up local network routes.
+  For Minikube, use the command `make minikube` to start Minikube and set up local network routes. Minikube **v0.25.1** is tested with Travis CI.
 
 * Follow the appropriate instructions for standing up your Kubernetes cluster using [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) or [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)
 
