@@ -49,7 +49,7 @@ spec:
     spec:
       containers:
         - name: storage
-          image: localstack/localstack
+          image: localstack/localstack:0.8.6
 {{ if .Values.docker.pullPolicy }}
           imagePullPolicy: {{.Values.docker.pullPolicy}}
 {{ end }}
