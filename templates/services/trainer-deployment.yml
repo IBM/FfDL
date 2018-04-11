@@ -51,6 +51,8 @@ spec:
           value: {{.Values.log.level}}
         - name: DLAAS_PUSH_METRICS_ENABLED
           value: "true"
+        - name: customizable
+          value: "{{.Values.trainer.customizable}}"
         - name: FFDL_NAMESPACE
           value: {{.Values.namespace}}
 {{ if eq .Values.env "dev" }}

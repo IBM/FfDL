@@ -34,19 +34,13 @@ environment (using `helm`):
 make deploy
 ```
 
-## Enable device plugin for GPU workloads with development build
+## Enable accelerator for GPU workloads with development build
 
-Please modify the `resourceGPU` under [lcm/service/lcm/container_helper.go](../lcm/service/lcm/container_helper.go#L530) and [lcm/service/lcm/resources.go](../lcm/service/lcm/resources.go#L149) to `"nvidia.com/gpu"` and rebuild the lcm image to enable device plugin for all GPU workloads on your development build.
+To enable accelerator for all GPU workloads on your development build, change [values.yaml](../values.yaml#L30)'s `lcm.GPU_resources` to **accelerator** and redeploy FfDL.
 
 ## Enable custom learner images with development build
 
-Please uncomment the following section under [trainer/trainer/frameworks.go](../trainer/trainer/frameworks.go#L39) and rebuild the trainer image to enable custom learner images from any users. Alternatively, you can use the pre-built images `ffdl/ffdl-trainer:customizable` on DockerHub.
-
-``` go
-if fwName == "custom" {
-  return true, ""
-}
-```
+To enable custom learner images from any users, change [values.yaml](../values.yaml#L17)'s `trainer.customizable` to **true** and redeploy FfDL.
 
 After you deployed `ffdl-trainer` with custom image feature, you can use your custom learner images by changing the `framework.name` to **custom** and `framework.version` to your learner image in your training job's manifest.yml file. If you are using any private registry, you need to enable access to the private registry in your Kubernetes default namespace.
 
@@ -70,7 +64,7 @@ If your Kubernetes Cluster has a lot of resources and you want to enhance the tr
 
 You need to modify the following sections to deploy FfDL in a non default namespace.
 1. Change [values.yaml](../values.yaml#L1)'s `namespace` section. (Note that the helm chart will create the namespace for you)
-2. Change [values.yaml](../values.yaml#L69)'s `objectstore.auth_url` section with the new KubeDNS link that targets the new namespace. (e.g.  `http://s3.<namespace>.svc.cluster.local`)
+2. Change [values.yaml](../values.yaml#L71)'s `objectstore.auth_url` section with the new KubeDNS link that targets the new namespace. (e.g.  `http://s3.<namespace>.svc.cluster.local`)
 3. Since all the scripts and command are targeting the default namespace, you need to change the namespace preference after you run helm install.
  ```shell
  kubectl config set-context $(kubectl config current-context) --namespace=<namespace>

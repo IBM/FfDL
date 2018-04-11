@@ -550,8 +550,10 @@ func constructLearnerContainer(req *service.JobDeploymentRequest, learnerID int,
 	}
 	cmd := wrapCommand(command, learnerContainerName, PodLevelJobDir)
 
-	// Set the resourceGPU to "nvidia.com/gpu" if you want to run your GPU workloads using device plugin.
-	var resourceGPU v1core.ResourceName = v1core.ResourceNvidiaGPU
+	var resourceGPU v1core.ResourceName = "nvidia.com/gpu"
+	if os.Getenv("GPU_resources") == "accelerator" {
+		resourceGPU = v1core.ResourceNvidiaGPU
+	}
 
 	learnerContainer := v1core.Container{
 		Name:            learnerContainerName,

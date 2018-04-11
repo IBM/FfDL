@@ -14,6 +14,7 @@ trainer:
   replicas: 1
   cpus: 100m
   memory: 64Mi
+  customizable: false
 restapi:
   version: latest
   port: 0
@@ -26,6 +27,7 @@ lcm:
   replicas: 1
   cpus: 100m
   memory: 64Mi
+  GPU_resources: device-plugin
 trainingdata:
   version: latest
   port: 0

@@ -100,6 +100,8 @@ spec:
           value: "{{.Values.helper.controllerMilliCPU}}"
         - name: controllerMemInMB
           value: "{{.Values.helper.controllerMemInMB}}"
+        - name: GPU_resources
+          value: {{.Values.lcm.GPU_resources}}
         - name: FFDL_NAMESPACE
           value: {{.Values.namespace}}
         - name: DLAAS_ETCD_ADDRESS
