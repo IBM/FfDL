@@ -69,4 +69,4 @@ You need to modify the following sections to deploy FfDL in a non default namesp
  ```shell
  kubectl config set-context $(kubectl config current-context) --namespace=<namespace>
  ```
-4. If you are using the local S3 for storing your dataset, make sure you changed the KubeDNS auth_url to targets the new namespace. (e.g.  `http://s3.<namespace>.svc.cluster.local`)
+4. If you are using the local S3 for storing your dataset, make sure you changed the KubeDNS auth_url in your training job's manifest file to targets the new namespace. (e.g.  `http://s3.<namespace>.svc.cluster.local`)
