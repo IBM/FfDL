@@ -22,6 +22,8 @@ UI_REPO = git@github.com:IBM/FfDL-dashboard.git
 CLI_CMD = $(shell pwd)/cli/bin/ffdl-$(UNAME_SHORT)
 CLUSTER_NAME ?= mycluster
 PUBLIC_IP ?= 127.0.0.1
+CI_MINIKUBE_VERSION ?= v0.25.1
+CI_KUBECTL_VERSION ?= v1.9.4
 
 IMAGE_DIR := $(IMAGE_NAME)
 ifneq ($(filter $(IMAGE_NAME),controller ),)
@@ -229,9 +231,9 @@ kubernetes-ip:
 
 install-minikube-in-ci:
 	@echo "Starting local kubernetes cluster (minikube)"
-	@curl -s -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.7.0/bin/linux/amd64/kubectl && \
+	@curl -s -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/$(CI_KUBECTL_VERSION)/bin/linux/amd64/kubectl && \
 		chmod +x kubectl && sudo mv kubectl /usr/local/bin/
-	@curl -s -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && \
+	@curl -s -Lo minikube https://storage.googleapis.com/minikube/releases/$(CI_MINIKUBE_VERSION)/minikube-linux-amd64 && \
 		chmod +x minikube && sudo mv minikube /usr/local/bin/
 	@sudo minikube start --vm-driver=none
 	@minikube update-context
