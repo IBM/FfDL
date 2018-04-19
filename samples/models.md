@@ -1,8 +1,8 @@
 # Sample Models
 
-We will keep this as a running list of models which we are training on Deep Learning as a Service in Watson and FfDL, as long as there we can point to open source references.
+We will keep this as a running list of models being trained using Deep Learning as a Service within Watson Studio and FfDL, as long as we can point to external open source references.
 
-To run these experiments using Fabric for Deep Learning (FFDL), you can simply clone the FfDL repository and follow the instructions over [here]https://github.com/IBM/FfDL/blob/master/etc/converter/ffdl-wml.md) to convert your training-runs.yml into FfDL's specification.
+To run these experiments using Fabric for Deep Learning (FFDL), you can simply clone the FfDL repository and follow the instructions over [here](https://github.com/IBM/FfDL/blob/master/etc/converter/ffdl-wml.md) to convert your training-runs.yml into FfDL's specification.
 
 ## Model Asset Exchange Models
 
