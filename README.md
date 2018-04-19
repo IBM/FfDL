@@ -10,7 +10,7 @@ FfDL is a collaboration platform for:
 - Common instrumentation
 - Running Deep Learning hosting in user's private or public cloud
 
-![ffdl-architecture](docs/images/ffdl-architecture.png)
+![ffdl-architecture](docs/images/ffdl-arch-web.png)
 
 ## Prerequisites
 
