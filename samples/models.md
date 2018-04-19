@@ -7,7 +7,7 @@ To run these experiments using Fabric for Deep Learning (FFDL), you can simply c
 ## Model Asset Exchange Models
 
 
-### IBM Code Model Asset Exchange
+### 1. IBM Code Model Asset Exchange
 
 #### Adversarial Cryptography Experiment
 
@@ -15,20 +15,20 @@ This repository contains code to run an Adversarial-Crypto experiment on IBM Wat
 
 [MAX - Adversarial Cryptography Experiment](https://github.com/IBM/MAX-Adversarial-Cryptography) 
 
-#### spatial Transformer Network
+#### Spatial Transformer Network
 
 This repository contains code to train and score a Spatial Transformer Network/
 
 [MAX-Spatial Transformer Network](https://github.com/IBM/MAX-Spatial-Transformer-Network)
 
 
-### CIFAR10 with PyTorch 
+### 2. CIFAR10 with PyTorch 
 
 The code here is forked from [kuangliu work with PyTorch on the CIFAR10 dataset](https://github.com/kuangliu/pytorch-cifar), and adapted for submitting the model to Watson Studio for training. It is meant to get you quick-started. 
 
 [CIFAR10 with PyTorch](https://github.com/IBM/pytorch-cifar10-in-ibm-cloud)
 
-### Adversarial Robustness Toolbox (ART v0.1)
+### 3. Adversarial Robustness Toolbox (ART v0.1)
 
 This is a library dedicated to adversarial machine learning. Its purpose is to allow rapid crafting and analysis of attacks and defense methods for machine learning models. The Adversarial Robustness Toolbox provides an implementation for many state-of-the-art methods for attacking and defending classifiers. We will be adding support here for running these experiments on FfDL
 
