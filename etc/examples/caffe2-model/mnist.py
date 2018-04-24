@@ -26,7 +26,7 @@ import time
 import os
 
 from caffe2.python import core, workspace, experiment_util, data_parallel_model
-from caffe2.python import dyndep, optimizer
+from caffe2.python import data_parallel_model_utils, dyndep, optimizer
 from caffe2.python import timeout_guard, model_helper, brew
 from caffe2.proto import caffe2_pb2
 
