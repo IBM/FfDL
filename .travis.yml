@@ -20,6 +20,9 @@ before_script:
   - curl https://glide.sh/get | bash > /dev/null
   # install "nsenter" (needed for k8s container port forwarding)
   - docker run --rm jpetazzo/nsenter cat /nsenter > /tmp/nsenter 2> /dev/null; sudo cp /tmp/nsenter /usr/local/bin/; sudo chmod +x /usr/local/bin/nsenter; which nsenter
+  # upgrade requests[security] to remove insecure platform warnings
+  - pip install --user requests[security]
+  - sudo -H pip install requests[security]
   # install Minikube (in the background, to speed up the build)
   - make install-minikube-in-ci > /dev/null &
   # install Helm
