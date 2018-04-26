@@ -36,9 +36,9 @@ func validateFrameworks(fw *grpc_trainer_v2.Framework) (bool, string) {
 	}
 
 	// Uncomment the below condition to enable users to apply any custom learner.
-	// if fwName == "custom" {
-	// 	return true, ""
-	// }
+	if fwName == "custom" {
+		return true, ""
+	}
 
 	loc := config.GetCurrentLearnerConfigLocation(fwName, fwVersion)
 	if loc == "" {
