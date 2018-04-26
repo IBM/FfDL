@@ -34,7 +34,7 @@ func extendLearnerContainer(learner *v1core.Container, req *service.JobDeploymen
 	case customFrameworkName:
 		learnerImage = req.Version
 	case h2o3FrameworkName:
-		learnerImage = "opsh2oai/h2o3:" + req.Version
+		learnerImage = "nkpng2k/h2o3:" + req.Version
 	default:
 		// TODO!
 	}
