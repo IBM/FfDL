@@ -4,6 +4,7 @@ metadata:
   name: ffdl-trainingdata
   labels:
     environment: {{.Values.env}}
+  namespace: {{.Values.namespace}}
 spec:
 {{ if .Values.services.expose_node_port }}
   type: NodePort

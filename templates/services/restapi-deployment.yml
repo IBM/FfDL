@@ -5,6 +5,7 @@ metadata:
   labels:
     service: ffdl-restapi
     environment: {{.Values.env}}
+  namespace: {{.Values.namespace}}
 spec:
   selector:
     matchLabels:
@@ -35,6 +36,8 @@ spec:
           value: {{.Values.env}}
         - name: DLAAS_LOGLEVEL
           value: {{.Values.log.level}}
+        - name: FFDL_NAMESPACE
+          value: {{.Values.namespace}}
 {{ if ne .Values.env "dev" }}
         - name: EUREKA_APP
           value: {{.Values.eureka.name}}

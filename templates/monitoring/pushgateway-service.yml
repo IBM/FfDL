@@ -5,6 +5,7 @@ metadata:
   labels:
     name: pushgateway
   name: pushgateway
+  namespace: {{.Values.namespace}}
 spec:
   selector:
     app: pushgateway

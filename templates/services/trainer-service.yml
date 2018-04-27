@@ -5,6 +5,7 @@ metadata:
   labels:
     service: ffdl-trainer
     environment: {{.Values.env}}
+  namespace: {{.Values.namespace}}
 spec:
 {{ if .Values.services.expose_node_port }}
   type: NodePort

@@ -57,6 +57,7 @@ func defineLearnerService(name string, trainingID string) *v1core.Service {
 			Labels: map[string]string{
 				"training_id": trainingID,
 			},
+			Namespace: config.GetPodNamespace(),
 		},
 		Spec: v1core.ServiceSpec{
 			Type:     v1core.ServiceTypeClusterIP,
@@ -489,6 +490,7 @@ func getGpuDeploymentSpec(name string, trainingID string, schedulePolicy string,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
+			Namespace: config.GetPodNamespace(),
 		},
 		Spec: v1beta1.DeploymentSpec{
 			Strategy: v1beta1.DeploymentStrategy{

@@ -5,6 +5,7 @@ metadata:
   labels:
     service: ffdl-lcm
     environment: {{.Values.env}}
+  namespace: {{.Values.namespace}}
 spec:
   selector:
     matchLabels:
@@ -79,6 +80,30 @@ spec:
           value: {{.Values.learner.tag}}
         - name: DLAAS_LEARNER_REGISTRY
           value: {{.Values.docker.registry}}/{{.Values.learner.docker_namespace}}
+        - name: storeResultsMilliCPU
+          value: "{{.Values.helper.storeResultsMilliCPU}}"
+        - name: storeResultsMemInMB
+          value: "{{.Values.helper.storeResultsMemInMB}}"
+        - name: loadModelMilliCPU
+          value: "{{.Values.helper.loadModelMilliCPU}}"
+        - name: loadModelMemInMB
+          value: "{{.Values.helper.loadModelMemInMB}}"
+        - name: loadTrainingDataMilliCPU
+          value: "{{.Values.helper.loadTrainingDataMilliCPU}}"
+        - name: loadTrainingDataMemInMB
+          value: "{{.Values.helper.loadTrainingDataMemInMB}}"
+        - name: logCollectorMilliCPU
+          value: "{{.Values.helper.logCollectorMilliCPU}}"
+        - name: logCollectorMemInMB
+          value: "{{.Values.helper.logCollectorMemInMB}}"
+        - name: controllerMilliCPU
+          value: "{{.Values.helper.controllerMilliCPU}}"
+        - name: controllerMemInMB
+          value: "{{.Values.helper.controllerMemInMB}}"
+        - name: GPU_resources
+          value: {{.Values.lcm.GPU_resources}}
+        - name: FFDL_NAMESPACE
+          value: {{.Values.namespace}}
         - name: DLAAS_ETCD_ADDRESS
           valueFrom:
             secretKeyRef:

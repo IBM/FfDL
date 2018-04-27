@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: learner-config
+  namespace: {{.Values.namespace}}
 data:
   tensorflow_cpu_latest_CURRENT: manual
   tensorflow_cpu_latest-py3_CURRENT: manual
@@ -38,6 +39,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: learner-entrypoint-files
+  namespace: {{.Values.namespace}}
 data:
   train.sh: |
     #!/bin/bash

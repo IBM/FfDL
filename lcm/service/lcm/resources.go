@@ -20,6 +20,7 @@ import (
 	//"errors"
 	"strconv"
 	"time"
+	"os"
 
 	v1core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -145,8 +146,10 @@ func getResources(s *lcmService, logr *logger.LocLoggingEntry) (bool, *allocatab
 		}
 	}
 
-	// Set the resourceGPU to "nvidia.com/gpu" if you want to run your GPU workloads using device plugin.
-	var resourceGPU v1core.ResourceName = v1core.ResourceNvidiaGPU
+	var resourceGPU v1core.ResourceName = "nvidia.com/gpu"
+	if os.Getenv("GPU_resources") == "accelerator" {
+		resourceGPU = v1core.ResourceNvidiaGPU
+	}
 
 	//By querying nodes, determine the number of allocatable resources
 	for _, node := range nodes.Items {

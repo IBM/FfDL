@@ -21,6 +21,7 @@ import (
 	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
 	"strings"
 	"github.com/IBM/FfDL/commons/config"
+	"os"
 )
 
 func validateFrameworks(fw *grpc_trainer_v2.Framework) (bool, string) {
@@ -35,10 +36,11 @@ func validateFrameworks(fw *grpc_trainer_v2.Framework) (bool, string) {
 		return false, "framework version is required"
 	}
 
-	// Uncomment the below condition to enable users to apply any custom learner.
-	// if fwName == "custom" {
-	// 	return true, ""
-	// }
+	if strings.ToLower(os.Getenv("customizable")) == "true" {
+		if fwName == "custom" {
+			return true, ""
+		}
+	}
 
 	loc := config.GetCurrentLearnerConfigLocation(fwName, fwVersion)
 	if loc == "" {

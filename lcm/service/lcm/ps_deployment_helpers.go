@@ -129,6 +129,7 @@ func definePSDeployment(req *service.JobDeploymentRequest, envVars []v1core.EnvV
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: psName,
+			Namespace: config.GetPodNamespace(),
 		},
 		Spec: v1beta1.DeploymentSpec{
 			Strategy: v1beta1.DeploymentStrategy{
@@ -152,6 +153,7 @@ func definePSDeployment(req *service.JobDeploymentRequest, envVars []v1core.EnvV
 						"training_id": req.TrainingId,
 						"service":     "dlaas-parameter-server",
 					},
+					Namespace: config.GetPodNamespace(),
 				},
 				Spec: v1core.PodSpec{
 					Containers: []v1core.Container{
@@ -227,6 +229,7 @@ func definePSService(psName string, trainingID string) *v1core.Service {
 				"training_id": trainingID,
 				"service":     "dlaas-parameter-server",
 			},
+			Namespace: config.GetPodNamespace(),
 		},
 		Spec: v1core.ServiceSpec{
 			Type:     v1core.ServiceTypeClusterIP,

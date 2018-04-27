@@ -4,6 +4,7 @@ metadata:
   name: ffdl-ui
   labels:
     service: ffdl-ui
+  namespace: {{.Values.namespace}}
 spec:
   selector:
     matchLabels:
@@ -37,6 +38,7 @@ metadata:
   labels:
     service: ffdl-ui
     environment: {{.Values.env}}
+  namespace: {{.Values.namespace}}
 spec:
 {{ if .Values.services.expose_node_port }}
   type: NodePort

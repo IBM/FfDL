@@ -299,6 +299,8 @@ func GetPodName() string {
 func GetPodNamespace() string {
 	if viper.IsSet(PodNamespaceKey) {
 		return viper.GetString(PodNamespaceKey)
+	} else if os.Getenv("FFDL_NAMESPACE") != "" {
+		return os.Getenv("FFDL_NAMESPACE")
 	}
 	return "default"
 }
@@ -306,6 +308,8 @@ func GetPodNamespaceForPrometheus() string {
 	namespace := "default"
 	if viper.IsSet(PodNamespaceKey) {
 		namespace = viper.GetString(PodNamespaceKey)
+	} else if os.Getenv("FFDL_NAMESPACE") != "" {
+		namespace = os.Getenv("FFDL_NAMESPACE")
 	}
 	namespace = strings.Replace(namespace, "-", "", -1)
 	return namespace
@@ -315,6 +319,8 @@ func GetPodNamespaceForPrometheus() string {
 func GetLearnerNamespace() string {
 	if viper.IsSet(LearnerKubeNamespaceKey) {
 		return viper.GetString(LearnerKubeNamespaceKey)
+	} else if os.Getenv("FFDL_NAMESPACE") != "" {
+		return os.Getenv("FFDL_NAMESPACE")
 	}
 	return "default"
 }
