@@ -52,6 +52,8 @@ deploy:           ## Deploy the services to Kubernetes
 	@# deploy the stack via helm
 	@echo Deploying services to Kubernetes. This may take a while.
 	@if ! helm list > /dev/null 2>&1; then echo 'Installing helm/tiller'; helm init > /dev/null 2>&1; sleep 3; fi;
+	@# Temperary hardcode Token until the helm issue is fixed
+	@if [ "$$CI" = "true" ]; then kubectl -n kube-system patch deployment tiller-deploy -p '{"spec": {"template": {"spec": {"automountServiceAccountToken": true}}}}'; fi;
 	@while kubectl get pods --all-namespaces | grep -v RESTARTS | grep -v Running | grep 'alertmanager\|etcd0\|lcm\|restapi\|trainer\|trainingdata\|ui\|mongo\|prometheus\|pushgateway\|storage' > /dev/null; do sleep 1; done
 	@while ! (kubectl get pods --all-namespaces | grep tiller-deploy | grep '1/1' > /dev/null); do sleep 1; done
 	@existing=$$(helm list | grep ffdl | awk '{print $$1}' | head -n 1); \

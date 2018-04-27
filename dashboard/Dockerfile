@@ -1,4 +1,4 @@
-FROM node:8.5-alpine
+FROM node:8-alpine
 
 # install chromium for headless browser tests
 ENV CHROME_BIN=/usr/bin/chromium-browser
