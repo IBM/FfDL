@@ -25,8 +25,10 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
-import sys
+import itertools
 import os
+import re
+import sys
 
 import tensorflow as tf
 
