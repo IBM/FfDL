@@ -13,6 +13,9 @@ bin/copy.sh
 .vagrant/
 .DS_Store
 *.log
+*.csr
+*.crt
+*.key
 lcm/coord/tmp.etcd
 tmp
 .venv/

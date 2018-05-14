@@ -339,7 +339,12 @@ test-submit:      ## Submit test training job
 		echo S3 URL: $$s3_url  REST URL: $$restapi_url; \
 		export DLAAS_URL=http://$$node_ip:$$restapi_port; export DLAAS_USERNAME=$(TEST_USER); export DLAAS_PASSWORD=test; \
 		echo Executing in etc/examples/$(TEST_SAMPLE): DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$$DLAAS_USERNAME DLAAS_PASSWORD=test $(CLI_CMD) train manifest.yml . ; \
-		(cd etc/examples/$(TEST_SAMPLE); pwd; $(CLI_CMD) train manifest.yml .); \
+		cp etc/examples/tf-model/manifest.yml etc/examples/tf-model/manifest_testrun.yml ; \
+		sed -i '' -e "s/user_name: test/user_name: ${AWS_ACCESS_KEY_ID}/g" etc/examples/tf-model/manifest_testrun.yml ; \
+		sed -i '' -e "s/password: test/password: ${AWS_SECRET_ACCESS_KEY}/g" etc/examples/tf-model/manifest_testrun.yml ; \
+		cat etc/examples/tf-model/manifest_testrun.yml ; \
+		(cd etc/examples/$(TEST_SAMPLE); pwd; $(CLI_CMD) train manifest_testrun.yml .); \
+		rm -f etc/examples/tf-model/manifest_testrun.yml ; \
 		echo Test job submitted. Track the status via '"'DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$(TEST_USER) DLAAS_PASSWORD=test $(CLI_CMD) list'"'. ;
 
 test-localmount-submit:      ## Submit test training job
