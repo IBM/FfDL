@@ -18,11 +18,10 @@
 #
 
 import re
+import logging
 from google.protobuf import json_format
 
 from builtins import object
-
-from log_collectors.training_data_service_client import training_data_pb2 as tdp
 
 rindex_regex = re.compile(r"\"rindex\":\s\"([0-9]+)\"")
 time_regex = re.compile(r"\"time\":\s\"([0-9]+)\"")
@@ -32,6 +31,12 @@ def output(obj: object):
     """Take a EMetrics or LogLine record and print a valid JSON object to stdout"""
     json_string = to_string(obj)
     print(json_string)
+
+
+def logging_output(obj: object):
+    """Take a EMetrics or LogLine record and print a valid JSON object to stdout"""
+    json_string = to_string(obj)
+    logging.debug("json: %s", json_string)
 
 
 def to_string(obj: object)->str:
@@ -58,4 +63,3 @@ def to_string(obj: object)->str:
     json_string = time_regex.sub(r'"time": \1', json_string)
 
     return json_string
-

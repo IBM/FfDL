@@ -16,12 +16,6 @@ Install:
 * `Go` is very specific about directory layouts. Make sure to set your `$GOPATH` and clone this repo to a directory
 `$GOPATH/src/github.com/IBM/FfDL` before proceeding with the next steps.
 
-> If you are developing on Minikube, please run the following commands to configure your Minikube and set up the Docker client to use the Minikube's Docker Daemon. Then start to build your own Docker images.
-> ```shell
-> export VM_TYPE=minikube
-> make minikube
-> eval $(minikube docker-env)
-> ```
 
 Then, fetch the dependencies via:
 ```

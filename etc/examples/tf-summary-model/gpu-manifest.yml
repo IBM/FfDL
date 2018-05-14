@@ -2,7 +2,7 @@ name: tf_mnist_with_summaries_gpu_tutorial
 description: Convolutional network model using tensorflow (GPU)
 version: "1.0"
 gpus: 1
-cpus: 2
+cpus: 0.005
 memory: 2000MiB
 
 # Object stores that allow the system to retrieve training data.
@@ -21,7 +21,7 @@ data_stores:
 
 framework:
   name: tensorflow
-  version: "1.5.0-gpu"
+  version: "1.3.0-gpu"
   command: >
     python mnist_with_summaries.py
     --train_images_file ${DATA_DIR}/train-images-idx3-ubyte.gz

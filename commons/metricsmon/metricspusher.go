@@ -5,10 +5,10 @@ import (
 
 	"github.com/IBM/FfDL/commons/config"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/go-kit/kit/metrics/statsd"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
+	log "github.com/sirupsen/logrus"
 	"github.com/sony/gobreaker"
 )
 
@@ -65,5 +65,5 @@ func StartStatsdMetricsPusher(statsd *statsd.Statsd, pushInterval time.Duration)
 	report := time.NewTicker(pushInterval)
 	//TODO
 	//defer report.Stop()
-	go statsd.SendLoop(report.C, "udp", "pushgateway:9125")
+	go statsd.SendLoop(report.C, "udp", "statsdexporter:9125")
 }

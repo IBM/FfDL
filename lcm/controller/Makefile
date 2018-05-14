@@ -17,7 +17,8 @@
 
 REPO=docker.io/ffdl
 CONTROLLER_IMAGE_NAME=controller
-IMAGE_TAG?=latest
+WHOAMI ?= $(shell whoami)
+IMAGE_TAG ?= user-$(WHOAMI)
 
 STATE_MACHINE_PDF=docs/state-machine.pdf
 

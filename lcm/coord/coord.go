@@ -23,33 +23,36 @@ import (
 	"fmt"
 	"io/ioutil"
 	"time"
-	"path"
 
 	"github.com/IBM/FfDL/commons/logger"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/clientv3util"
 	"github.com/coreos/etcd/clientv3/namespace"
-	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
 	etcdRecipes "github.com/coreos/etcd/contrib/recipes"
+	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
 )
 
 const (
-	timeout = 10 * time.Second
-	queuePrefix = "__coord_fifos__/"
+	timeout     = 10 * time.Second
 )
 
 //coordinator ... Thin wrapper to prevent exposing any of the etcd specific logic
 type coordinator struct {
-	cli *clientv3.Client
+	cli    *clientv3.Client
 	config *Config
 }
 
-//queueHandler ... Thin wrapper to capture the state of a named queue
+//queueHandler is a wrapper to capture the state of a named queue
 type queueHandler struct {
-	coordinator *Coordinator
-	queueName string
-	queue *etcdRecipes.Queue
+	queueName   string
+	queue       *etcdRecipes.Queue
+}
+
+//valueSequenceHandler is a wrapper to capture the state of a value sequence
+type valueSequenceHandler struct {
+	coordinator *coordinator
+	keyPrefix   string
 }
 
 //Coordinator ... interfacing declaring methods that can be consumed
@@ -67,12 +70,20 @@ type Coordinator interface {
 	RefreshLease(leaseID clientv3.LeaseID, log *logger.LocLoggingEntry) (*clientv3.LeaseKeepAliveResponse, error)
 	RevokeLease(leaseID clientv3.LeaseID, log *logger.LocLoggingEntry) error
 	GetLeaseDetails(leaseID clientv3.LeaseID, log *logger.LocLoggingEntry) (*clientv3.LeaseTimeToLiveResponse, error)
-	NewQueue(queueName string, log *logger.LocLoggingEntry) (*queueHandler)
+	NewQueue(queueName string, log *logger.LocLoggingEntry) *queueHandler
+	NewValueSequence(sequenceName string, log *logger.LocLoggingEntry) *valueSequenceHandler
 }
 
+// QueueHandler is a simple interface for a queue
 type QueueHandler interface {
 	Enqueue(message string, log *logger.LocLoggingEntry) error
 	Dequeue(log *logger.LocLoggingEntry) (string, error)
+}
+
+// ValueSequence is an interface for a sequence of values, stored in temporal order
+type ValueSequence interface {
+	AddNew(value string, log *logger.LocLoggingEntry) error
+	GetAll(log *logger.LocLoggingEntry) ([]string, error)
 }
 
 //Config ..config passed to the coordinator
@@ -108,7 +119,7 @@ func NewCoordinator(config Config, log *logger.LocLoggingEntry) (Coordinator, er
 	}
 
 	coordinator := coordinator{
-		cli: etcdClient,
+		cli:    etcdClient,
 		config: &config,
 	}
 	return &coordinator, err
@@ -213,7 +224,7 @@ func (instance *coordinator) PutIfKeyMissing(path string, value string, log *log
 		log.WithError(err).Errorf("Exception while performing a transaction to update key %s , with value %s and options %v.", path, value, opts)
 		return false, err
 	}
-	log.Debugf("Completed the  PutIfKeyMissing operation for key %s , value %s and opts %v with result %t", path, value, opts, resp.Succeeded)
+	//log.Debugf("Completed the  PutIfKeyMissing operation for key %s , value %s and opts %v with result %t", path, value, opts, resp.Succeeded)
 	return resp.Succeeded, err
 }
 
@@ -351,12 +362,10 @@ func (instance *coordinator) RevokeLease(leaseID clientv3.LeaseID, log *logger.L
 
 // NewQueue ... creates a new queue with the given name
 func (instance *coordinator) NewQueue(queueName string, log *logger.LocLoggingEntry) *queueHandler {
-	// construct full etcd path for the FIFO queue with the given name
-	queuePath := path.Join(queuePrefix, queueName)
-	log.Infof("Creating new message queue '%s' (full etcd path: %s)", queueName, queuePath)
+	log.Infof("Creating new message queue '%s'", queueName)
 	queue := &queueHandler{
 		queueName: queueName,
-		queue: etcdRecipes.NewQueue(instance.cli, queuePath),
+		queue:     etcdRecipes.NewQueue(instance.cli, queueName),
 	}
 	return queue
 }
@@ -373,6 +382,42 @@ func (instance *queueHandler) Dequeue(log *logger.LocLoggingEntry) (string, erro
 	return instance.queue.Dequeue()
 }
 
+// NewValueSequence ... creates a new value sequence with the given name (key prefix)
+func (instance *coordinator) NewValueSequence(sequenceName string, log *logger.LocLoggingEntry) *valueSequenceHandler {
+	log.Infof("Creating new value sequence '%s'", sequenceName)
+	sequence := &valueSequenceHandler{
+		coordinator: instance,
+		keyPrefix:   sequenceName,
+	}
+	return sequence
+}
+
+// AddNew ... adds a new value to the sequence
+func (instance *valueSequenceHandler) AddNew(value string, log *logger.LocLoggingEntry) error {
+	log.Infof("Adding new value to sequence '%s'", instance.keyPrefix)
+	newKey := fmt.Sprintf("%s/%v", instance.keyPrefix, time.Now().UnixNano())
+	_, err := (*instance.coordinator).PutIfKeyMissing(newKey, value, log)
+
+	if err != nil {
+		log.Errorf("Error posting new sequence value to etcd: %s", err)
+	}
+	return err
+}
+
+// GetAll ... returns the full list of values in the sequence
+func (instance *valueSequenceHandler) GetAll(log *logger.LocLoggingEntry) ([]string, error) {
+	log.Infof("Getting historical values for sequence '%s'", instance.keyPrefix)
+	var result []string
+	values, err := (*instance.coordinator).Get(instance.keyPrefix, log, clientv3.WithLimit(0), clientv3.WithPrefix())
+	if err != nil {
+		log.Errorf("Error retrieving sequence values from etcd: %s", err)
+	} else {
+		for k := range values {
+			result = append(result, values[k].Value)
+		}
+	}
+	return result, err
+}
 
 //--private fns
 func connect(config Config, log *logger.LocLoggingEntry) (*clientv3.Client, error) {
@@ -389,7 +434,8 @@ func connect(config Config, log *logger.LocLoggingEntry) (*clientv3.Client, erro
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)
 		tlsConfig = &tls.Config{
-			RootCAs: caCertPool,
+			RootCAs:            caCertPool,
+			InsecureSkipVerify: true,
 		}
 	}
 
@@ -444,7 +490,7 @@ func retry(attempts int, interval time.Duration, description string, log *logger
 	var err error
 	var result interface{}
 	for i := 0; ; i++ {
-		result, err = logic()
+		result, err := logic()
 		//if there was no error or condition to retry was false
 		if err == nil || !condition(err) {
 			return result, err

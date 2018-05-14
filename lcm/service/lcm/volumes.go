@@ -22,6 +22,9 @@ import (
 	v1core "k8s.io/api/core/v1"
 	v1resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/spf13/viper"
+	"github.com/IBM/FfDL/commons/config"
 )
 
 // from https://github.ibm.com/alchemy-containers/armada-storage-file-plugin/blob/master/armada-storage-classes
@@ -39,15 +42,19 @@ var supportedVolumeSizes = []v1resource.Quantity{
 }
 
 // GetVolumeClaim returns a PersistentVolumeClaim struct for the given volume size (specified in bytes).
-func GetVolumeClaim(volumeSize int64) (*v1core.PersistentVolumeClaim, error) {
+func GetVolumeClaim(volumeSize int64, logr *logger.LocLoggingEntry) (*v1core.PersistentVolumeClaim, error) {
 	quantity := getStorageQuantity(volumeSize)
 	if quantity == nil {
-		return nil, errors.New("Unable to find matching storage quantity")
+		err := errors.New("Unable to find matching storage quantity")
+		logr.WithError(err).Debugf("getStorageQuantity returned error")
+		return nil, err
 	}
 
 	class := getStorageClass(volumeSize)
 	if class == "" {
-		return nil, errors.New("Unable to find matching storage class")
+		err := errors.New("Unable to find matching storage class")
+		logr.WithError(err).Debugf("getStorageClass returned error")
+		return nil, err
 	}
 
 	claim := &v1core.PersistentVolumeClaim{
@@ -69,7 +76,7 @@ func GetVolumeClaim(volumeSize int64) (*v1core.PersistentVolumeClaim, error) {
 
 // Return the storage class for the given volume size.
 func getStorageClass(volumeSize int64) string {
-	return "ibmc-file-gold"
+	return viper.GetString(config.SharedVolumeStorageClassKey)
 }
 
 // Return the storage quantity for the given volume size.

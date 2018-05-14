@@ -17,50 +17,40 @@
 # limitations under the License.
 #
 
-import sys
 import os
-import time
+import logging
 
-# from log_collectors.training_data_service_client import training_data_pb2_grpc as td
+from typing import Tuple, Any
+
+from log_collectors.training_data_service_client import print_json
+
+from log_collectors.training_data_service_client import training_data_buffered as tdb
 from log_collectors.training_data_service_client import training_data_pb2 as tdp
-
-from log_collectors.training_data_service_client import extract_datetime as extract_datetime
-from log_collectors.training_data_service_client import print_json as print_json
+from log_collectors.training_data_service_client import extract_datetime as edt
 
 
-def push(td_client, logline, logfile_year, rindex):
+def push(td_client: tdb.TrainingDataClientBuffered, log_file: str, log_line: str, logfile_year: str, rindex: int, rindex2: int,
+         subdir: str, extra: Any=None) -> Tuple[int, int]:
     """Push the processed metrics data to the metrics service"""
 
-    # ms = time.time()
-    try:
-        line_time, _ = \
-            extract_datetime.extract_datetime(
-                logline, logfile_year)
-        ms = extract_datetime.to_timestamp(line_time)
-    except ValueError:
-        ms = time.time()
+    del log_file  # Ignored parameter for now
+    del logfile_year  # Ignored parameter for now
+    del extra  # Ignored parameter for now
 
-    try:
+    logging.debug("Creating logline record: %d", rindex)
+    # logging.debug("Sending %d (%s) %s", rindex, subdir, log_line)
+    log_line_record = tdp.LogLine(
+        meta=tdp.MetaInfo(
+            training_id=os.environ["TRAINING_ID"],
+            time=edt.get_meta_timestamp(),
+            rindex=rindex,
+            subid=subdir
+        ),
+        line=log_line
+    )
 
-        logLineRecord = tdp.LogLine(
-            meta=tdp.MetaInfo(
-                training_id=os.environ["TRAINING_ID"],
-                time=int(ms),
-                rindex=rindex
-            ),
-            line=logline
-        )
-        if td_client is not None:
-            td_client.AddLogLine(logLineRecord)
+    if td_client is not None:
+        logging.debug("Calling AddLogLine: %d", rindex)
+        td_client.AddLogLine(log_line_record)
 
-        # Uncomment for debugging
-        # print_json.output(logLineRecord)
-
-    except Exception as inst:
-        print("Unexpected error when attempting to send logline:", sys.exc_info()[0])
-        print(type(inst))
-        print(inst.args)
-        print(inst)
-        sys.stdout.flush()
-
-    return rindex+1
+    return rindex+1, rindex2

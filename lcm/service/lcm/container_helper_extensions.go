@@ -5,20 +5,26 @@ import (
 	"github.com/spf13/viper"
 
 	v1core "k8s.io/api/core/v1"
-	v1beta1 "k8s.io/api/extensions/v1beta1"
 	"os"
 	"fmt"
+
+	//"github.com/sirupsen/logrus"
+	"github.com/IBM/FfDL/commons/logger"
+	"github.com/sirupsen/logrus"
+	yaml "gopkg.in/yaml.v2"
 )
 
 const learnerEntrypointFilesVolume = "learner-entrypoint-files"
 const learnerEntrypointFilesPath = "/entrypoint-files"
 const hostDataMountVolume = "mounted-host-data"
-const hostDataMountPath = "/host-data"
+//const hostDataMountPath = "/host-data"
+const hostDataMountPath = "/cosdata"
 const imagePrefixKey = "image.prefix"
 const mountHostDataKey = "mount.host.data"
 
 
-func extendLearnerContainer(learner *v1core.Container, req *service.JobDeploymentRequest) {
+func extendLearnerContainer(learner *v1core.Container, req *service.JobDeploymentRequest,
+	logr *logger.LocLoggingEntry) {
 
 	learnerImage := "__unknown__"
 
@@ -37,6 +43,7 @@ func extendLearnerContainer(learner *v1core.Container, req *service.JobDeploymen
 		// TODO!
 	}
 
+
 	extCmd := "export PATH=/usr/local/bin/:$PATH; cp " + learnerEntrypointFilesPath + "/*.sh /usr/local/bin/; chmod +x /usr/local/bin/*.sh;"
 	extMount := v1core.VolumeMount{
 		Name:      learnerEntrypointFilesVolume,
@@ -50,13 +57,22 @@ func extendLearnerContainer(learner *v1core.Container, req *service.JobDeploymen
 			MountPath: hostDataMountPath,
 		}
 		learner.VolumeMounts = append(learner.VolumeMounts, hostMount)
+
+		yamlbytes,err := yaml.Marshal(learner.VolumeMounts)
+		if err != nil {
+			logr.WithError(err).Errorf("Could not marshal volume mounts for diagnosis")
+		}
+		fmt.Printf("-------------------------\n")
+		fmt.Printf("learner.VolumeMounts: %s", string(yamlbytes))
 	}
 
 	learner.Image = learnerImage
 	learner.Command[2] = extCmd + learner.Command[2]
 }
 
-func extendLearnerDeployment(deployment *v1beta1.Deployment) {
+
+func extendLearnerVolumes(volumeSpecs []v1core.Volume, logr *logger.LocLoggingEntry) []v1core.Volume {
+	logr.Debugf("extendLearnerVolumes entry")
 
 	// learner entrypoint files volume
 	learnerEntrypointFilesVolume := v1core.Volume{
@@ -69,9 +85,13 @@ func extendLearnerDeployment(deployment *v1beta1.Deployment) {
 			},
 		},
 	}
-	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, learnerEntrypointFilesVolume)
+	volumeSpecs = append(volumeSpecs, learnerEntrypointFilesVolume)
 
-	if doMountHostData() {
+	shouldMountHostData := doMountHostData()
+
+	logrus.Debugf("shouldMountHostData: %t", shouldMountHostData)
+
+	if shouldMountHostData {
 		hostDataVolume := v1core.Volume{
 			Name: hostDataMountVolume,
 			VolumeSource: v1core.VolumeSource{
@@ -80,9 +100,47 @@ func extendLearnerDeployment(deployment *v1beta1.Deployment) {
 				},
 			},
 		}
-		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, hostDataVolume)
+		logrus.Debugf("created host mount volume spec: %v+", hostDataVolume)
+		volumeSpecs = append(volumeSpecs, hostDataVolume)
+
+		yamlbytes,err := yaml.Marshal(volumeSpecs)
+		if err != nil {
+			logr.WithError(err).Errorf("Could not marshal volumeSpecs for diagnosis")
+		}
+		fmt.Printf("-------------------------\n")
+		fmt.Printf("volumeSpecs: %s", string(yamlbytes))
 	}
+	logr.Debugf("extendLearnerVolumes exit")
+	return volumeSpecs
 }
+
+//func extendLearnerDeployment(deployment *v1beta1.Deployment) {
+//
+//	// learner entrypoint files volume
+//	learnerEntrypointFilesVolume := v1core.Volume{
+//		Name: learnerEntrypointFilesVolume,
+//		VolumeSource: v1core.VolumeSource{
+//			ConfigMap: &v1core.ConfigMapVolumeSource{
+//				LocalObjectReference: v1core.LocalObjectReference{
+//					Name: learnerEntrypointFilesVolume,
+//				},
+//			},
+//		},
+//	}
+//	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, learnerEntrypointFilesVolume)
+//
+//	if doMountHostData() {
+//		hostDataVolume := v1core.Volume{
+//			Name: hostDataMountVolume,
+//			VolumeSource: v1core.VolumeSource{
+//				HostPath: &v1core.HostPathVolumeSource{
+//					Path: hostDataMountPath,
+//				},
+//			},
+//		}
+//		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, hostDataVolume)
+//	}
+//}
 
 func dataBrokerImageNameExtended(dockerRegistry string, dataBrokerType string, dataBrokerTag string) string {
 	imagePrefix := getImagePrefix()

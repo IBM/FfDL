@@ -27,6 +27,11 @@ spec:
         - name: learner-config-volume
           configMap:
             name: learner-config
+{{ if (eq .Values.has_static_volumes true) }}
+        - name: static-volumes-config-volume
+          configMap:
+            name: static-volumes
+{{ end }}
         - name: etcd-ssl-cert
           secret:
             secretName: lcm-secrets
@@ -53,6 +58,10 @@ spec:
 {{ end }}
         - mountPath: /etc/learner-config
           name: learner-config-volume
+{{ if (eq .Values.has_static_volumes true) }}
+        - mountPath: /etc/static-volumes
+          name: static-volumes-config-volume
+{{ end }}
         - mountPath: /etc/certs/
           name: etcd-ssl-cert
           readOnly: true
@@ -65,8 +74,12 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+        - name: DLAAS_SHARED_VOLUME_STORAGE_CLASS
+          value: {{.Values.lcm.shared_volume_storage_class}}
         - name: DLAAS_IMAGE_TAG
           value: {{.Values.restapi.version}}
+        - name: DLAAS_IMAGE_PULL_POLICY
+          value: {{.Values.docker.pullPolicy}}
         - name: DLAAS_ENV
           value: {{.Values.env}}
         - name: DLAAS_LOGLEVEL
@@ -115,3 +128,5 @@ spec:
               - "grpc-health-checker --port 8443 --tls"
           initialDelaySeconds: 15
           timeoutSeconds: 2
+      imagePullSecrets:
+      - name: regcred

@@ -37,6 +37,7 @@ type ManifestV1 struct {
 	Version           string            `yaml:"version,omitempty"`
 	Cpus              float64           `yaml:"cpus,omitempty"`
 	Gpus              float64           `yaml:"gpus,omitempty"`
+	Gpu_type	  string	    `yaml:"gpu_type,omitempty"`
 	Learners          int32             `yaml:"learners,omitempty"`
 	Memory            string            `yaml:"memory,omitempty"`
 	Storage           string            `yaml:"storage,omitempty"`
@@ -223,6 +224,7 @@ func manifest2TrainingRequest(m *ManifestV1, modelDefinition []byte, http *http.
 
 	r.Training.Resources = &grpc_trainer_v2.ResourceRequirements{
 		Gpus:        float32(m.Gpus),
+		GpuType:     string(m.Gpu_type),
 		Cpus:        float32(m.Cpus),
 		Memory:      mem,
 		MemoryUnit:  memUnit,

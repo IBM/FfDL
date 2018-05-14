@@ -2,9 +2,9 @@ name: mnist-caffe-gpu-model
 description: Caffe MNIST model (GPU)
 version: "1.0"
 gpus: 1
-cpus: 2
+cpus: 0.005
 learners: 1
-memory: 2000MiB
+memory: 1000MiB
 
 # Object stores that allow the system to retrieve training data.
 data_stores:

@@ -15,15 +15,17 @@
 #
 
 
-REPO ?= docker.io/ffdl
+DOCKER_REPO ?= docker.io
+DOCKER_NAMESPACE ?= ffdl
+GRPC_GIT=git@github.ibm.com:deep-learning-platform/grpc-parameter-server.git
 WHOAMI ?= $(shell whoami)
 IMAGE_TAG ?= user-$(WHOAMI)
 
-IMAGE_NAME?=${REPO}/emetrics_file_extractor:${IMAGE_TAG}
+IMAGE_NAME?=${DOCKER_REPO}/${DOCKER_NAMESPACE}/emetrics_file_extractor:${IMAGE_TAG}
 
 DOCKER_OPTIONS ?=
 
-all: build push
+all: build
 
 build:
 	echo "Building ${IMAGE_NAME}"
@@ -31,10 +33,6 @@ build:
 	docker build -q ${DOCKER_OPTIONS} -t ${IMAGE_NAME} -f Dockerfile .
 	rm -r training_data_service_client
 	echo "Success building ${IMAGE_NAME}"
-
-push:
-	echo "Pushing ${IMAGE_NAME}"
-	docker push ${IMAGE_NAME}
 
 imagename:
 	echo $(IMAGE_NAME)

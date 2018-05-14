@@ -1,4 +1,4 @@
-package: github.com/IBM/FfDL
+package: github.com/IBM/FfDL/
 import:
 - package: github.com/sirupsen/logrus
   version: ~1.0.2
@@ -59,8 +59,11 @@ import:
   version: v0.8.0
   subpackages:
   - prometheus
+- package: github.com/grpc-ecosystem/go-grpc-prometheus
+  version: ^1.1.0
 - package: github.com/sony/gobreaker
 - package: golang.org/x/crypto
+  version: d6449816ce06963d9d136eee5a56fca5b0616e7e
   subpackages:
   - ssh/terminal
 - package: github.com/go-logfmt/logfmt

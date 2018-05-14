@@ -17,17 +17,17 @@
 package lcm
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/IBM/FfDL/commons/config"
+	"github.com/IBM/FfDL/lcm/lcmconfig"
 
 	"github.com/IBM/FfDL/commons/logger"
 	"github.com/IBM/FfDL/commons/service"
 
 	"github.com/spf13/viper"
+	v1beta1 "k8s.io/api/apps/v1beta1"
 	v1core "k8s.io/api/core/v1"
-	v1beta1 "k8s.io/api/extensions/v1beta1"
 	v1resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -121,11 +121,12 @@ func defineJobMonitorDeployment(req *service.JobDeploymentRequest, envVars []v1c
 		dockerRegistry = viper.GetString(config.LearnerRegistryKey)
 	}
 
-	fmt.Sprintf("%s/jobmonitor:%s", dockerRegistry, jmTag)
 	jmImage := jobmonitorImageNameExtended(dockerRegistry, jmTag)
 	imagePullSecret := viper.GetString(config.LearnerImagePullSecretKey)
+	logr.Debugf("jmImage: %s, imagePullSecret: %s, imagePullPolicy: %s",
+		jmImage, imagePullSecret, lcmconfig.GetImagePullPolicy())
 
-	cpuCount := v1resource.NewMilliQuantity(int64(float64(0.1)*1000.0), v1resource.DecimalSI)
+	cpuCount := v1resource.NewMilliQuantity(int64(float64(0.5)*1000.0), v1resource.DecimalSI)
 	memInBytes := int64(512 * 1024 * 1024)
 	memCount := v1resource.NewQuantity(memInBytes, v1resource.DecimalSI)
 	logr.Debugf("job monitor: cpu %+v, mem %+v", cpuCount, memCount)
@@ -133,10 +134,6 @@ func defineJobMonitorDeployment(req *service.JobDeploymentRequest, envVars []v1c
 	jmName := constructJMName(req.Name)
 
 	deploySpec := &v1beta1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Deployment",
-			APIVersion: "extensions/v1beta1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: jmName,
 		},
@@ -160,6 +157,8 @@ func defineJobMonitorDeployment(req *service.JobDeploymentRequest, envVars []v1c
 					Labels: map[string]string{
 						"app":         jmName,
 						"training_id": req.TrainingId,
+						"service":     "dlaas-jobmonitor",
+						"user_id":     req.UserId,
 					},
 				},
 				Spec: v1core.PodSpec{
@@ -202,7 +201,7 @@ func defineJobMonitorDeployment(req *service.JobDeploymentRequest, envVars []v1c
 									v1core.ResourceMemory: *memCount,
 								},
 							},
-							ImagePullPolicy: defaultPullPolicy,
+							ImagePullPolicy: lcmconfig.GetImagePullPolicy(),
 						},
 					},
 					RestartPolicy: v1core.RestartPolicyAlways,
@@ -217,6 +216,7 @@ func defineJobMonitorDeployment(req *service.JobDeploymentRequest, envVars []v1c
 		},
 	}
 
-	setServiceTypeLabel(&deploySpec.Spec.Template.ObjectMeta, "dlaas-jobmonitor")
+	logr.Debug("defineJobMonitorDeployment() Pull Secret: %v", imagePullSecret)
+
 	return deploySpec
 }

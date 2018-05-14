@@ -38,11 +38,11 @@ func init() {
 	config.InitViper()
 
 	// mongo default settings
-	viper.SetDefault("mongo.address", "mongodb://localhost:27017/dlaas_trainer")
-	mongoAddress = viper.GetString("mongo.address")   // overwrite this by setting ENV var DLAAS_MONGO_ADDRESS
-	mongoDatabase = viper.GetString("mongo.database") // overwrite this by setting ENV var DLAAS_MONGO_ADDRESS
-	mongoUsername = viper.GetString("mongo.username") // overwrite this by setting ENV var DLAAS_MONGO_USERNAME
-	mongoPassword = viper.GetString("mongo.password") // overwrite this by setting ENV var DLAAS_MONGO_PASSWORD
+	viper.SetDefault(mongoAddressKey, "mongodb://localhost:27017/dlaas_trainer")
+	mongoAddress = viper.GetString(mongoAddressKey)   // overwrite this by setting ENV var DLAAS_MONGO_ADDRESS
+	mongoDatabase = viper.GetString(mongoDatabaseKey) // overwrite this by setting ENV var DLAAS_MONGO_ADDRESS
+	mongoUsername = viper.GetString(mongoUsernameKey) // overwrite this by setting ENV var DLAAS_MONGO_USERNAME
+	mongoPassword = viper.GetString(mongoPasswordKey) // overwrite this by setting ENV var DLAAS_MONGO_PASSWORD
 	mongoCertLocation = config.GetMongoCertLocation()
 }
 
@@ -121,7 +121,8 @@ func TestMongoRepository(t *testing.T) {
 	assert.EqualValues(t, "bar-name", tr2.ModelDefinition.Name)
 
 	// manually connect to Mongo to check state of soft-deleted records
-	sess, coll, _ := ConnectMongo(mongoAddress, mongoDatabase, mongoUsername, mongoPassword, mongoCertLocation, collectionName)
+	sess, _ := ConnectMongo(mongoAddress, mongoDatabase, mongoUsername, mongoPassword, mongoCertLocation)
+	coll := sess.DB(mongoDatabase).C(collectionName)
 	defer sess.Close()
 
 	// Delete()
@@ -171,7 +172,8 @@ func TestMongoRespositoryFindCurrentlyRunningTrainings(t *testing.T) {
 
 	logEntry().Debugf("Using Mongo address: %s", mongoAddress)
 
-	r, err := newTrainingsRepository(mongoAddress, mongoDatabase, mongoUsername, mongoPassword, mongoCertLocation, fmt.Sprintf("itest_trainer_repo_%d", time.Now().Unix()))
+	r, err := newTrainingsRepository(mongoAddress, mongoDatabase, mongoUsername, mongoPassword,
+		mongoCertLocation, fmt.Sprintf("itest_trainer_repo_%d", time.Now().Unix()))
 	assert.NoError(t, err)
 	defer r.Close()
 

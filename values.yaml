@@ -1,6 +1,7 @@
 namespace: default
 env: dev
 k8s_1dot8_or_above: true
+has_static_volumes: false
 services:
   expose_node_port: true
 docker:
@@ -9,25 +10,27 @@ docker:
   image_prefix: ffdl-
   pullPolicy: IfNotPresent
 trainer:
-  version: latest
+  version: dummy
   port: 0
   replicas: 1
   cpus: 100m
   memory: 64Mi
 restapi:
-  version: latest
+  version: dummy
   port: 0
   replicas: 1
   cpus: 100m
   memory: 64Mi
 lcm:
-  version: latest
+  version: dummy
   port: 0
   replicas: 1
   cpus: 100m
   memory: 64Mi
+  # This will used for "volume.beta.kubernetes.io/storage-class" for the shared volume
+  shared_volume_storage_class: ""
 trainingdata:
-  version: latest
+  version: dummy
   port: 0
   replicas: 1
   cpus: 100m
@@ -37,9 +40,9 @@ learner:
   docker_namespace: ffdl
   kubeSecret: lcm-secrets
 databroker:
-  tag: latest
+  tag: dummy
 webui:
-  version: latest
+  version: dummy
   port: 0
   cpus: 100m
   memory: 64Mi

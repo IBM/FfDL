@@ -16,9 +16,8 @@
 # limitations under the License.
 #
 
-
-PUSHGATEWAY_HOST="pushgateway"
-PUSHGATEWAY_UDP_PORT="9125"
+STATSDEXPORTER_HOST="statsdexporter"
+STATSDEXPORTER_UDP_PORT="9125"
 
 # Retries a command a with backoff.
 # The retry count is given by ATTEMPTS (default 5), the
@@ -106,11 +105,15 @@ function infinite_exp_backoff {
 # This function is needed because the etcdctl command returns 0 even on failure.
 function runEtcdCommand() {
 
-  cert_file_path=/etc/certs/etcd/etcd.cert
   # Run command.
   echo "etcdctl args: $@"
+
+  cert_file_path=/etc/certs/etcd/etcd.cert
+
   ETCDCTL_API=3 etcdctl --user=${DLAAS_ETCD_USERNAME}:${DLAAS_ETCD_PASSWORD} --insecure-skip-tls-verify=true --cacert ${cert_file_path} --dial-timeout=10s --endpoints $DLAAS_ETCD_ADDRESS "$@" 2> /tmp/stderr
+
   exitcode=$?
+  echo "etcdctl exitcode: $exitcode"
 
   # Return non-zero exit code if there's any stderr output.
   if [ -s "/tmp/stderr" ]; then
@@ -148,7 +151,7 @@ function updateMetricsOnETCDFailure() {
 function pushMetrics() {
   metrics=$1
   # Setup UDP socket with statsd server
-  exec 3<> /dev/udp/$PUSHGATEWAY_HOST/$PUSHGATEWAY_UDP_PORT
+  exec 3<> /dev/udp/$STATSDEXPORTER_HOST/$STATSDEXPORTER_UDP_PORT
   # Send data
   printf "$metrics" >&3
   # Close UDP socket

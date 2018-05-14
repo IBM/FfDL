@@ -1,0 +1,45 @@
+name: tf_convolutional_network_tutorial
+description: Convolutional network model using tensorflow
+version: "1.0"
+gpus: 0
+cpus: 0.5
+memory: 1Gb
+
+# Object stores that allow the system to retrieve training data.
+data_stores:
+  - id: hostmount
+    type: mount_volume
+    training_data:
+      container: local-dlaas-ci-tf-training-data
+      #  volumeMounts:
+      #    - mountPath: /data
+      #      name: host-mount
+    training_results:
+      container: local-dlaas-ci-trained-results-tf-training-data
+      #  volumeMounts:
+      #    - mountPath: /results
+      #      name: host-mount
+    connection:
+      type: host_mount
+      name: "host-mount"
+      path: "/cosdata"
+      #  name: host-mount
+      #  hostPath:
+      #    path: /cosdata
+
+framework:
+  name: tensorflow
+  version: "1.5.0-py3"
+  command: >
+    python3 convolutional_network.py --trainImagesFile ${DATA_DIR}/train-images-idx3-ubyte.gz
+      --trainLabelsFile ${DATA_DIR}/train-labels-idx1-ubyte.gz --testImagesFile ${DATA_DIR}/t10k-images-idx3-ubyte.gz
+      --testLabelsFile ${DATA_DIR}/t10k-labels-idx1-ubyte.gz --learningRate 0.001
+      --trainingIters 2000
+  # Change trainingIters to 20000 if you want your model to have over 80% Accuracy rate.
+
+evaluation_metrics:
+  type: tensorboard
+  in: "$JOB_STATE_DIR/logs/tb"
+  # (Eventual) Available event types: 'images', 'distributions', 'histograms', 'images'
+  # 'audio', 'scalars', 'tensors', 'graph', 'meta_graph', 'run_metadata'
+  #  event_types: [scalars]

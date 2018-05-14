@@ -46,18 +46,6 @@ func TestS3Connect(t *testing.T) {
 	// assert.Error(t, err)
 }
 
-func TestS3WithSession(t *testing.T) {
-	conf := make(map[string]string)
-	conf[AuthURLKey] = "https://non-existent"
-	conf[UsernameKey] = "foo"
-	conf[PasswordKey] = "bar"
-
-	os, err := NewS3ObjectStore(conf)
-	assert.NotNil(t, os)
-	assert.NoError(t, err)
-	assert.Error(t, os.Connect())
-}
-
 func TestS3GetRegion(t *testing.T) {
 	os := &s3ObjectStore{
 		conf: config.GetDataStoreConfig(),

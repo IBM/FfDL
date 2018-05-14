@@ -19,12 +19,12 @@ package client
 import (
 	"fmt"
 
+	"github.com/grpc-ecosystem/go-grpc-prometheus"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/IBM/FfDL/commons/config"
 	"github.com/IBM/FfDL/commons/service"
 	"github.com/IBM/FfDL/commons/util"
-
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
 
@@ -61,6 +61,8 @@ func NewLcm(lcm service.LifecycleManagerClient) (LcmClient, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	dialOpts = append(dialOpts, grpc.WithUnaryInterceptor(grpc_prometheus.UnaryClientInterceptor), grpc.WithStreamInterceptor(grpc_prometheus.StreamClientInterceptor))
 
 	if lcm == nil {
 		conn, err := grpc.Dial(address, dialOpts...)

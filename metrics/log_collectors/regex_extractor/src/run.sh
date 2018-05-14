@@ -6,7 +6,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+# http:#www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,17 +15,12 @@
 # limitations under the License.
 #
 
-
-TRAININGLOGS=$JOB_STATE_DIR/latest-log
-
-echo $TRAININGLOGS
-
-while [ ! -f $TRAININGLOGS ]
+while [ ! -d ${LOG_DIR} ]
 do
   sleep 1
 done
 
-echo "$EM_DESCRIPTION" > $JOB_STATE_DIR/logs/evaluation_metrics_description.yaml
-export EM_DESCRIPTION="$JOB_STATE_DIR/logs/evaluation_metrics_description.yaml"
+echo "$EM_DESCRIPTION" > ${LOG_DIR}/evaluation_metrics_description.yaml
+export EM_DESCRIPTION="$LOG_DIR/evaluation_metrics_description.yaml"
 
 python3 extract_from_log.py

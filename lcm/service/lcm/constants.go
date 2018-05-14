@@ -59,6 +59,8 @@ const (
 	customFrameworkName          string = "custom"
 	numRetries                          = 5
 	maxGPUsPerNode                      = 4
+
+	// Not sure if these should stay or go, -sb 3/15/2018
 	errCodeNormal                       = "000"
 	errCodeInsufficientResources        = "100"
 	errCodeFailedDeploy                 = "101"
@@ -77,9 +79,9 @@ const (
 	loadModelMilliCPU=20
 	loadModelMemInMB=50
 	loadTrainingDataMilliCPU=20
-	loadTrainingDataMemInMB=300
-	logCollectorMilliCPU=60
-	logCollectorMemInMB=300
+	loadTrainingDataMemInMB=100
+	logCollectorMilliCPU=20
+	logCollectorMemInMB=100
 	controllerMilliCPU=20
 	controllerMemInMB=100
 )

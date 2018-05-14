@@ -11,8 +11,6 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/go-kit/kit/metrics"
 
-	"github.com/coreos/etcd/clientv3"
-
 	"google.golang.org/grpc"
 
 	"github.com/IBM/FfDL/commons/config"
@@ -42,9 +40,10 @@ const (
 )
 
 const (
-	numRetries                    = 10
-	insuffResourcesRetries        = 40
-	ctxTimeout                    = 10 * time.Second
+	numRetries             = 10
+	insuffResourcesRetries = 40
+	ctxTimeout             = 10 * time.Second
+	pollingInterval        = 60 * time.Second
 )
 
 type jobMonitorMetrics struct {
@@ -81,7 +80,6 @@ func NewJobMonitor(trainingID string, userID string, numLearners int, jobName st
 	logr.Infof("Starting Job Monitor service for training %s", trainingID)
 	// assert necessary config keys
 	config.FatalOnAbsentKey(config.ETCDEndpoints)
-	failedTrainerConnectivityCounter = statsdClient.NewCounter("jobmonitor.trainer.connectivity.failed", 1)
 
 	jmMetrics := jobMonitorMetrics{
 		failedETCDConnectivityCounter:        statsdClient.NewCounter("jobmonitor.etcd.connectivity.failed", 1),
@@ -150,7 +148,7 @@ func NewJobMonitor(trainingID string, userID string, numLearners int, jobName st
 func updateJobStatusInTrainer(trainingID string, userID string, statusUpdate *client.TrainingStatusUpdate, logr *logger.LocLoggingEntry) error {
 	updStatus := statusUpdate.Status
 	logr.Infof("(updateJobStatus) Updating status of %s to %s", trainingID, updStatus.String())
-	updateRequest := &grpc_trainer_v2.UpdateRequest{TrainingId: trainingID, Status: updStatus,
+	updateRequest := &grpc_trainer_v2.UpdateRequest{TrainingId: trainingID, Status: updStatus, Timestamp: statusUpdate.Timestamp,
 		UserId: userID, StatusMessage: statusUpdate.StatusMessage, ErrorCode: statusUpdate.ErrorCode}
 	trainer, err := client.NewTrainer()
 	if err != nil {
@@ -175,19 +173,15 @@ func updateJobStatusInTrainer(trainingID string, userID string, statusUpdate *cl
 		return err
 	}
 
-	if err := sendStatusUpdate(trainingID, updStatus.String(), logr); err != nil {
-		logr.WithError(err).Errorf("Error when sending status update(s) for trainingID %s", trainingID)
-	}
-
 	return err
 }
 
 // update job status in mongo on error
 func updateJobStatusOnError(trainingID string, userID string, errorCode string, statusMessage string, logr *logger.LocLoggingEntry) error {
 	statusUpdate := client.TrainingStatusUpdate{
-		Status: grpc_trainer_v2.Status_FAILED,
-		Timestamp: float64(time.Now().UnixNano()) / 1000000000,
-		ErrorCode: errorCode,
+		Status:        grpc_trainer_v2.Status_FAILED,
+		Timestamp:     client.CurrentTimestampAsString(),
+		ErrorCode:     errorCode,
 		StatusMessage: statusMessage,
 	}
 	return updateJobStatusInTrainer(trainingID, userID, &statusUpdate, logr)
@@ -205,18 +199,14 @@ func (jm *JobMonitor) ManageDistributedJob(logr *logger.LocLoggingEntry) {
 //the trailing slash on status/ on learner is important as it distinguishes the regex from status_summary_metrics
 func (jm *JobMonitor) monitorJob(logr *logger.LocLoggingEntry) {
 
-	type IndividualStatusChannelsWatch struct {
-		key   string
-		watch clientv3.WatchChan
-	}
-
 	defaultBackoff := backoff.NewExponentialBackOff()
 	defaultBackoff.MaxElapsedTime = 1 * time.Minute
 	defaultBackoff.MaxInterval = 5 * time.Second
+
 	err := backoff.RetryNotify(func() error {
 		_, err := jm.etcdClient.PutIfKeyMissing(overallJobStatusPath(jm.TrainingID), grpc_trainer_v2.Status_NOT_STARTED.String(), logr)
 		return err
-	}, defaultBackoff, func(err error, t time.Duration) { jm.metrics.failedK8sConnectivityCounter.Add(1) })
+	}, defaultBackoff, func(err error, t time.Duration) { jm.metrics.failedETCDConnectivityCounter.Add(1) })
 
 	//FIXME should we kill the job here
 	if err != nil {
@@ -224,138 +214,44 @@ func (jm *JobMonitor) monitorJob(logr *logger.LocLoggingEntry) {
 			grpc_trainer_v2.Status_NOT_STARTED.String(), overallJobStatusPath(jm.TrainingID))
 	}
 
-	done := make(chan string)
-	overallJobStatusChannel := jm.etcdClient.WatchPath(context.Background(), overallJobStatusPath(jm.TrainingID), logr, clientv3.WithProgressNotify())
-	var individualJobStatusChannels []*IndividualStatusChannelsWatch
+	//processed[1], for example, stores the number of status updates of learner 1 that have been processed
+	processed := make(map[int]int)
+
 	for i := 1; i <= jm.NumLearners; i++ {
-		individualWatch := jm.etcdClient.WatchPath(context.Background(), indvidualJobStatusPath(jm.TrainingID, i), logr, clientv3.WithProgressNotify())
-		item := IndividualStatusChannelsWatch{
-			key:   indvidualJobStatusPath(jm.TrainingID, i),
-			watch: individualWatch,
-		}
-
-		individualJobStatusChannels = append(individualJobStatusChannels, &item)
+		//To start, no status updates have been processed for any learner
+		processed[i] = 0
 	}
-
-	for _, ch := range individualJobStatusChannels {
-		go func(individualCh *IndividualStatusChannelsWatch) {
-			for wresp := range individualCh.watch {
-
-				if err := wresp.Err(); err != nil {
-					jm.metrics.failedETCDWatchCounter.Add(1)
-					logr.WithError(err).Errorf("watch failed with error, this should not have happened for path %s", individualCh.key)
-				}
-
-				if wresp.Canceled {
-					logr.Warnf("Received cancel event against the watch channel %v and path %s , so breaking out of the watch logic with possible error %v", wresp, overallJobStatusPath(jm.TrainingID), wresp.Err())
-					done <- fmt.Sprintf("received cancel with error %v", wresp.Err())
-				}
-
-				if wresp.IsProgressNotify() {
-					etcdLearnerProgressNotificationCounter++
-					if etcdLearnerProgressNotificationCounter >= etcdProgressNotificationLogFrequency {
-						logr.Infof("progress notification for watch on learner status %s", individualCh.key)
-						etcdLearnerProgressNotificationCounter = 0
-					}
-				}
-
-				for _, ev := range wresp.Events {
-					switch ev.Type {
-					case clientv3.EventTypePut:
-						logr.Infof("Received update on MATCHING LEARNER on path %s, with event %v , with new value as %v", string(ev.Kv.Key), ev.Type, string(ev.Kv.Value))
-						finished, error := jm.processUpdateLearnerStatus(string(ev.Kv.Key), string(ev.Kv.Value), logr)
-						if error != nil {
-							logr.WithError(error).Warnf("Error occurred when trying to process learner status for path %s with value %s , skipping ... ", string(ev.Kv.Key), string(ev.Kv.Value))
-						}
-						if error != nil && finished {
-							done <- fmt.Sprintf("Received call to stop watching learner because %s has received a value of %s", ev.Kv.Key, ev.Kv.Value)
-						}
-					case clientv3.EventTypeDelete:
-						logr.Warn("wasn't expecting to get a delete message on path %s", string(ev.Kv.Key))
-					default:
-						logr.Warn("wasn't expecting to get a default message on path %s", string(ev.Kv.Key))
-					}
-				}
-			}
-
-		}(ch)
-	}
-
-	time.AfterFunc(5*time.Second, func() {
-		logr.Info("Sending a one time request to check if the paths already exist")
-
-		//check if individual job status path exists for indvidual learners as well and if so send a message to one time watch
-		for i := 1; i <= jm.NumLearners; i++ {
-			individualJobStatusResponse, error := jm.etcdClient.Get(indvidualJobStatusPath(jm.TrainingID, i), logr)
-			if error != nil {
-				logr.WithError(error).Errorf("(monitorLearner) Learner with path %s : got error while doing a one time get", indvidualJobStatusPath(jm.TrainingID, i))
-			}
-			if individualJobStatusResponse != nil && len(individualJobStatusResponse) > 0 {
-				logr.Infof("(monitorLearner) Learner with path %s : was already present with val %s while doing a one time get, sending signal downstream", indvidualJobStatusPath(jm.TrainingID, i), individualJobStatusResponse[0].Value)
-				finished, error := jm.processUpdateLearnerStatus(individualJobStatusResponse[0].Key, individualJobStatusResponse[0].Value, logr)
-				if error != nil {
-					logr.WithError(error).Warnf("Error occurred when trying to process learner status first time for path %s with value %s , skipping ... ", individualJobStatusResponse[0].Key, individualJobStatusResponse[0].Value)
-				}
-				if error != nil && finished {
-					done <- fmt.Sprintf("Received call to stop learner from  timer because %s has received a value of %s", individualJobStatusResponse[0].Key, individualJobStatusResponse[0].Value)
-				}
-			}
-		}
-	})
 
 	for {
-		select {
-		case reason := <-done:
-			logr.Infof("Finished processing and getting out because of reason %s", reason)
-			close(done)
-			return
+		for i := 1; i <= jm.NumLearners; i++ {
+			seqName := indvidualJobStatusPath(jm.TrainingID, i)
+			seq := jm.etcdClient.NewValueSequence(seqName, logr)
+			statuses, err := seq.GetAll(logr)
 
-		case wresp := <-overallJobStatusChannel:
-			if err := wresp.Err(); err != nil {
-				jm.metrics.failedETCDWatchCounter.Add(1)
-				logr.WithError(err).Errorf("watch failed with error, this should not have happened for path %s", overallJobStatusPath(jm.TrainingID))
+			if err != nil {
+				logr.Errorf("Job Monitor could not connect to ETCD to get the status of Learner %d\n", i)
+				jm.metrics.failedETCDConnectivityCounter.Add(1)
+				continue
 			}
 
-			if wresp.Canceled {
-				logr.Warnf("Recieved cancel event against the watch channel %v and path %s , so breaking out of the watch logic with possible error %v", wresp, overallJobStatusPath, wresp.Err())
-				done <- fmt.Sprintf("received cancel event on path %s with error %v", overallJobStatusPath(jm.TrainingID), wresp.Err())
-			}
-			if wresp.IsProgressNotify() {
-				etcdJobProgressNotificationCounter++
-				if etcdJobProgressNotificationCounter >= etcdProgressNotificationLogFrequency {
-					logr.Infof("progress notification for watch for path %s", overallJobStatusPath(jm.TrainingID))
-					etcdJobProgressNotificationCounter = 0
-				}
-			}
-			for _, ev := range wresp.Events {
-				switch ev.Type {
-				case clientv3.EventTypePut:
-					logr.Infof("Received update on MATCHING JOB on path %s, with event %v , with new value as %v", ev.Kv.Key, ev.Type, ev.Kv.Value)
-					finished := jm.processUpdateJobStatus(string(ev.Kv.Value), failedTrainerConnectivityCounter, logr)
-					if finished {
-						done <- fmt.Sprintf("Received call to stop watching job because %s has received a value of %s", ev.Kv.Key, ev.Kv.Value)
-					}
-				case clientv3.EventTypeDelete:
-					logr.Warn("wasn't expecting to get a delete message on path %s", ev.Kv.Key)
-				default:
-					logr.Warn("wasn't expecting to get a default message on path %s", ev.Kv.Key)
-				}
+			for j := processed[i]; j < len(statuses); j++ {
+				jm.processUpdateLearnerStatus(seqName, statuses[j], logr)
+				processed[i]++
 			}
 		}
+		time.Sleep(pollingInterval)
 	}
+
 }
 
 //gets triggered when the /status node is updated
 //This function updates the overall job status with trainer and calls LCM to clean up the job when necessary
 //This function should only return true if the job needs no further status monitoring
-func (jm *JobMonitor) processUpdateJobStatus(currStatus string, failedTrainerConnectivityCounter metrics.Counter, logr *logger.LocLoggingEntry) bool {
+func (jm *JobMonitor) processUpdateJobStatus(currStatus string, logr *logger.LocLoggingEntry) bool {
 	logr.Infof("(processUpdateJobStatus) got triggered with the current status %s", currStatus)
 	//Variable to notify whether the job needs further status monitoring
 	markComplete := false
 	statusUpdate := client.GetStatus(currStatus, logr)
-
-	// prepare error/status message
-	statusUpdate.StatusMessage = prepareStatusMessage(statusUpdate.ErrorCode, statusUpdate.StatusMessage)
 
 	status := statusUpdate.Status
 	error := updateJobStatusInTrainer(jm.TrainingID, jm.UserID, statusUpdate, logr)
@@ -414,11 +310,15 @@ func (jm *JobMonitor) processUpdateLearnerStatus(learnerStatusPath string, learn
 		return markComplete, fmt.Errorf("(processUpdateLearnerStatus) while processing update from learner, the value at overall job status path %s was empty, the default value is NOT_STARTED", overallJobStatusPath(jm.TrainingID))
 	}
 	currentOverallJobStatus := response[0].Value
-	if jm.isTransitionAllowed(currentOverallJobStatus, learnerStatus.String()) {
-		logr.Infof("Transition was allowed, changing overall status of job from %s to learners status %s", currentOverallJobStatus, learnerStatus)
-		jm.etcdClient.CompareAndSwap(overallJobStatusPath(jm.TrainingID), learnerStatus.String(), currentOverallJobStatus, logr)
+	// currentOverallJobStatus may be a JSON value -> parse and convert to TrainingStatusUpdate struct
+	currentOverallJobStatusObj := client.GetStatus(currentOverallJobStatus, logr)
+	jobStatus := currentOverallJobStatusObj.Status
+	if jm.isTransitionAllowed(jobStatus.String(), learnerStatus.String()) {
+		logr.Infof("Transition was allowed, changing overall status of job from %s to learners status %s", jobStatus, learnerStatus)
+		jm.etcdClient.CompareAndSwap(overallJobStatusPath(jm.TrainingID), learnerStatusValue, currentOverallJobStatus, logr)
+		jm.processUpdateJobStatus(learnerStatusValue, logr)
 	} else {
-		logr.Warnf("Transition not allowed job from overall job status %s to learner status %s", currentOverallJobStatus, learnerStatus)
+		logr.Warnf("Transition not allowed job from overall job status %s to learner status %s", jobStatus, learnerStatus)
 	}
 	//keep an eye on idividual learners as well, if they terminate then check if all of them are done then check if job can be terminated
 	if learnerStatus == grpc_trainer_v2.Status_COMPLETED || learnerStatus == grpc_trainer_v2.Status_FAILED || learnerStatus == grpc_trainer_v2.Status_HALTED {
@@ -426,11 +326,6 @@ func (jm *JobMonitor) processUpdateLearnerStatus(learnerStatusPath string, learn
 		markComplete = true
 	}
 	return markComplete, err
-}
-
-func jobLearnerStatusPathPattern(trainingID string, numLearners int) string {
-	pattern := fmt.Sprintf("%s/%s/%s[0-%d]/%s/", trainingID, zkLearners, zkLearner, numLearners, zkStatus)
-	return pattern
 }
 
 func overallJobStatusPath(trainingID string) string {
@@ -526,7 +421,7 @@ func learnerSummaryMetricsPath(trainingID string, learnerID int) string {
 func initTransitionMap() map[string]([]string) {
 	transistionMap := make(map[string]([]string))
 	allowDOWNLOADING := []string{grpc_trainer_v2.Status_PENDING.String(), grpc_trainer_v2.Status_NOT_STARTED.String()}
-	allowPROCESSING := []string{grpc_trainer_v2.Status_DOWNLOADING.String(), grpc_trainer_v2.Status_PENDING.String()}
+	allowPROCESSING := []string{grpc_trainer_v2.Status_PROCESSING.String(), grpc_trainer_v2.Status_DOWNLOADING.String(), grpc_trainer_v2.Status_PENDING.String()}
 	allowSTORING := []string{grpc_trainer_v2.Status_PROCESSING.String(), grpc_trainer_v2.Status_DOWNLOADING.String(), grpc_trainer_v2.Status_PENDING.String(), grpc_trainer_v2.Status_NOT_STARTED.String()}
 	allowCOMPLETED := []string{grpc_trainer_v2.Status_STORING.String(), grpc_trainer_v2.Status_PROCESSING.String(), grpc_trainer_v2.Status_DOWNLOADING.String(), grpc_trainer_v2.Status_PENDING.String(), grpc_trainer_v2.Status_NOT_STARTED.String()}
 	allowFAILED := []string{grpc_trainer_v2.Status_STORING.String(), grpc_trainer_v2.Status_PROCESSING.String(), grpc_trainer_v2.Status_DOWNLOADING.String(), grpc_trainer_v2.Status_PENDING.String(), grpc_trainer_v2.Status_NOT_STARTED.String()}

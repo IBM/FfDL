@@ -24,13 +24,15 @@ import (
 
 	"github.com/IBM/FfDL/commons/config"
 	"github.com/IBM/FfDL/commons/service"
+	"github.com/IBM/FfDL/lcm/lcmconfig"
+	"github.com/IBM/FfDL/lcm/service/lcm/learner"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/spf13/viper"
 
 	"bytes"
 
 	"github.com/IBM/FfDL/commons/logger"
-	"gopkg.in/yaml.v2"
 	v1core "k8s.io/api/core/v1"
 	v1resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,7 +40,6 @@ import (
 )
 
 const logCollectorContainerName string = "log-collector" // the name of the learner container in the pod
-const controllerContainerName = "controller"
 const loadDataContainerName = "load-data"
 const loadModelContainerName = "load-model"
 const learnerContainerName = "learner"
@@ -49,40 +50,6 @@ const learnerConfigDir = "/etc/learner-config"
 const simpleLogCollectorName = "log_collector"
 
 const logCollectorBadTagNoTDSFound = "dummy-tag-no-tds-found"
-
-// The whitelisted environment variables to pass to the learner container.
-// Use a map structure for O(1) lookups.
-var learnerContainerEnvVars = map[string]struct{}{
-	"MODEL_DIR":        {},
-	"DATA_DIR":         {},
-	"RESULT_DIR":       {},
-	"LOG_DIR":          {},
-	"TRAINING_JOB":     {},
-	"TRAINING_COMMAND": {},
-	"TRAINING_ID":      {},
-	"LEARNER_ID":       {},
-	"GPU_COUNT":        {},
-	"NUM_LEARNERS":     {},
-	"SERVICE_NAME_1":   {},
-	"SERVICE_NAME_2":   {},
-	"SERVICE_NAME_3":   {},
-	"SERVICE_NAME_4":   {},
-	"SERVICE_NAME_5":   {},
-	"SERVICE_NAME_6":   {},
-	"SERVICE_NAME_7":   {},
-	"SERVICE_NAME_8":   {},
-	"SERVICE_NAME_9":   {},
-	"SERVICE_NAME_10":  {},
-	"SERVICE_NAME_11":  {},
-	"SERVICE_NAME_12":  {},
-	"SERVICE_NAME_13":  {},
-	"SERVICE_NAME_14":  {},
-	"SERVICE_NAME_15":  {},
-	"SERVICE_NAME_16":  {},
-}
-
-// TODO make configurablee
-var defaultPullPolicy = v1core.PullIfNotPresent
 
 // valid names of databroker types that map to "databroker_<type>" Docker image names
 var validDatabrokerTypes = []string{"objectstorage", "s3"}
@@ -95,14 +62,16 @@ const (
 	sshPort    int32 = 22
 )
 
-// PodLevelJobDir represents the place to store the job state indicator files,
-// as well as the $BREAK_FILE and $EXITCODE_FILE.
-const PodLevelJobDir = "/job"
+//helpers won't know about learner ID since that is only available to stateful set learners
+// TODO used by controller (for tracking state of individual learners) and logs, do we really need this for logs
+// need to use 1 and not 0 because job monitor tracks path starting with learner 1 and not 0
+const masterLearnerID = 1
 
-// PodLevelLogDir represents the place to store the per-learner logs.
-const PodLevelLogDir = PodLevelJobDir + "/logs"
+func constructControllerContainer(trainingID string, etcdVolumeMount, sharedVolumeMount v1core.VolumeMount, mountTrainingDataStoreInLearner, mountResultsStoreInLearner bool) v1core.Container {
 
-func constructControllerContainer(learnerNodeBasePath, learnerNodeStatusPath, summaryMetricsPath, jobBasePath string, jobVolumeMount v1core.VolumeMount, etcdVolumeName string, logr *logger.LocLoggingEntry, mountTrainingDataStoreInLearner, mountResultsStoreInLearner bool) v1core.Container {
+	learnerNodeBasePath := learnerNodeEtcdBasePath(trainingID, masterLearnerID)
+	learnerNodeStatusPath := learnerNodeEtcdStatusPath(trainingID, masterLearnerID)
+	jobBasePath := jobBasePath(trainingID)
 
 	var getEnvVarFromLCMSecret = func(lookupkey string) v1core.EnvVar {
 		return v1core.EnvVar{
@@ -118,24 +87,19 @@ func constructControllerContainer(learnerNodeBasePath, learnerNodeStatusPath, su
 		}
 	}
 
-	mountPath := PodLevelJobDir
-	logr.Debugf("constructControllerContainer: PodLevelJobDir=%s", mountPath)
-
 	servicesTag := viper.GetString(config.ServicesTagKey)
-	logr.Debugf("servicesTag: %s", servicesTag)
 
 	dockerRegistry := viper.GetString(config.LearnerRegistryKey)
 	controllerImageName := controllerImageNameExtended(dockerRegistry, servicesTag)
-	logr.Debugf("controllerImageName: %s", controllerImageName)
 
 	cmd := fmt.Sprintf("controller.sh")
 
 	// short-circuit the load and store databrokers when we mount object storage directly
 	if mountResultsStoreInLearner {
-		cmd = "echo 0 > " + PodLevelJobDir + "/store-results.exit && " + "echo 0 > " + PodLevelJobDir + "/store-logs.exit && " + cmd
+		cmd = "echo 0 > " + sharedVolumeMount.MountPath + "/store-results.exit && " + cmd
 	}
 	if mountTrainingDataStoreInLearner {
-		cmd = "echo 0 > " + PodLevelJobDir + "/load-data.exit && " + cmd
+		cmd = "echo 0 > " + sharedVolumeMount.MountPath + "/load-data.exit && " + cmd
 	}
 
 	cpuCount := v1resource.NewMilliQuantity(int64(controllerMilliCPU), v1resource.DecimalSI)
@@ -143,15 +107,14 @@ func constructControllerContainer(learnerNodeBasePath, learnerNodeStatusPath, su
 	memCount := v1resource.NewQuantity(memInBytes, v1resource.DecimalSI)
 
 	container := v1core.Container{
-		Name:    controllerContainerName,
+		Name:    "controller",
 		Image:   controllerImageName,
 		Command: []string{"sh", "-c", cmd},
 		Env: []v1core.EnvVar{
-			v1core.EnvVar{Name: "JOB_STATE_DIR", Value: PodLevelJobDir},
+			v1core.EnvVar{Name: "JOB_STATE_DIR", Value: sharedVolumeMount.MountPath},
 			v1core.EnvVar{Name: "JOB_LEARNER_ZNODE_PATH", Value: learnerNodeBasePath},
 			v1core.EnvVar{Name: "JOB_BASE_PATH", Value: jobBasePath},
 			v1core.EnvVar{Name: "JOB_LEARNER_ZNODE_STATUS_PATH", Value: learnerNodeStatusPath},
-			v1core.EnvVar{Name: "JOB_LEARNER_SUMMARY_STATS_PATH", Value: summaryMetricsPath},
 			v1core.EnvVar{Name: "DOWNWARD_API_POD_NAME", ValueFrom: &v1core.EnvVarSource{FieldRef: &v1core.ObjectFieldSelector{FieldPath: "metadata.name"}}},
 			v1core.EnvVar{Name: "DOWNWARD_API_POD_NAMESPACE", ValueFrom: &v1core.EnvVarSource{FieldRef: &v1core.ObjectFieldSelector{FieldPath: "metadata.namespace"}}},
 			getEnvVarFromLCMSecret("DLAAS_ETCD_ADDRESS"),
@@ -169,15 +132,8 @@ func constructControllerContainer(learnerNodeBasePath, learnerNodeStatusPath, su
 				v1core.ResourceMemory: *memCount,
 			},
 		},
-		VolumeMounts: []v1core.VolumeMount{
-			jobVolumeMount,
-			v1core.VolumeMount{
-				Name:      etcdVolumeName,
-				MountPath: "/etc/certs/",
-				ReadOnly:  true,
-			},
-		},
-		ImagePullPolicy: defaultPullPolicy,
+		VolumeMounts:    []v1core.VolumeMount{etcdVolumeMount, sharedVolumeMount},
+		ImagePullPolicy: lcmconfig.GetImagePullPolicy(),
 	}
 	return container
 }
@@ -228,13 +184,9 @@ func fetchImageNameFromEvaluationMetrics(evalMetricsString string,
 				// Assume the image name has been validated upstream
 				logCollectorImageShortName = imageType.(string)
 				if logCollectorImageShortName == "tensorboard" || logCollectorImageShortName == "tensorboard_extractor" {
-					// TODO: Fix tensorflow/board docker image version matrix nightmare
-					tensorBoardVersion := "1.3-py3"
-					// if framework == tfFrameworkName {
-					// 	tensorBoardVersion = version
-					// }
-					// Try to match the best version
-					logCollectorImageShortName = fmt.Sprintf("%s_extract_%s", "tensorboard", tensorBoardVersion)
+					// For the moment we're just going to use TF 1.3, but the tag should change to be non-version
+					// specific, and we should just use latest TF.
+					logCollectorImageShortName = fmt.Sprintf("%s_extract", "tensorboard")
 				}
 				// Be flexible
 				if logCollectorImageShortName == "null" || logCollectorImageShortName == "nil" ||
@@ -282,50 +234,34 @@ func findTrainingDataServiceTag(k8sClient kubernetes.Interface, logr *logger.Loc
 	return logCollectorBadTagNoTDSFound
 }
 
-func constructLogCollector(jobVolumeMount v1core.VolumeMount, k8sClient kubernetes.Interface, req *service.JobDeploymentRequest,
-	learnerID int, envVars []v1core.EnvVar, logr *logger.LocLoggingEntry) v1core.Container {
-
-	etcdEnvVars := populateETCDEnvVariables(req.TrainingId)
-	envVarsWithEtcdVars := append(envVars, etcdEnvVars...)
-
-	servicesTag := viper.GetString(config.ServicesTagKey)
-	logr.Debugf("servicesTag: %s", servicesTag)
-
-	mountPath := PodLevelJobDir
+func constructLogCollector(sharedVolumeMount v1core.VolumeMount, k8sClient kubernetes.Interface, req *service.JobDeploymentRequest,
+	envVars []v1core.EnvVar, logr *logger.LocLoggingEntry) v1core.Container {
 
 	defaultTag := findTrainingDataServiceTag(k8sClient, logr)
-	logr.Debugf("default log-collector tag: " + defaultTag)
 
-	logCollectorImageShortName, learnerEMTag := fetchImageNameFromEvaluationMetrics(req.EvaluationMetricsSpec,
-		defaultTag, req.Framework, req.Version, logr)
+	logCollectorImageShortName, learnerEMTag := fetchImageNameFromEvaluationMetrics(req.EvaluationMetricsSpec, defaultTag, req.Framework, req.Version, logr)
 
 	dockerRegistry := viper.GetString(config.LearnerRegistryKey)
 	logCollectorImage :=
 		fmt.Sprintf("%s/%s:%s", dockerRegistry, logCollectorImageShortName, learnerEMTag)
 
-	// logCollectorImage := fmt.Sprintf("%s/log-collector:%s", dockerRegistry, servicesTag)
-	logr.Debugf("logCollectorImage: %s", logCollectorImage)
-
-	vars := make([]v1core.EnvVar, 0, len(envVarsWithEtcdVars))
-	for _, ev := range envVarsWithEtcdVars {
+	vars := make([]v1core.EnvVar, 0, len(envVars))
+	for _, ev := range envVars {
 		if strings.HasSuffix(ev.Name, "_DIR") {
 			// Adjust the paths to be in the mount point.
-			dir := path.Join(mountPath, ev.Value)
+			dir := path.Join(sharedVolumeMount.MountPath, ev.Value)
 			vars = append(vars, v1core.EnvVar{Name: ev.Name, Value: dir})
-			logr.Debugf("constructWaitingLearnerContainer, binding env var: %s=%s", ev.Name, dir)
 		} else {
 			vars = append(vars, ev)
 		}
 	}
 
-	vars = append(vars, v1core.EnvVar{Name: "JOB_STATE_DIR", Value: PodLevelJobDir})
+	vars = append(vars, v1core.EnvVar{Name: "JOB_STATE_DIR", Value: sharedVolumeMount.MountPath})
 	vars = append(vars, v1core.EnvVar{Name: "TRAINING_DATA_NAMESPACE", Value: config.GetPodNamespace()})
 
 	if req.EvaluationMetricsSpec != "" {
 		vars = append(vars, v1core.EnvVar{Name: "EM_DESCRIPTION", Value: req.EvaluationMetricsSpec})
 	}
-
-	var cmd = "/scripts/run.sh"
 
 	cpuCount := v1resource.NewMilliQuantity(int64(logCollectorMilliCPU), v1resource.DecimalSI)
 	memInBytes := int64(logCollectorMemInMB * 1024 * 1024)
@@ -334,7 +270,7 @@ func constructLogCollector(jobVolumeMount v1core.VolumeMount, k8sClient kubernet
 	logCollectorContainer := v1core.Container{
 		Name:    logCollectorContainerName,
 		Image:   logCollectorImage,
-		Command: []string{"bash", "-c", cmd},
+		Command: []string{"bash", "-c", "/scripts/run.sh"},
 		Env:     vars,
 		Resources: v1core.ResourceRequirements{
 			Requests: v1core.ResourceList{
@@ -346,15 +282,13 @@ func constructLogCollector(jobVolumeMount v1core.VolumeMount, k8sClient kubernet
 				v1core.ResourceMemory: *memCount,
 			},
 		},
-		VolumeMounts:    []v1core.VolumeMount{jobVolumeMount},
-		ImagePullPolicy: defaultPullPolicy,
+		VolumeMounts:    []v1core.VolumeMount{sharedVolumeMount},
+		ImagePullPolicy: lcmconfig.GetImagePullPolicy(),
 	}
-	logr.Debugf("logCollectorContainer name: %s\n", logCollectorContainer.Name)
 	return logCollectorContainer
 }
 
-func constructLoadTrainingDataContainer(jobVolumeMount v1core.VolumeMount, jobEnvVars []v1core.EnvVar) v1core.Container {
-	mountPath := PodLevelJobDir
+func constructLoadTrainingDataContainer(sharedVolumeMount v1core.VolumeMount, jobEnvVars []v1core.EnvVar) v1core.Container {
 
 	// Construct the environment variables to pass to the container.
 	// Include all the variables in the job that start with "DATA_STORE_"
@@ -371,7 +305,7 @@ func constructLoadTrainingDataContainer(jobVolumeMount v1core.VolumeMount, jobEn
 			}
 		}
 		if ev.Name == "DATA_DIR" { // special case
-			dataDir := path.Join(mountPath, ev.Value)
+			dataDir := path.Join(sharedVolumeMount.MountPath, ev.Value)
 			vars = append(vars, v1core.EnvVar{Name: "DATA_DIR", Value: dataDir})
 		}
 	}
@@ -381,7 +315,7 @@ func constructLoadTrainingDataContainer(jobVolumeMount v1core.VolumeMount, jobEn
 	memCount := v1resource.NewQuantity(memInBytes, v1resource.DecimalSI)
 
 	command := fmt.Sprintf(`load.sh |tee -a %s/load-data.log`, PodLevelLogDir)
-	cmd := wrapCommand(command, loadDataContainerName, PodLevelJobDir)
+	cmd := wrapCommand(command, loadDataContainerName, sharedVolumeMount.MountPath, false)
 	container := v1core.Container{
 		Name:    loadDataContainerName,
 		Image:   dataBrokerImageName(vars),
@@ -396,15 +330,14 @@ func constructLoadTrainingDataContainer(jobVolumeMount v1core.VolumeMount, jobEn
 				v1core.ResourceMemory: *memCount,
 			},
 		},
-		VolumeMounts:    []v1core.VolumeMount{jobVolumeMount},
+		VolumeMounts:    []v1core.VolumeMount{sharedVolumeMount},
 		Env:             vars,
-		ImagePullPolicy: defaultPullPolicy,
+		ImagePullPolicy: lcmconfig.GetImagePullPolicy(),
 	}
 	return container
 }
 
-func constructLoadModelContainer(jobVolumeMount v1core.VolumeMount, jobEnvVars []v1core.EnvVar) v1core.Container {
-	mountPath := PodLevelJobDir
+func constructLoadModelContainer(sharedVolumeMount v1core.VolumeMount, jobEnvVars []v1core.EnvVar) v1core.Container {
 
 	// Construct the environment variables to pass to the container.
 	// Include all the variables in the job that start with "MODEL_STORE_"
@@ -425,13 +358,13 @@ func constructLoadModelContainer(jobVolumeMount v1core.VolumeMount, jobEnvVars [
 			}
 		}
 		if ev.Name == "MODEL_DIR" { // special case
-			dataDir := path.Join(mountPath, ev.Value)
+			dataDir := path.Join(sharedVolumeMount.MountPath, ev.Value)
 			vars = append(vars, v1core.EnvVar{Name: "DATA_DIR", Value: dataDir})
 		}
 	}
 
-	command := fmt.Sprintf(`loadmodel.sh |tee -a %s/load-model.log`, PodLevelLogDir)
-	cmd := wrapCommand(command, loadModelContainerName, PodLevelJobDir)
+	command := "loadmodel.sh"
+	cmd := wrapCommand(command, loadModelContainerName, sharedVolumeMount.MountPath, false)
 
 	cpuCount := v1resource.NewMilliQuantity(int64(loadModelMilliCPU), v1resource.DecimalSI)
 	memInBytes := int64(loadModelMemInMB * 1024 * 1024)
@@ -451,136 +384,104 @@ func constructLoadModelContainer(jobVolumeMount v1core.VolumeMount, jobEnvVars [
 				v1core.ResourceMemory: *memCount,
 			},
 		},
-		VolumeMounts:    []v1core.VolumeMount{jobVolumeMount},
+		VolumeMounts:    []v1core.VolumeMount{sharedVolumeMount},
 		Env:             vars,
-		ImagePullPolicy: defaultPullPolicy,
+		ImagePullPolicy: lcmconfig.GetImagePullPolicy(),
 	}
 	return container
 }
 
-func constructLearnerContainer(req *service.JobDeploymentRequest, learnerID int,
-	learnerTag string, envVars []v1core.EnvVar, volumeMount v1core.VolumeMount, logr *logger.LocLoggingEntry, mountTrainingDataStoreInLearner, mountResultsStoreInLearner, mountSSHCertsInLearner bool) v1core.Container {
-
-	mountPath := PodLevelJobDir
-
-	dockerRegistry := viper.GetString(config.LearnerRegistryKey)
-	learnerImage := fmt.Sprintf("%s/%s_gpu_%s:%s", dockerRegistry, req.Framework, req.Version, learnerTag)
-
+func constructLearnerContainer(req *service.JobDeploymentRequest, envVars []v1core.EnvVar, learnerVolumeMounts []v1core.VolumeMount, sharedVolumeMount v1core.VolumeMount, mountTrainingDataStoreInLearner, mountResultsStoreInLearner bool, logr *logger.LocLoggingEntry) v1core.Container {
 	cpuCount := v1resource.NewMilliQuantity(int64(float64(req.Resources.Cpus)*1000.0), v1resource.DecimalSI)
 	gpuCount := v1resource.NewQuantity(int64(req.Resources.Gpus), v1resource.DecimalSI)
 	memInBytes := int64(calcMemory(req.Resources) * 1024 * 1024)
 	memCount := v1resource.NewQuantity(memInBytes, v1resource.DecimalSI)
-	logr.Debugf("req.Resources: %+v", req.Resources)
-	logr.Debugf("learner: cpu %+v, gpu %+v, mem %+v", cpuCount, gpuCount, memCount)
 
-	volumes := []v1core.VolumeMount{
-		volumeMount,
-	}
-
-	if mountSSHCertsInLearner {
-		sshVolumeMount := v1core.VolumeMount{
-			Name:      "sshcertmount-" + req.Name,
-			MountPath: "/etc/ssh-certs",
-		}
-		volumes = append(volumes, sshVolumeMount)
-	}
-
-	filteredVars := getLearnerContainerEnvVars(envVars)
-	vars := make([]v1core.EnvVar, 0, len(filteredVars))
-	for _, ev := range filteredVars {
-		if strings.HasSuffix(ev.Name, "_DIR") {
-			var dir string
-			if mountTrainingDataStoreInLearner && ev.Name == "DATA_DIR" {
-				dir = "/mnt/" + ev.Value
-				inputVolume := v1core.VolumeMount{
-					Name:      "cosinputmount-" + req.Name,
-					MountPath: dir,
-				}
-				volumes = append(volumes, inputVolume)
-			} else if mountResultsStoreInLearner && ev.Name == "RESULT_DIR" {
-				dir = "/mnt/" + ev.Value
-				outputVolume := v1core.VolumeMount{
-					Name:      "cosoutputmount-" + req.Name,
-					MountPath: dir,
-				}
-				volumes = append(volumes, outputVolume)
-			} else {
-				// Adjust the paths to be in the mount point.
-				dir = path.Join(mountPath, ev.Value)
-			}
-			vars = append(vars, v1core.EnvVar{Name: ev.Name, Value: dir})
-		} else {
-			vars = append(vars, ev)
-		}
-	}
-
-	vars = append(vars, v1core.EnvVar{Name: "JOB_STATE_DIR", Value: PodLevelJobDir})
-
+	//argh!!! this should be abstracted out as well
 	command := "for i in ${!ALERTMANAGER*} ${!DLAAS*} ${!ETCD*} ${!GRAFANA*} ${!HOSTNAME*} ${!KUBERNETES*} ${!MONGO*} ${!PUSHGATEWAY*}; do unset $i; done;"
+	//FIXME need to have the learner IDs start from 1 rather than 0
+	var cmd string
+	var doCondExitWrite = true
 	if mountResultsStoreInLearner {
-		// this commented out version writes stderr and stdout to different files
-		//command = fmt.Sprintf(`%s bash -c 'train.sh > >(tee -a $RESULT_DIR/$TRAINING_ID.stdout %s/latest-log) 2> >(tee -a $RESULT_DIR/$TRAINING_ID.stderr >&2); exit ${PIPESTATUS[0]}'`, command, PodLevelJobDir)
-		command = fmt.Sprintf(`%s export RESULT_DIR=$RESULT_DIR/$TRAINING_ID && mkdir -p $RESULT_DIR/learner-$LEARNER_ID; bash -c 'train.sh 2>&1 | tee -a $RESULT_DIR/learner-$LEARNER_ID/training-logs.txt %s/latest-log; exit ${PIPESTATUS[0]}'`, command, PodLevelJobDir)
+		//this $RESULT_DIR/training-log.txt is a top level log, where logs of train.sh get redirected
+		command = fmt.Sprintf(`
+		function copyLogs() {
+             if [ ! -f "%[2]s/%[4]s.exit" ]; then
+				 echo Wait for start-logs start signal.
+				 # Wait for start-logs start signal.
+				 start_wait=$(date +%%s)
+				 while [ ! -f %[2]s/%[4]s.start ]; do
+					end_wait=$(date +%%s) ;
+					duration_wait=$((end_wait-start_wait)) ;
+					# Make this a pretty long timeout, as we really want the lc to finish
+					if [ ${duration_wait} -gt 120 ]; then
+						echo "time out waiting for %[2]s/%[4]s.start"
+						break
+					fi
+					sleep 2;
+				 done ;
+				 echo Calling copy logs.
+				 mv -f $LOG_DIR/* $RESULT_DIR/learner-$LEARNER_ID ;
+				 ERROR_CODE=$? ;
+				 echo $ERROR_CODE > $RESULT_DIR/learner-$LEARNER_ID/.log-copy-complete ;
+				 echo "Setting status ${ERROR_CODE} > %[2]s/%[4]s.exit"
+				 echo $ERROR_CODE > %[2]s/%[4]s.exit ;
+			 fi
+		}
+		
+		%[1]s export LEARNER_ID=$((${DOWNWARD_API_POD_NAME##*-} + 1)) ;
+		 export RESULT_DIR=$RESULT_DIR/$TRAINING_ID ;
+		 mkdir -p $RESULT_DIR/learner-$LEARNER_ID ;
+		 mkdir -p $CHECKPOINT_DIR ;
+         # Leaving this commmented code as a reminder that trap handling may be part of the answer
+		 # trap "copyLogs" SIGHUP SIGINT SIGTERM
+		 bash -c ' train.sh 2>&1 |  tee -a $RESULT_DIR/learner-$LEARNER_ID/training-log.txt %[2]s/latest-log ; exit ${PIPESTATUS[0]}'
+		 main_cmd_status=$?
+		 echo learner "done, snooze before exit (temporary, to be removed)"
+         echo "Setting status ${main_cmd_status} > %[2]s/%[3]s.exit"
+		 echo $main_cmd_status > %[2]s/%[3]s.exit
+         echo "call copyLogs function"
+         copyLogs
+         echo "learner container exiting"
+         `,
+			command, sharedVolumeMount.MountPath, learnerContainerName,
+			storeLogsContainerName)
 	} else {
-		command = fmt.Sprintf(`%s mkdir -p $RESULT_DIR; bash -c 'train.sh 2>&1 | tee -a %s/latest-log; exit ${PIPESTATUS[0]}'`, command, PodLevelJobDir)
+		command = fmt.Sprintf(`%s mkdir -p $RESULT_DIR ; bash -c ' train.sh 2>&1 | tee -a %s/latest-log; exit ${PIPESTATUS[0]}'`, command, sharedVolumeMount.MountPath)
+		doCondExitWrite = false
 	}
-	cmd := wrapCommand(command, learnerContainerName, PodLevelJobDir)
+	cmd = wrapCommand(command, learnerContainerName, sharedVolumeMount.MountPath, doCondExitWrite)
 
-	// Set the resourceGPU to "nvidia.com/gpu" if you want to run your GPU workloads using device plugin.
-	var resourceGPU v1core.ResourceName = v1core.ResourceNvidiaGPU
-
-	learnerContainer := v1core.Container{
-		Name:            learnerContainerName,
-		Image:           learnerImage,
-		ImagePullPolicy: defaultPullPolicy,
-		Command:         []string{"bash", "-c", cmd},
-		Env:             vars,
-		Ports: []v1core.ContainerPort{
-			v1core.ContainerPort{ContainerPort: int32(workerPort), Protocol: v1core.ProtocolTCP},
-			v1core.ContainerPort{ContainerPort: int32(sshPort), Protocol: v1core.ProtocolTCP},
+	container := learner.Container{
+		Image: learner.Image{Framework: req.Framework, Version: req.Version, Tag: req.EnvVars["DLAAS_LEARNER_IMAGE_TAG"]},
+		Resources: learner.Resources{
+			CPUs: *cpuCount, Memory: *memCount, GPUs: *gpuCount,
 		},
-		Resources: v1core.ResourceRequirements{
-			Requests: v1core.ResourceList{
-				v1core.ResourceCPU:       *cpuCount,
-				v1core.ResourceMemory:    *memCount,
-				resourceGPU: *gpuCount,
-			},
-			Limits: v1core.ResourceList{
-				v1core.ResourceCPU:       *cpuCount,
-				v1core.ResourceMemory:    *memCount,
-				resourceGPU: *gpuCount,
-			},
-		},
-		VolumeMounts: volumes,
+		VolumeMounts: append(learnerVolumeMounts, sharedVolumeMount),
+		Name:         learnerContainerName,
+		EnvVars:      envVars,
+		Command:      cmd,
 	}
-	logr.Debugf("learnerContainer name: %s\n", learnerContainer.Name)
-	extendLearnerContainer(&learnerContainer, req)
+
+	learnerContainer := learner.CreateContainerSpec(container)
+	extendLearnerContainer(&learnerContainer, req, logr)
+	//logr.Debugf("learnerContainer: %v+", learnerContainer)
+	// dumpAsYaml("learnerContainer", learnerContainer, logr)
+
 	return learnerContainer
 }
 
-// Given a set of environment variables, return the subset that should appear in the learner container.
-func getLearnerContainerEnvVars(allVars []v1core.EnvVar) []v1core.EnvVar {
-	vars := make([]v1core.EnvVar, 0, 0)
-	for _, ev := range allVars {
-		if _, exists := learnerContainerEnvVars[ev.Name]; exists {
-			vars = append(vars, ev)
-		} else {
-			// don't include this var.
-		}
-	}
-	return vars
-}
+func constructStoreLogsContainer(sharedVolumeMount v1core.VolumeMount, jobEnvVars []v1core.EnvVar) v1core.Container {
 
-func constructStoreLogsContainer(jobVolumeMount v1core.VolumeMount, learnerID int, jobEnvVars []v1core.EnvVar) v1core.Container {
 	command := "store.sh"
-	container := constructStoreContainer(storeLogsContainerName, command, jobVolumeMount, learnerID, jobEnvVars)
+	container := constructStoreContainer(storeLogsContainerName, command, sharedVolumeMount, jobEnvVars)
 
 	for i := range container.Env {
 		if container.Env[i].Name == "DATA_STORE_BUCKET" {
-			value := fmt.Sprintf("%s/learner-%d", container.Env[i].Value, learnerID) // per-learner directory
+			value := fmt.Sprintf("%s/learner-%d", container.Env[i].Value, masterLearnerID) // per-learner directory
 			container.Env[i].Value = value
 		} else if container.Env[i].Name == "DATA_DIR" {
-			value := fmt.Sprintf("%s/logs", PodLevelJobDir)
+			value := fmt.Sprintf("%s/logs", sharedVolumeMount.MountPath)
 			container.Env[i].Value = value
 		}
 	}
@@ -588,17 +489,15 @@ func constructStoreLogsContainer(jobVolumeMount v1core.VolumeMount, learnerID in
 	return container
 }
 
-func constructStoreResultsContainer(jobVolumeMount v1core.VolumeMount, learnerID int, jobEnvVars []v1core.EnvVar) v1core.Container {
-	command := "true" // a no-op
-	if learnerID == 1 {
-		command = "store.sh" // only store results from first learner
-	}
-	container := constructStoreContainer(storeResultsContainerName, command, jobVolumeMount, learnerID, jobEnvVars)
+func constructStoreResultsContainer(sharedVolumeMount v1core.VolumeMount, jobEnvVars []v1core.EnvVar) v1core.Container {
+
+	//FIXME how does this work in terms of split learner
+	command := "store.sh" // only store results from first learner
+	container := constructStoreContainer(storeResultsContainerName, command, sharedVolumeMount, jobEnvVars)
 	return container
 }
 
-func constructStoreContainer(containerName string, command string, jobVolumeMount v1core.VolumeMount, learnerID int, jobEnvVars []v1core.EnvVar) v1core.Container {
-	mountPath := PodLevelJobDir
+func constructStoreContainer(containerName, command string, sharedVolumeMount v1core.VolumeMount, jobEnvVars []v1core.EnvVar) v1core.Container {
 
 	// Construct the environment variables to pass to the container.
 	// Include all the variables in the job that start with "DATA_STORE_"
@@ -619,7 +518,7 @@ func constructStoreContainer(containerName string, command string, jobVolumeMoun
 			}
 		}
 		if ev.Name == "RESULT_DIR" { // special case
-			dataDir := path.Join(mountPath, ev.Value)
+			dataDir := path.Join(sharedVolumeMount.MountPath, ev.Value)
 			vars = append(vars, v1core.EnvVar{Name: "DATA_DIR", Value: dataDir})
 		}
 	}
@@ -628,7 +527,7 @@ func constructStoreContainer(containerName string, command string, jobVolumeMoun
 	memInBytes := int64(storeResultsMemInMB * 1024 * 1024)
 	memCount := v1resource.NewQuantity(memInBytes, v1resource.DecimalSI)
 
-	cmd := wrapCommand(command, containerName, PodLevelJobDir)
+	cmd := wrapCommand(command, containerName, sharedVolumeMount.MountPath, false)
 	container := v1core.Container{
 		Name:    containerName,
 		Image:   dataBrokerImageName(vars),
@@ -643,20 +542,33 @@ func constructStoreContainer(containerName string, command string, jobVolumeMoun
 				v1core.ResourceMemory: *memCount,
 			},
 		},
-		VolumeMounts:    []v1core.VolumeMount{jobVolumeMount},
+		VolumeMounts:    []v1core.VolumeMount{sharedVolumeMount},
 		Env:             vars,
-		ImagePullPolicy: defaultPullPolicy,
+		ImagePullPolicy: lcmconfig.GetImagePullPolicy(),
 	}
 	return container
 }
 
 // Wrap a single command with start and exit files.
-func wrapCommand(cmd string, containerName string, controlFilesDirectory string) string {
+func wrapCommand(cmd string, containerName string, controlFilesDirectory string, doCondExitWrite bool) string {
 
 	vars := map[string]string{
 		"Name": containerName,
 		"Dir":  controlFilesDirectory,
 		"Cmd":  cmd,
+	}
+
+	var exitWriteStr string
+	if doCondExitWrite {
+		exitWriteStr = `
+		if [ ! -f {{.Dir}}/{{.Name}}.exit ]; then
+			echo $main_cmd_status > {{.Dir}}/{{.Name}}.exit
+        fi
+		`
+	} else {
+		exitWriteStr = `
+		echo $? > {{.Dir}}/{{.Name}}.exit
+		`
 	}
 
 	var buf bytes.Buffer
@@ -667,18 +579,22 @@ func wrapCommand(cmd string, containerName string, controlFilesDirectory string)
 		fi
 		# Wait for start signal.
 		while [ ! -f {{.Dir}}/{{.Name}}.start ]; do sleep 2; done
-		{{.Cmd}} # do the actual work
-		echo $? > {{.Dir}}/{{.Name}}.exit
-		while true; do sleep 2; done
+		# Record the start time. Note: In distributed mode, this
+		# file will get overwritten by each learner (this is intentional)
+		date "+%s%N" | cut -b1-13 > {{.Dir}}/{{.Name}}.start_time
+		{{.Cmd}} # do the actual work` + exitWriteStr +
+		`while true; do sleep 2; done
 	`)
 	tmpl.Execute(&buf, vars)
 
 	return buf.String()
 }
 
-func constructVolumeClaim(name string, namespace string, volumeSize int64, labels map[string]string) *v1core.PersistentVolumeClaim {
-	claim, err := GetVolumeClaim(volumeSize)
+func constructVolumeClaim(name string, namespace string, volumeSize int64,
+	labels map[string]string, logr *logger.LocLoggingEntry) *v1core.PersistentVolumeClaim {
+	claim, err := GetVolumeClaim(volumeSize, logr)
 	if err != nil {
+		logr.WithError(err).Debugf("GetVolumeClaim returned error")
 		return nil
 	}
 	claim.Name = name
@@ -686,11 +602,6 @@ func constructVolumeClaim(name string, namespace string, volumeSize int64, label
 	claim.Labels = labels
 	claim.Spec.AccessModes = []v1core.PersistentVolumeAccessMode{v1core.ReadWriteMany}
 	return claim
-}
-
-//LearnerDataDir ... Return the training data directory.
-func LearnerDataDir(envVars []v1core.EnvVar) string {
-	return getValue(envVars, "DATA_DIR")
 }
 
 // Return the value of the named environment variable.

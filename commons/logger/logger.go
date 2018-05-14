@@ -34,20 +34,26 @@ const (
 	// ======= Log field keys =======
 	// These keys are to be used for structured logging, and will
 	// be visible to the Elastic Search repository for query and the like.
-	LogkeyCaller          = "caller_info"
-	LogkeyTrainingID      = "training_id"
-	LogkeyModelID         = "model_id"
-	LogkeyModelName       = "model_name"
-	LogkeyDBName          = "db_name"
-	LogkeyUserID          = "user_id"
-	LogkeyModule          = "module"
-	LogkeyIsMetrics       = "is_metrics"
-	LogkeyIsFollow       = "is_follow"
-	LogkeyIsSummary       = "is_summary"
-	LogkeyObjectstorePath = "os_path"
-	LogkeyTrainingDataURI = "training_data_uri"
-	LogkeyModelDataURI    = "model_data_uri"
-	LogkeyModelFilename   = "model_filename"
+	LogkeyCaller           = "caller_info"
+	LogkeyTrainingID       = "training_id"
+	LogkeyGpuType          = "gpu_type"
+	LogkeyGpuUsage         = "gpu_usage"
+	LogkeyFramework        = "framework_name"
+	LogkeyFrameworkVersion = "framework_version"
+	LogkeyErrorCode        = "error_code"
+	LogkeyErrorType        = "error_type"
+	LogkeyModelID          = "model_id"
+	LogkeyModelName        = "model_name"
+	LogkeyDBName           = "db_name"
+	LogkeyUserID           = "user_id"
+	LogkeyModule           = "module"
+	LogkeyIsMetrics        = "is_metrics"
+	LogkeyIsFollow         = "is_follow"
+	LogkeyIsSummary        = "is_summary"
+	LogkeyObjectstorePath  = "os_path"
+	LogkeyTrainingDataURI  = "training_data_uri"
+	LogkeyModelDataURI     = "model_data_uri"
+	LogkeyModelFilename    = "model_filename"
 
 	LogkeyDeployerService      = "deployer-service"
 	LogkeyLcmService           = "lifecycle-manager-service"
@@ -125,10 +131,13 @@ func FileInfoFindGood() string {
 		if strings.Contains(file, "runtime/extern.go") {
 			continue
 		}
-		if strings.Contains(file, "dlaas-commons/logger/logger.go") {
+		if strings.Contains(file, "logger/logger.go") {
 			continue
 		}
 		if strings.Contains(file, "/logging_impl.go") {
+			continue
+		}
+		if strings.Contains(file, "/logging.go") {
 			continue
 		}
 		break
@@ -153,6 +162,22 @@ func FileInfoFindGood() string {
 	}
 
 	return fmt.Sprintf("%s:%d %s -", file, line, funcName)
+}
+
+func LogStackTrace() {
+	pc := make([]uintptr, 30)
+	stackDepth := runtime.Callers(0, pc)
+	for i := 0; i < stackDepth; i++ {
+		f := runtime.FuncForPC(pc[i])
+		file, line := f.FileLine(pc[i])
+		// Truncate package name
+		funcName := f.Name()
+		if slash := strings.LastIndex(funcName, "."); slash >= 0 {
+			funcName = funcName[slash+1:]
+		}
+		locString := fmt.Sprintf("%s:%d %s -", file, line, funcName)
+		log.Debugf("   ---> %s", locString)
+	}
 }
 
 // NewDlaaSLogData construct log data object.
@@ -213,7 +238,7 @@ func Config() {
 			case config.ProductionEnv:
 				log.SetFormatter(&log.JSONFormatter{})
 			default: // any other env will use local settings (assuming outside SL)
-				log.SetFormatter(&log.TextFormatter{})
+				log.SetFormatter(&log.JSONFormatter{})
 			}
 		}
 

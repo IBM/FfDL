@@ -19,15 +19,14 @@
 import (
 	"crypto/tls"
 	"net/http"
-	errors "github.com/go-openapi/errors"
-	runtime "github.com/go-openapi/runtime"
-	middleware "github.com/go-openapi/runtime/middleware"
-	graceful "github.com/tylerb/graceful"
+	"github.com/go-openapi/errors"
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/runtime/middleware"
+	"github.com/tylerb/graceful"
 	log "github.com/sirupsen/logrus"
   mw "github.com/IBM/FfDL/restapi/middleware"
 	"github.com/IBM/FfDL/restapi/api_v1/server/operations"
 	"github.com/IBM/FfDL/restapi/api_v1/server/operations/models"
-	"github.com/IBM/FfDL/restapi/api_v1/server/operations/events"
 	"github.com/dre1080/recover"
 	"github.com/IBM/FfDL/commons/service"
 	"github.com/IBM/FfDL/restapi/api_v1/server/operations/training_data"
@@ -112,18 +111,6 @@ func configureAPI(api *operations.DlaasAPI) http.Handler {
 	})
 	api.ModelsPatchModelHandler = models.PatchModelHandlerFunc(func(params models.PatchModelParams, principal interface{}) middleware.Responder {
 		return patchModel(params)
-	})
-	api.EventsCreateEventEndpointHandler = events.CreateEventEndpointHandlerFunc(func(params events.CreateEventEndpointParams, principal interface{}) middleware.Responder {
-		return createEventEndpoint(params)
-	})
-	api.EventsGetEventEndpointHandler = events.GetEventEndpointHandlerFunc(func(params events.GetEventEndpointParams, principal interface{}) middleware.Responder {
-		return getEventEndpoint(params)
-	})
-	api.EventsGetEventTypeEndpointsHandler = events.GetEventTypeEndpointsHandlerFunc(func(params events.GetEventTypeEndpointsParams) middleware.Responder {
-		return getEventTypeEndpoints(params)
-	})
-	api.EventsDeleteEventEndpointHandler = events.DeleteEventEndpointHandlerFunc(func(params events.DeleteEventEndpointParams, principal interface{}) middleware.Responder {
-		return deleteEventEndpoint(params)
 	})
 	api.TrainingDataGetEMetricsHandler = training_data.GetEMetricsHandlerFunc(func(params training_data.GetEMetricsParams, principal interface{}) middleware.Responder {
 		return getEMetrics(params)

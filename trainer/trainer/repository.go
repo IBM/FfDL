@@ -17,37 +17,37 @@
 package trainer
 
 import (
-	"crypto/tls"
-	"crypto/x509"
-	"fmt"
-	"io/ioutil"
-	"net"
-	"strings"
-	"time"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/IBM/FfDL/commons/logger"
 	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
+
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
-const (
-	sslSuffix = "?ssl=true"
-)
-
-// TrainingRecord is the data structure we store in the Mongo collection "trainings"
+// TrainingRecord is the data structure we store in the Mongo collection "training_jobs"
 type TrainingRecord struct {
-	ID              bson.ObjectId                    `bson:"_id,omitempty" json:"id"`
-	TrainingID      string                           `bson:"training_id" json:"training_id"`
-	UserID          string                           `bson:"user_id" json:"user_id"`
-	JobID           string                           `bson:"job_id" json:"job_id"`
-	ModelDefinition *grpc_trainer_v2.ModelDefinition `bson:"model_definition,omitempty" json:"model_definition"`
-	Training        *grpc_trainer_v2.Training        `bson:"training,omitempty" json:"training"`
-	Datastores      []*grpc_trainer_v2.Datastore     `bson:"data_stores,omitempty" json:"data_stores"`
-	TrainingStatus  *grpc_trainer_v2.TrainingStatus  `bson:"training_status,omitempty" json:"training_status"`
-	Metrics         *grpc_trainer_v2.Metrics         `bson:"metrics,omitempty" json:"metrics"`
-	Deleted         bool                             `bson:"deleted,omitempty" json:"deleted"`
+	ID                    bson.ObjectId                    `bson:"_id,omitempty" json:"id"`
+	TrainingID            string                           `bson:"training_id" json:"training_id"`
+	UserID                string                           `bson:"user_id" json:"user_id"`
+	JobID                 string                           `bson:"job_id" json:"job_id"`
+	ModelDefinition       *grpc_trainer_v2.ModelDefinition `bson:"model_definition,omitempty" json:"model_definition"`
+	Training              *grpc_trainer_v2.Training        `bson:"training,omitempty" json:"training"`
+	Datastores            []*grpc_trainer_v2.Datastore     `bson:"data_stores,omitempty" json:"data_stores"`
+	TrainingStatus        *grpc_trainer_v2.TrainingStatus  `bson:"training_status,omitempty" json:"training_status"`
+	Metrics               *grpc_trainer_v2.Metrics         `bson:"metrics,omitempty" json:"metrics"`
+	Deleted               bool                             `bson:"deleted,omitempty" json:"deleted"`
+	EvaluationMetricsSpec string                           `bson:"evaluation_metrics_spec,omitempty" json:"evaluation_metrics_spec"`
+}
+
+// JobHistoryEntry stores training job status history in the Mongo collection "job_history"
+type JobHistoryEntry struct {
+	ID            bson.ObjectId          `bson:"_id,omitempty" json:"id"`
+	TrainingID    string                 `bson:"training_id" json:"training_id"`
+	Timestamp     string                 `bson:"timestamp,omitempty" json:"timestamp,omitempty"`
+	Status        grpc_trainer_v2.Status `bson:"status,omitempty" json:"status,omitempty"`
+	StatusMessage string                 `bson:"status_message,omitempty" json:"status_message,omitempty"`
+	ErrorCode     string                 `bson:"error_code,omitempty" json:"error_code,omitempty"`
 }
 
 type trainingsRepository struct {
@@ -68,83 +68,60 @@ type repository interface {
 	Close()
 }
 
-// ConnectMongo connects to a mongo database collection, using the provided username, password, and certificate file
-// It returns a pointer to the session and collection objects, or an error if the connection attempt fails.
-// TODO: This function could potentially be moved to a central utility package
-func ConnectMongo(mongoURI string, database string, username string, password string, cert string, collection string) (*mgo.Session, *mgo.Collection, error) {
-
-	// See here about the SSL weirdness: https://help.compose.com/docs/connecting-to-mongodb#go--golang-mongodb-and-compose
-	uri := strings.TrimSuffix(mongoURI, sslSuffix)
-	dialInfo, err := mgo.ParseURL(uri)
-	if err != nil {
-		log.WithError(err).Errorf("Cannot parse Mongo Connection URI")
-		return nil, nil, err
-	}
-	dialInfo.FailFast = true
-	dialInfo.Timeout = 10 * time.Second
-
-	// only do ssl if we have the suffix
-	if strings.HasSuffix(mongoURI, sslSuffix) {
-		log.Debugf("Using TLS for mongo ...")
-		tlsConfig := &tls.Config{}
-		roots := x509.NewCertPool()
-		if ca, err := ioutil.ReadFile(cert); err == nil {
-			roots.AppendCertsFromPEM(ca)
-		}
-		tlsConfig.RootCAs = roots
-		tlsConfig.InsecureSkipVerify = false
-		dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
-			conn, err := tls.Dial("tcp", addr.String(), tlsConfig)
-			return conn, err
-		}
-	}
-
-	// in case the username/password are not part of the URL string
-	if username != "" && password != "" {
-		dialInfo.Username = username
-		dialInfo.Password = password
-	}
-
-	session, err := mgo.DialWithInfo(dialInfo)
-
-	if database == "" {
-		database = dialInfo.Database
-	}
-
-	if err != nil {
-		msg := fmt.Sprintf("Cannot connect to MongoDB at %s, db %s, collection %s", mongoURI, database, collection)
-		log.WithError(err).Errorf(msg)
-		return nil, nil, err
-	}
-
-	collectionObj := session.DB(database).C(collection)
-
-	return session, collectionObj, nil
+type jobHistoryRepository interface {
+	RecordJobStatus(e *JobHistoryEntry) error
+	GetJobStatusHistory(trainingID string) []*JobHistoryEntry
+	Close()
 }
 
-// newTrainingsRepository create a new training repo for storing training data. The mongo URI can contain all the necessary
+// newTrainingsRepository creates a new training repo for storing training data. The mongo URI can contain all the necessary
 // connection information. See here: http://docs.mongodb.org/manual/reference/connection-string/
 // However, we also support not putting the username/password in the connection URL and provide is separately.
 func newTrainingsRepository(mongoURI string, database string, username string, password string, cert string, collection string) (repository, error) {
 	log := logger.LocLogger(log.StandardLogger().WithField("module", "trainingRepository"))
 	log.Debugf("Creating mongo training repository for %s, collection %s:", mongoURI, collection)
 
-	repo := &trainingsRepository{}
-
-	session, collectionObj, err := ConnectMongo(mongoURI, database, username, password, cert, collection)
-
+	session, err := ConnectMongo(mongoURI, database, username, password, cert)
 	if err != nil {
 		return nil, err
 	}
+	collectionObj := session.DB(database).C(collection)
 
-	repo.session = session
-	repo.collection = collection
-	repo.database = collectionObj.Database.Name
+	repo := &trainingsRepository{
+		session:    session,
+		database:   collectionObj.Database.Name,
+		collection: collection,
+	}
 
 	// create index
 	collectionObj.EnsureIndexKey("user_id", "training_id")
 
 	return repo, nil
+}
+
+// newJobHistoryRepository creates a new repo for storing job status history entries.
+func newJobHistoryRepository(mongoURI string, database string, username string, password string,
+	cert string, collection string) (jobHistoryRepository, error) {
+	log := logger.LocLogger(log.StandardLogger().WithField("module", "jobHistoryRepository"))
+	log.Debugf("Creating mongo repository for %s, collection %s:", mongoURI, collection)
+	repo, _, err := createMongoRepository(mongoURI, database, username, password, cert, collection)
+	return repo, err
+}
+
+// createMongoRepository creates a new struct for a MongoDB collection
+func createMongoRepository(mongoURI string, database string, username string, password string,
+	cert string, collection string) (*trainingsRepository, *mgo.Collection, error) {
+	repo := &trainingsRepository{}
+	session, err := ConnectMongo(mongoURI, database, username, password, cert)
+	if err != nil {
+		return nil, nil, err
+	}
+	collectionObj := session.DB(database).C(collection)
+
+	repo.session = session
+	repo.collection = collection
+	repo.database = collectionObj.Database.Name
+	return repo, collectionObj, nil
 }
 
 func (r *trainingsRepository) Store(t *TrainingRecord) error {
@@ -318,6 +295,33 @@ func (r *trainingsRepository) FindCurrentlyRunningTrainings(limit int) ([]*Train
 	//sorting by id in descending fashion(hence the - before id), assumption being records in mongo are being created with auto generated id which has a notion of timestamp built into it
 	err := r.queryDatabase(nil, sess).Sort("-_id").Limit(limit).Select(bson.M{"training_status": 1, "training.resources": 2, "training_id": 3}).All(&tr)
 	return tr, err
+}
+
+func (r *trainingsRepository) RecordJobStatus(e *JobHistoryEntry) error {
+	sess := r.session.Clone()
+	defer sess.Close()
+
+	setOnInsert := make(map[string]interface{})
+	setOnInsert["$setOnInsert"] = e
+	_, err := sess.DB(r.database).C(r.collection).Upsert(e, setOnInsert)
+	if err != nil {
+		logWithTraining(e.TrainingID).Errorf("Error storing job history entry: %s", err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (r *trainingsRepository) GetJobStatusHistory(trainingID string) []*JobHistoryEntry {
+	sess := r.session.Clone()
+	defer sess.Close()
+	selector := bson.M{}
+	if trainingID != "" {
+		selector["training_id"] = trainingID
+	}
+	var result []*JobHistoryEntry
+	sess.DB(r.database).C(r.collection).Find(selector).Sort("timestamp").All(&result)
+	return result
 }
 
 func (r *trainingsRepository) Close() {

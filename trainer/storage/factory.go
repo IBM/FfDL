@@ -29,7 +29,8 @@ type DataStoreFactory func(conf map[string]string) (DataStore, error)
 var datastoreFactories = make(map[string]DataStoreFactory)
 
 func init() {
-	Register("mount_cos", NewS3ObjectStore)
+	Register(DataStoreTypeMountVolume, NewVolumeMountStorage)
+	Register(DataStoreTypeMountCOSS3, NewS3ObjectStore)
 	Register(DataStoreTypeS3, NewS3ObjectStore)
 	Register(DataStoreTypeSwift, NewSwiftObjectStore)
 	Register(DataStoreTypeInMemory, NewInMemObjectStore)

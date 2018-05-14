@@ -3,7 +3,9 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
+	"time"
 	"github.com/IBM/FfDL/commons/logger"
 	"github.com/IBM/FfDL/commons/service"
 	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
@@ -12,7 +14,7 @@ import (
 // TrainingStatusUpdate captures the details for training status update events
 type TrainingStatusUpdate struct {
 	Status grpc_trainer_v2.Status
-	Timestamp float64
+	Timestamp string
 	ErrorCode string
 	StatusMessage string
 }
@@ -37,6 +39,10 @@ const (
 	ErrCodeK8SConnection          = "S200"
 	// ErrCodeEtcdConnection indicates a etcd connection error
 	ErrCodeEtcdConnection         = "S201"
+	// ErrCodeFailEnqueue indicates an error while adding the job to the queue in mongo
+	ErrCodeFailEnqueue            = "S210"
+	// ErrCodeFailDequeue indicates an error where a job was incorrectly dequeued
+	ErrCodeFailDequeue            = "S211"
 	// ErrCodeFailLoadModel indicates an error while loading the model code
 	ErrCodeFailLoadModel          = "S301"
 	// ErrCodeFailLoadData indicates an error while loading the training data
@@ -63,6 +69,13 @@ const (
 )
 
 
+// CurrentTimestampAsString returns the current time as milliseconds since
+// the Unix epoch (e.g., "1519135679722")
+func CurrentTimestampAsString() string {
+	epochMillis := time.Now().UnixNano() / 1000000
+	return fmt.Sprintf("%v", epochMillis)
+}
+
 // GetStatus converts between a string and proper DLaaS type of job status updates.
 // The value parameter is either a status string (e.g., "PROCESSING"), or a JSON string
 // with status and error details, e.g., '{"status":"FAILED","exit_code":"51","status_message":"Error opening ZIP file"}'
@@ -70,7 +83,7 @@ func GetStatus(value string, logr *logger.LocLoggingEntry) (*TrainingStatusUpdat
 	status := value
 	statusMessage := service.StatusMessages_NORMAL_OPERATION.String()
 	errorCode := ""
-	timestamp := 0.0
+	timestamp := ""
 	if strings.HasPrefix(status, "{") {
 		var objmap map[string]*json.RawMessage
 		err := json.Unmarshal([]byte(status), &objmap)

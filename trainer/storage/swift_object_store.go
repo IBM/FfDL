@@ -75,7 +75,7 @@ func (os *swiftObjectStore) Connect() error {
 }
 
 func (os *swiftObjectStore) connect(conn *swift.Connection) error {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 	if conn == nil {
 		return errors.New("conn argument is nil")
 	}
@@ -85,15 +85,15 @@ func (os *swiftObjectStore) connect(conn *swift.Connection) error {
 
 	// authenticate via retry logic
 	var nerr error // non-recoverable error
-	retry(10, 100*time.Millisecond, "connect", log, func() error {
+	retry(10, 100*time.Millisecond, "connect", logr, func() error {
 		err := conn.Authenticate()
 		// only retry on timeout or bad request
 		if err == swift.TimeoutError || err == swift.BadRequest {
-			log.Warnf("ObjectStore timeout/bad request error in connect(): %s. Retrying ...", err.Error())
+			logr.Warnf("ObjectStore timeout/bad request error in connect(): %s. Retrying ...", err.Error())
 			return err
 		} else if err != nil {
 			// non-retryable error
-			log.WithError(err).Errorf("ObjectStore connection error")
+			logr.WithError(err).Errorf("ObjectStore connection error")
 			nerr = err
 		}
 		if err == nil && conn.Authenticated() {
@@ -105,7 +105,7 @@ func (os *swiftObjectStore) connect(conn *swift.Connection) error {
 }
 
 func (os *swiftObjectStore) UploadArchive(container string, object string, payload []byte) error {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 	if os.conn == nil {
 		return ErrNotConnected
 	}
@@ -113,9 +113,9 @@ func (os *swiftObjectStore) UploadArchive(container string, object string, paylo
 	info, _, _ := os.conn.Container(container)
 
 	if info.Name == "" { // container does not exist
-		log.Debugf("Creating storage container: %s\n", container)
+		logr.Debugf("Creating storage container: %s\n", container)
 		if err := os.conn.ContainerCreate(container, nil); err != nil {
-			log.WithError(err).Errorf("Storage container creation failed: %s", err.Error())
+			logr.WithError(err).Errorf("Storage container creation failed: %s", err.Error())
 			return err
 		}
 	}
@@ -123,20 +123,20 @@ func (os *swiftObjectStore) UploadArchive(container string, object string, paylo
 }
 
 func (os *swiftObjectStore) DownloadArchive(container string, object string) ([]byte, error) {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 
 	if os.conn == nil {
 		return nil, ErrNotConnected
 	}
 
 	var payload []byte
-	err := retry(10, 100*time.Millisecond, "ObjectGetBytes", log, func() error {
+	err := retry(10, 100*time.Millisecond, "ObjectGetBytes", logr, func() error {
 		var err error
 		payload, err = os.conn.ObjectGetBytes(container, object)
 		return err
 	})
 	if err != nil {
-		log.WithError(err).Errorf("DownloadArchive failed %s, %s", container, object)
+		logr.WithError(err).Errorf("DownloadArchive failed %s, %s", container, object)
 		return nil, err
 	}
 	return payload, nil
@@ -171,7 +171,7 @@ func (os *swiftObjectStore) DeleteArchive(container string, object string) error
 }
 
 func (os *swiftObjectStore) GetTrainedModelSize(path string, numLearners int32) (int64, error) {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 	if os.conn == nil {
 		return 0,ErrNotConnected
 	}
@@ -201,15 +201,15 @@ func (os *swiftObjectStore) GetTrainedModelSize(path string, numLearners int32) 
 		objects, err := os.conn.Objects(container, &swift.ObjectsOpts{
 			Path: pathToLearner,
 		})
-		log.Debugf("objects: %s", objects)
+		logr.Debugf("objects: %s", objects)
 
 		if err != nil {
-			log.WithError(err).Errorf("Checking object in container %s failed", container)
+			logr.WithError(err).Errorf("Checking object in container %s failed", container)
 			return 0, err
 		}
 
 		for _, obj := range objects {
-			log.Debugf("trained model object: %s, %d", obj.Name, obj.Bytes)
+			logr.Debugf("trained model object: %s, %d", obj.Name, obj.Bytes)
 			trainedModelSize += obj.Bytes
 		}
 	}
@@ -218,7 +218,7 @@ func (os *swiftObjectStore) GetTrainedModelSize(path string, numLearners int32) 
 }
 
 func (os *swiftObjectStore) DownloadTrainedModelAsZipStream(path string, numLearners int32, writer io.Writer) error {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 	if os.conn == nil {
 		return ErrNotConnected
 	}
@@ -235,15 +235,15 @@ func (os *swiftObjectStore) DownloadTrainedModelAsZipStream(path string, numLear
 	}
 	if objectPrefix != "" {
 		// Best effort to get the training ID
-		log = log.WithField(logger.LogkeyTrainingID, objectPrefix)
+		logr = logr.WithField(logger.LogkeyTrainingID, objectPrefix)
 	}
-	log.Debugf("Number of learners is: %d", numLearners)
+	logr.Debugf("Number of learners is: %d", numLearners)
 
 	// Create a buffer to write our zip to
 	w := zip.NewWriter(writer)
 
 	var objects []swift.Object
-	err := retry(10, 100*time.Millisecond, "Objects", log, func() error {
+	err := retry(10, 100*time.Millisecond, "Objects", logr, func() error {
 		var err error
 		var objects1 []swift.Object
 		objects1, err = os.conn.Objects(container, &swift.ObjectsOpts{Path: objectPrefix})
@@ -257,34 +257,34 @@ func (os *swiftObjectStore) DownloadTrainedModelAsZipStream(path string, numLear
 			return err
 		}
 		if len(objects1) != len(objects) {
-			err = errors.New("Object count mismatch")
+			err = errors.New("object count mismatch")
 		}
 		return err
 	})
 	if err != nil {
-		log.WithError(err).Errorf("Getting objects in container %s failed", container)
+		logr.WithError(err).Errorf("Getting objects in container %s failed", container)
 		return err
 	}
 
 
-	log.Debugf("objects: %s", objects)
+	logr.Debugf("objects: %s", objects)
 	if err != nil {
-		log.WithError(err).Errorf("Getting objects in container %s failed", container)
+		logr.WithError(err).Errorf("Getting objects in container %s failed", container)
 		return err
 	}
 	for _, obj := range objects {
-		log.Debugf("Downloading trained model object: %s, %d", obj.Name, obj.Bytes)
+		logr.Debugf("Downloading trained model object: %s, %d", obj.Name, obj.Bytes)
 		f, err := w.Create(obj.Name)
 		if err != nil {
 			return err
 		}
 
-		err = retry(10, 100*time.Millisecond, "ObjectGet", log, func() error {
+		err = retry(10, 100*time.Millisecond, "ObjectGet", logr, func() error {
 			_, err := os.conn.ObjectGet(container, obj.Name, f, true, nil)
 			return err
 		})
 		if err != nil {
-			log.WithError(err).Errorf("Getting object %s in container %s failed", obj.Name, container)
+			logr.WithError(err).Errorf("Getting object %s in container %s failed", obj.Name, container)
 			return err
 		}
 	}
@@ -292,16 +292,16 @@ func (os *swiftObjectStore) DownloadTrainedModelAsZipStream(path string, numLear
 
 	if numLearners == 0 {
 		numLearners = 1
-		log.Debugf("Forcing number learners to 1: %d", numLearners)
+		logr.Debugf("Forcing number learners to 1: %d", numLearners)
 	}
 
 	//Iterate over all learner objects
 	for iter := 0; iter < int(numLearners); iter++ {
 
 		pathToLearner := objectPrefix + "/learner-" + strconv.Itoa(iter+1)
-		log.Debugf("pathToLearner: %s", pathToLearner)
+		logr.Debugf("pathToLearner: %s", pathToLearner)
 
-		err = retry(10, 100*time.Millisecond, "Objects", log, func() error {
+		err = retry(10, 100*time.Millisecond, "Objects", logr, func() error {
 			var err error
 			var objects1 []swift.Object
 			objects1, err = os.conn.Objects(container, &swift.ObjectsOpts{Path: pathToLearner})
@@ -315,39 +315,39 @@ func (os *swiftObjectStore) DownloadTrainedModelAsZipStream(path string, numLear
 				return err
 			}
 			if len(objects1) != len(objects) {
-				err = errors.New("Object count mismatch")
+				err = errors.New("object count mismatch")
 			}
 			return err
 		})
-		log.Debugf("objects: %s", objects)
+		logr.Debugf("objects: %s", objects)
 
 		if err != nil {
-			log.WithError(err).Errorf("Getting objects in container %s failed", container)
+			logr.WithError(err).Errorf("Getting objects in container %s failed", container)
 			return err
 		}
 
 		for _, obj := range objects {
-			log.Debugf("Downloading trained model object: %s, %d", obj.Name, obj.Bytes)
+			logr.Debugf("Downloading trained model object: %s, %d", obj.Name, obj.Bytes)
 
 			f, err := w.Create(obj.Name)
 			if err != nil {
-				log.WithError(err).Errorf("Creating ZIP file entry for object %s failed", obj.Name)
+				logr.WithError(err).Errorf("Creating ZIP file entry for object %s failed", obj.Name)
 				return err
 			}
 
-			err = retry(10, 100*time.Millisecond, "ObjectGet", log, func() error {
+			err = retry(10, 100*time.Millisecond, "ObjectGet", logr, func() error {
 				_, err = os.conn.ObjectGet(container, obj.Name, f, true, nil)
 				return err
 			})
 			if err != nil {
-				log.WithError(err).Errorf("Getting object %s in container %s failed", obj.Name, container)
+				logr.WithError(err).Errorf("Getting object %s in container %s failed", obj.Name, container)
 				return err
 			}
 		}
 
 	}
 	if err := w.Close(); err != nil {
-		log.WithError(err).Errorf("Closing ZIP stream failed")
+		logr.WithError(err).Errorf("Closing ZIP stream failed")
 		return err
 	}
 	return nil
@@ -356,7 +356,7 @@ func (os *swiftObjectStore) DownloadTrainedModelAsZipStream(path string, numLear
 func (os *swiftObjectStore) DownloadTrainedModelLogFile(path string, numLearners int32, learnerIndex int32,
 	objectPath string, outputWriter io.Writer) error {
 
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 
 	if os.conn == nil {
 		return ErrNotConnected
@@ -373,19 +373,19 @@ func (os *swiftObjectStore) DownloadTrainedModelLogFile(path string, numLearners
 	}
 	if objectPrefix != "" {
 		// Best effort to get the training ID
-		log = log.WithField(logger.LogkeyTrainingID, objectPrefix)
+		logr = logr.WithField(logger.LogkeyTrainingID, objectPrefix)
 	}
-	log.Debugf("swiftObjectStore DownloadTrainedModelLogFile: entry: %s, %s", path, objectPath)
-	log.Debugf("Number of learners is: %d", numLearners)
+	logr.Debugf("swiftObjectStore DownloadTrainedModelLogFile: entry: %s, %s", path, objectPath)
+	logr.Debugf("Number of learners is: %d", numLearners)
 
 	pathToLearner := objectPrefix + "/learner-" + strconv.Itoa(int(learnerIndex))
 	objects, err := os.conn.Objects(container, &swift.ObjectsOpts{
 		Path: pathToLearner,
 	})
-	log.Debugf("objects: %s", objects)
+	logr.Debugf("objects: %s", objects)
 
 	if err != nil {
-		log.WithError(err).Errorf("Getting objects in container %s failed", container)
+		logr.WithError(err).Errorf("Getting objects in container %s failed", container)
 		return err
 	}
 
@@ -393,14 +393,14 @@ func (os *swiftObjectStore) DownloadTrainedModelLogFile(path string, numLearners
 	foundIt := false
 
 	for _, obj := range objects {
-		log.Debugf("Found trained model object: %s, %d", obj.Name, obj.Bytes)
-		log.Debugf("Looking for: %s", fullObjectPath)
+		logr.Debugf("Found trained model object: %s, %d", obj.Name, obj.Bytes)
+		logr.Debugf("Looking for: %s", fullObjectPath)
 
 		if fullObjectPath == obj.Name {
-			log.Debugf("DownloadTrainedModelLogFile: Downloading trained model object: %s, %d", obj.Name, obj.Bytes)
+			logr.Debugf("DownloadTrainedModelLogFile: Downloading trained model object: %s, %d", obj.Name, obj.Bytes)
 			_, err = os.conn.ObjectGet(container, obj.Name, outputWriter, true, nil)
 			if err != nil {
-				log.WithError(err).Errorf("Getting object %s in container %s failed", obj.Name, container)
+				logr.WithError(err).Errorf("Getting object %s in container %s failed", obj.Name, container)
 				return err
 			}
 			foundIt = true
@@ -415,32 +415,32 @@ func (os *swiftObjectStore) DownloadTrainedModelLogFile(path string, numLearners
 }
 
 func (os *swiftObjectStore) ContainerExists(name string) (bool, error) {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 
 	if os.conn == nil {
-		log.Debugln("ContainerExists: object store not connected")
+		logr.Debugln("ContainerExists: object store not connected")
 		return false, ErrNotConnected
 	}
 
-	// log.Debugf("connection: %v", os.conn)
+	// logr.Debugf("connection: %v", os.conn)
 
 	var nerr error
 	var exists bool
 	// retry because of flakiness
-	retry(10, 100*time.Millisecond, "ContainerExists", log, func() error {
+	retry(10, 100*time.Millisecond, "ContainerExists", logr, func() error {
 		_, _, err := os.conn.Container(name)
 		if err == swift.TimeoutError || err == swift.BadRequest { // retryable error
-			log.Warnf("ObjectStore timeout/bad request error in ContainerExists: %s. Retrying ...", err.Error())
+			logr.Warnf("ObjectStore timeout/bad request error in ContainerExists: %s. Retrying ...", err.Error())
 			return err
 		} else if err == swift.ContainerNotFound {
-			log.Debugf("Container %s does not exist.", name)
+			logr.Debugf("Container %s does not exist.", name)
 		}
 		nerr = err
-		exists = (err != swift.ContainerNotFound)
+		exists = err != swift.ContainerNotFound
 		return nil
 	})
 	if nerr != nil {
-		log.Debugf("ContainerExists failed: %s", nerr.Error())
+		logr.Debugf("ContainerExists failed: %s", nerr.Error())
 	}
 	return exists, nil
 }
@@ -455,7 +455,7 @@ func (os *swiftObjectStore) Disconnect() {
 // "rewrite" the object store URL to either use the internal SL proxy or the
 // external URLs. This needs to work for both SL and Bluemix ObjectStore.
 func replaceSwiftObjectStoreURL(conn *swift.Connection) {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 	env := viper.GetString(config.EnvKey)
 
 	switch env {
@@ -468,25 +468,25 @@ func replaceSwiftObjectStoreURL(conn *swift.Connection) {
 	default: // any other env will use local settings (assuming outside SL)
 		if strings.Contains(conn.AuthUrl, intSLObjectStoreURLFragment) {
 			newURL := strings.Replace(conn.AuthUrl, intSLObjectStoreURLFragment, extSLObjectStoreURLFragment, 1)
-			log.Debugf("Replaced ObjectStore URL from %s to %s", conn.AuthUrl, newURL)
+			logr.Debugf("Replaced ObjectStore URL from %s to %s", conn.AuthUrl, newURL)
 			conn.AuthUrl = newURL
 		} else if strings.Contains(conn.AuthUrl, intDevBMObjectStoreURL) ||
 			strings.Contains(conn.AuthUrl, intStagingBMObjectStoreURL) ||
 			strings.Contains(conn.AuthUrl, intProdBMObjectStoreURL) {
-			log.Debugf("Replaced ObjectStore URL from %s to %s", conn.AuthUrl, extBMObjectStoreURL)
+			logr.Debugf("Replaced ObjectStore URL from %s to %s", conn.AuthUrl, extBMObjectStoreURL)
 			conn.AuthUrl = extBMObjectStoreURL
 		}
 	}
 }
 
 func replaceSwiftConnURL(conn *swift.Connection, bluemixOSURL string) {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 	if strings.Contains(conn.AuthUrl, extSLObjectStoreURLFragment) { // external SL URL part
 		newURL := strings.Replace(conn.AuthUrl, extSLObjectStoreURLFragment, intSLObjectStoreURLFragment, 1)
-		log.Debugf("Replaced ObjectStore URL from %s to %s", conn.AuthUrl, newURL)
+		logr.Debugf("Replaced ObjectStore URL from %s to %s", conn.AuthUrl, newURL)
 		conn.AuthUrl = newURL
 	} else if strings.Contains(conn.AuthUrl, extBMObjectStoreURL) { // external BM
-		log.Debugf("Replaced ObjectStore URL from %s to %s", conn.AuthUrl, bluemixOSURL)
+		logr.Debugf("Replaced ObjectStore URL from %s to %s", conn.AuthUrl, bluemixOSURL)
 		conn.AuthUrl = bluemixOSURL
 		conn.Internal = true // we need to use the internal IP that we get back from the auth service
 	} else if strings.Contains(conn.AuthUrl, bluemixOSURL) {

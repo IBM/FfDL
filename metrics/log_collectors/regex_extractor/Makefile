@@ -14,24 +14,23 @@
 # limitations under the License.
 #
 
-REPO ?= docker.io/ffdl
+DOCKER_REPO ?= docker.io
+DOCKER_NAMESPACE ?= ffdl
+GRPC_GIT=git@github.ibm.com:deep-learning-platform/grpc-parameter-server.git
 WHOAMI ?= $(shell whoami)
 IMAGE_TAG ?= user-$(WHOAMI)
 
-IMAGE_NAME?=${REPO}/regex_extractor:${IMAGE_TAG}
+IMAGE_NAME?=${DOCKER_REPO}/${DOCKER_NAMESPACE}/regex_extractor:${IMAGE_TAG}
 
 DOCKER_OPTIONS ?=
 
-all: build push
+all: build
 
 build:
 	cp -r ../training_data_service_client .
-	docker build -q ${DOCKER_OPTIONS} -t ${REPO}/regex_extractor:${IMAGE_TAG} -f Dockerfile .
+	docker build -q ${DOCKER_OPTIONS} -t ${IMAGE_NAME} -f Dockerfile .
 	rm -r training_data_service_client
 
-push:
-	docker push ${REPO}/regex_extractor:${IMAGE_TAG}
-
 imagename:
-	echo ${REPO}/regex_extractor:${IMAGE_TAG}
+	echo ${IMAGE_NAME}
 	echo "Docker options: ${DOCKER_OPTIONS}"

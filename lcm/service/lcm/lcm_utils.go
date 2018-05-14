@@ -31,12 +31,11 @@ import (
 
 	"github.com/IBM/FfDL/trainer/client"
 	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
+	"golang.org/x/net/context"
 	v1core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
-
-	"golang.org/x/net/context"
 )
 
 //creates all the znodes used by a training job before it is deployed
@@ -125,7 +124,9 @@ func getStorageSize(r *service.ResourceRequirements) int64 {
 
 // Return the name of a volume to use for a job.
 func getStaticVolume(logr *logger.LocLoggingEntry) string {
+
 	// Read file with PVC specs.
+	logr.Debugf("entry into getStaticVolume")
 	pvcsFile := "/etc/static-volumes/PVCs.yaml"
 	bytes, err := ioutil.ReadFile(pvcsFile)
 	if err != nil {
@@ -142,9 +143,13 @@ func getStaticVolume(logr *logger.LocLoggingEntry) string {
 
 	// Make sure it's a list.
 	var pvcList *v1core.List
+
 	switch obj := obj.(type) {
 	case *v1core.List:
 		pvcList = obj
+	//case *v1core.PersistentVolumeClaim:
+	//	pvcList = new(v1core.List)
+	//	pvcList = append(pvcList.Items, obj)
 	default:
 		logr.Errorf("Decoded object is not a list.")
 		return ""
@@ -176,33 +181,25 @@ func getStaticVolume(logr *logger.LocLoggingEntry) string {
 	logr.Debugf("static volumes: %s", volumes)
 	if len(volumes) > 0 {
 		n := rand.Int() % len(volumes)
+		logr.Debugf("returning a volume: %d", n)
 		return volumes[n]
 	}
-	return ""
-}
 
-// Return the list of service names associated with the services.
-func getServiceNames(services []*v1core.Service) []string {
-	names := []string{}
-	for _, s := range services {
-		names = append(names, s.Name)
-	}
-	return names
+	return ""
 }
 
 func handleDeploymentFailure(s *lcmService, dlaasJobName string, tID string,
 	userID string, component string, logr *logger.LocLoggingEntry) {
 
-	errUpd := updateJobStatus(tID, grpc_trainer_v2.Status_FAILED, userID, service.StatusMessages_INTERNAL_ERROR.String(), errCodeFailedDeploy, logr)
-	logr.Debugf("Updating %s status to FAILED", tID)
-	if errUpd != nil {
-		logr.Errorln("(deployDistributedTrainingJob) After failed "+component+", Error while calling Trainer service client update: ", errUpd.Error())
+	logr.Errorf("updating status to FAILED")
+	if errUpd := updateJobStatus(tID, grpc_trainer_v2.Status_FAILED, userID, service.StatusMessages_INTERNAL_ERROR.String(), client.ErrCodeFailedDeploy, logr); errUpd != nil {
+		logr.WithError(errUpd).Errorf("after failed %s, error while calling Trainer service client update", component)
 	}
 
 	//Cleaning up resources out of an abundance of caution
-	errKill := s.killDeployedJob(dlaasJobName, tID, userID)
-	if errKill != nil {
-		logr.Errorln("(deployDistributedTrainingJob) After failed "+component+", Problem calling KillDeployedJob for job ", tID, "error is:", errKill.Error())
+	logr.Errorf("training FAILED so going ahead and cleaning up resources")
+	if errKill := s.killDeployedJob(dlaasJobName, tID, userID); errKill != nil {
+		logr.WithError(errKill).Errorf("after failed %s, problem calling KillDeployedJob for job ", component)
 	}
 
 }
@@ -216,22 +213,18 @@ func learnerEtcdBasePath(trainingID string) string {
 	return jobBasePath(trainingID) + "/learners"
 }
 
-// Return the Zookeeper base path of status of learner znodes.
+// Return the etcd base path of status of learner znodes.
 func learnerNodeEtcdStatusPath(trainingID string, learnerID int) string {
-	return fmt.Sprintf("%s/learner_%d/status/", learnerEtcdBasePath(trainingID), learnerID)
+	return fmt.Sprintf("%s/learner_%d/status", learnerEtcdBasePath(trainingID), learnerID)
 }
 
 func learnerNodeEtcdStatusPathRelative(trainingID string, learnerID int) string {
-	return fmt.Sprintf("%s/learner_%d/status/", trainingID, learnerID)
+	return fmt.Sprintf("%s/learner_%d/status", trainingID, learnerID)
 }
 
-// Return the Zookeeper base path of learner znodes.
+// Return the etcd base path of learner znodes.
 func learnerNodeEtcdBasePath(trainingID string, learnerID int) string {
 	return fmt.Sprintf("%s/learner_%d/", learnerEtcdBasePath(trainingID), learnerID)
-}
-
-func learnerSummaryMetricsPath(trainingID string, learnerID int) string {
-	return fmt.Sprintf("%s%s", learnerNodeEtcdBasePath(trainingID, learnerID), "summary_metrics")
 }
 
 // calcMemory is a utility to convert the memory from DLaaS resource requirements
@@ -268,7 +261,7 @@ func calcSize(size float64, unit service.ResourceRequirements_MemoryUnit) float6
 //update job status in the database
 //update job status in cassandra
 func updateJobStatus(trainingID string, updStatus grpc_trainer_v2.Status, userID string, statusMessage string, errorCode string, logr *logger.LocLoggingEntry) error {
-	logr.Infof("(updateJobStatus) Updating status of %s to %s", trainingID, updStatus.String())
+	logr.Debugf("(updateJobStatus) Updating status of %s to %s", trainingID, updStatus.String())
 	updateRequest := &grpc_trainer_v2.UpdateRequest{TrainingId: trainingID, Status: updStatus, UserId: userID, StatusMessage: statusMessage, ErrorCode: errorCode}
 
 	trainer, err := client.NewTrainer()

@@ -12,8 +12,6 @@ FfDL is a collaboration platform for:
 
 ![ffdl-architecture](docs/images/ffdl-architecture.png)
 
-To know more about the architectural details, please read [here](design/design_docs.md)
-
 ## Prerequisites
 
 * `kubectl`: The Kubernetes command line interface (https://kubernetes.io/docs/tasks/tools/install-kubectl/)
@@ -251,7 +249,7 @@ CLI_CMD=cli/bin/ffdl-$(if [ "$(uname)" = "Darwin" ]; then echo 'osx'; else echo 
 $CLI_CMD train etc/examples/tf-model/manifest.yml etc/examples/tf-model
 ```
 
-Congratulation, you had submitted your first job on FfDL. You can check your FfDL status either from the FfDL UI or simply run `$CLI_CMD list`
+Congratulations, you had submitted your first job on FfDL. You can check your FfDL status either from the FfDL UI or simply run `$CLI_CMD list`
 
 > You can learn about how to create your own model definition files and `manifest.yaml` at [user guild](docs/user-guide.md#2-create-new-models-with-ffdl).
 

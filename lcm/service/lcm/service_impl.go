@@ -18,8 +18,6 @@ package lcm
 
 import (
 	"errors"
-	"fmt"
-	"strings"
 	"time"
 
 	"google.golang.org/grpc"
@@ -28,18 +26,20 @@ import (
 	"github.com/IBM/FfDL/commons/logger"
 	"github.com/IBM/FfDL/commons/metricsmon"
 	"github.com/IBM/FfDL/commons/service"
-	"github.com/IBM/FfDL/lcm/coord"
 	jobmonitor "github.com/IBM/FfDL/jobmonitor/jobmonitor"
+	"github.com/IBM/FfDL/lcm/coord"
 	"github.com/IBM/FfDL/lcm/lcmconfig"
+	"github.com/IBM/FfDL/trainer/client"
 	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
 
 	"github.com/cenkalti/backoff"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/go-kit/kit/metrics"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"golang.org/x/net/context"
 
-	v1beta1 "k8s.io/api/extensions/v1beta1"
+	v1beta1 "k8s.io/api/apps/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	k8srest "k8s.io/client-go/rest"
@@ -105,7 +105,7 @@ func newService() (*lcmService, error) {
 
 	if err != nil {
 		logr.WithError(err).Errorf("Failed to connect to etcd while creating new lcm service with cfg %v", "")
-		failedToLaunchTrainingsCounter.With(reason, errCodeEtcdConnection).Add(1)
+		failedToLaunchTrainingsCounter.With(reason, client.ErrCodeEtcdConnection).Add(1)
 		return nil, err
 	}
 
@@ -119,7 +119,7 @@ func newService() (*lcmService, error) {
 
 	if err != nil {
 		logr.WithError(err).Errorf("Failed to create a kubernetes client: %v", lcmconfig.GetKubernetesConfig())
-		failedToLaunchTrainingsCounter.With(reason, errCodeK8SConnection).Add(1)
+		failedToLaunchTrainingsCounter.With(reason, client.ErrCodeK8SConnection).Add(1)
 		return nil, err
 	}
 
@@ -157,10 +157,17 @@ func newService() (*lcmService, error) {
 
 //Deploys a training job in DLaaS. Retained for compatibility with other DLaaS microservices
 func (s *lcmService) DeployTrainingJob(ctx context.Context, req *service.JobDeploymentRequest) (*service.JobDeploymentResponse, error) {
-	logr := logger.LocLogger(s.logWithJobDeploymentRequest(req))
+	//extend the logger with required fields and this logr will be passed around
+	logr := logger.LocLogger(InitLogger(req.TrainingId, req.UserId).WithFields(logrus.Fields{
+		"name":      req.Name,
+		"framework": req.Framework,
+		"gpus":      req.Resources.Gpus,
+		"cpus":      req.Resources.Gpus,
+		"memory":    req.Resources.Gpus,
+	}))
 
 	totalTrainingCounter.With("framework", req.Framework).Add(1)
-	err := updateJobStatus(req.TrainingId, grpc_trainer_v2.Status_PENDING, req.UserId, service.StatusMessages_NORMAL_OPERATION.String(), errCodeNormal, logr)
+	err := updateJobStatus(req.TrainingId, grpc_trainer_v2.Status_PENDING, req.UserId, service.StatusMessages_NORMAL_OPERATION.String(), client.ErrCodeNormal, logr)
 	if err != nil {
 		logr.WithError(err).Errorf("(deployDistributedTrainingJob) Before deploying job, error while calling Trainer service client update for trainingID %s , but still carrying on ", req.TrainingId)
 	}
@@ -174,7 +181,7 @@ func (s *lcmService) HaltTrainingJob(ctx context.Context, req *service.JobHaltRe
 
 	counter := finishedTrainingCounter.With(outcome, halted)
 	counter.With(progress, started).Add(1)
-	logr := logger.LocLogger(s.logWithJobHaltRequest(req))
+	logr := logger.LocLogger(InitLogger(req.TrainingId, req.UserId))
 	logr.Infof("Halting training job: %s", req.TrainingId)
 	path := req.TrainingId + "/halt"
 	success, error := s.etcdClient.PutIfKeyMissing(path, "", logr)
@@ -183,7 +190,7 @@ func (s *lcmService) HaltTrainingJob(ctx context.Context, req *service.JobHaltRe
 		return nil, error
 	}
 	if !success {
-		logr.Warnf("While upadating halt for training job %s at path %s , the path already exists", req.TrainingId, path)
+		logr.Warnf("While updating halt for training job %s at path %s , the path already exists", req.TrainingId, path)
 	}
 	counter.With(progress, "etcdKeysDeleted").Add(1)
 
@@ -192,206 +199,135 @@ func (s *lcmService) HaltTrainingJob(ctx context.Context, req *service.JobHaltRe
 
 //default deploy job function.
 func (s *lcmService) deployDistributedTrainingJob(ctx context.Context, req *service.JobDeploymentRequest, logr *logger.LocLoggingEntry) {
+
 	numLearners := int(req.GetResources().Learners)
-	useNativeDistribution := false
+	useNativeDistribution := false //always use native since we don't support PS anymore
 
 	if numLearners < 1 {
 		numLearners = 1
 	}
-	logr.Infof("Deploying training job: %s with %d learners", req.TrainingId, numLearners)
 
-	//Disabling for now. To be re-enabled later after C4 and C5 permission diagnosis is complete
-	/*continueDeploy := s.currentResourceSnapshot(req, numLearners, logr)
-
-	  if !continueDeploy {
-	      return
-	  }*/
+	logr.WithField("learners", numLearners).Infof("starting deployment of training job in lcm")
 
 	// Initialize distributed training information in Zookeeper
-	err := createEtcdNodes(s, req.Name, req.UserId, req.TrainingId, numLearners, req.Framework, logr)
-	if err != nil {
-		failedToLaunchTrainingsCounter.With(reason, errCodeEtcdConnection).Add(1)
-		logr.WithError(err).Errorf("(LCM deployDistributedTrainingJob) Failed to create etcd nodes necessary to deploy a training job. Error is %s", err.Error())
-		errUpd := updateJobStatus(req.TrainingId, grpc_trainer_v2.Status_FAILED, req.UserId, service.StatusMessages_INTERNAL_ERROR.String(), errCodeEtcdConnection, logr)
-		if errUpd != nil {
-			logr.WithError(err).Errorf("(deployDistributedTrainingJob) Before deploying job, error while calling Trainer service client update with id %s", req.TrainingId)
-
-		}
+	if err := createEtcdNodes(s, req.Name, req.UserId, req.TrainingId, numLearners, req.Framework, logr); err != nil {
+		failedToLaunchTrainingsCounter.With(reason, client.ErrCodeEtcdConnection).Add(1)
+		logr.WithError(err).Errorf("Failed to create etcd nodes necessary to deploy a training job")
+		handleDeploymentFailure(s, req.Name, req.TrainingId, req.UserId, "etcd nodes creation", logr)
 		return //short circuit the code here, since the trainer was updated it knows the job was failed
 	}
 
-	for _, n := range NativeFrameworks {
-		if req.Framework == n && numLearners > 1 {
-			logr.Infof("(LCM deployDistributedTrainingJob) Using native distribution. There is no need for a parameter server for job %s ", req.TrainingId)
-			useNativeDistribution = true
-			break
-		}
-	}
-
-	logr.Infof("(LCM deployDistributedTrainingJob) Now starting to deploy job monitor to monitor training job %s", req.TrainingId)
-
-	err = manageDistributedJob(s, req, req.TrainingId, numLearners, req.Name, req.UserId, useNativeDistribution, logr)
-
-	if err != nil {
+	logr.Infof("now starting to deploy job monitor to monitor training job")
+	if err := manageDistributedJob(s, req, req.TrainingId, numLearners, req.Name, req.UserId, useNativeDistribution, logr); err != nil {
 		failedToLaunchTrainingsCounter.With(reason, jmLaunchFailed).Add(1)
-		logr.WithError(err).Errorf("(LCM deployDistributedTrainingJob) Failed to create job monitor for training job %s", req.TrainingId)
+		logr.WithError(err).Errorf("Failed to create job monitor for training job")
 		handleDeploymentFailure(s, req.Name, req.TrainingId, req.UserId, "job monitor", logr)
 		return
 	}
 
-	if numLearners > 1 && !useNativeDistribution {
-		logr.Infof("(LCM deployDistributedTrainingJob) NOT using native distribution. Deploying a parameter server for job %s ", req.TrainingId)
-		err = deployParameterServer(ctx, s, req)
-		if err != nil {
-			failedToLaunchTrainingsCounter.With(reason, psLaunchFailed).Add(1)
-			//Deploying parameter server has failed. Parameter server didn't start. So update status
-			handleDeploymentFailure(s, req.Name, req.TrainingId, req.UserId, "parameter server deployment", logr)
-			return
-		}
-		logr.Infof("(LCM deployDistributedTrainingJob) Finished deploying parameter server and checking whether it started")
-
-	}
-
-	logr.Infof("(LCM deployDistributedTrainingJob) Now starting to deploy learners for training job %s", req.TrainingId)
-	err = deployLearnersAndHelpers(ctx, s, req, useNativeDistribution)
-	if err != nil {
+	logr.Infof("now starting to deploy learners for training job")
+	if err := NewTraining(ctx, s.k8sClient, req, logr).Start(); err != nil {
 		//Deploying learner helpers has failed. So update status
+		logr.WithError(err).Debugf("Deploying learner helpers has failed. Update status.")
 		failedToLaunchTrainingsCounter.With(reason, learnerLaunchFailed).Add(1)
 		handleDeploymentFailure(s, req.Name, req.TrainingId, req.UserId, "learner deployment", logr)
+		return
 	}
+	logr.Debugf("Learner deployment seemed to launch ok")
 }
 
 //Kills a currently executing training job and cleans up its zookeeper entries
 func (s *lcmService) KillTrainingJob(ctx context.Context, req *service.JobKillRequest) (*service.JobKillResponse, error) {
 	counter := finishedTrainingCounter.With(outcome, killed)
 	counter.With(progress, started).Add(1)
-	logr := logger.LocLogger(s.logWithJobKillRequest(req))
+	logr := logger.LocLogger(InitLogger(req.TrainingId, req.UserId))
+
 	logr.Infof("Killing training job: %s", req.Name)
 
 	selector := "training_id==" + req.TrainingId
-	var gracePeriodSeconds int64
-	deleteOpts := &metav1.DeleteOptions{
-		GracePeriodSeconds: &gracePeriodSeconds,
+	backgroundPropagation := metav1.DeletePropagationBackground
+	backgroundDeleteOpts := &metav1.DeleteOptions{
+		PropagationPolicy: &backgroundPropagation,
 	}
 
-	logr.Debugf("(LCM KillTrainingJob) Checking if there are kubernetes services associated with training job %s", req.TrainingId)
-	svcs, err := s.k8sClient.Core().Services(config.GetLearnerNamespace()).List(metav1.ListOptions{LabelSelector: selector})
+	logr.Debugf(" Checking if there are kubernetes services associated with training job %s", req.TrainingId)
+	svcs, err := s.k8sClient.CoreV1().Services(config.GetLearnerNamespace()).List(metav1.ListOptions{LabelSelector: selector})
 	if err == nil {
-		logr.Debugf("(LCM KillTrainingJob) Services for job with name '%s' found by querying kubernetes.", req.Name)
+		logr.Debugf(" Services for job with name '%s' found by querying kubernetes.", req.Name)
 		for _, svc := range svcs.Items {
-			logr.Debugf("(LCM KillTrainingJob) Deleting service '%s'", svc.ObjectMeta.Name)
-			err := s.k8sClient.Core().Services(config.GetLearnerNamespace()).Delete(svc.ObjectMeta.Name, deleteOpts)
+			logr.Infof(" Deleting service '%s'", svc.ObjectMeta.Name)
+			err := s.k8sClient.CoreV1().Services(config.GetLearnerNamespace()).Delete(svc.ObjectMeta.Name, backgroundDeleteOpts)
 			if err != nil {
-				logr.WithError(err).Errorf("(LCM KillTrainingJob) Deleting kubernetes service '%s' failed", svc.ObjectMeta.Name)
+				logr.WithError(err).Errorf(" Deleting kubernetes service '%s' failed", svc.ObjectMeta.Name)
 			}
 		}
 	}
 	counter.With(progress, servicesDeletedPhaseComplete).Add(1)
 
-	logr.Debugf("(LCM KillTrainingJob) Checking if there are kubernetes deployments associated with training job %s", req.TrainingId)
-	deploys, err := s.k8sClient.Extensions().Deployments(config.GetLearnerNamespace()).List(metav1.ListOptions{LabelSelector: selector})
+	logr.Debugf(" Checking if there are kubernetes deployments associated with training job %s", req.TrainingId)
+	deploys, err := s.k8sClient.AppsV1beta1().Deployments(config.GetLearnerNamespace()).List(metav1.ListOptions{LabelSelector: selector})
 	if err == nil {
-		logr.Debugf("(LCM KillTrainingJob) Deployments for job with name '%s' found by querying kubernetes.", req.Name)
+		logr.Debugf(" Deployments for job with name '%s' found by querying kubernetes.", req.Name)
 		for _, deploy := range deploys.Items {
-			logr.Debugf("(LCM KillTrainingJob) Deleting deployment '%s'", deploy.ObjectMeta.Name)
-			err := s.k8sClient.Extensions().Deployments(config.GetLearnerNamespace()).Delete(deploy.ObjectMeta.Name, deleteOpts)
+			logr.Infof(" Deleting deployment '%s'", deploy.ObjectMeta.Name)
+			err := s.k8sClient.AppsV1beta1().Deployments(config.GetLearnerNamespace()).Delete(deploy.ObjectMeta.Name, backgroundDeleteOpts)
 			if err != nil {
-				logr.WithError(err).Errorf("(LCM KillTrainingJob) Deleting kubernetes deployment '%s' failed", deploy.ObjectMeta.Name)
+				logr.WithError(err).Errorf(" Deleting kubernetes deployment '%s' failed", deploy.ObjectMeta.Name)
+			}
+		}
+	}
+
+	logr.Debugf(" Checking if there are kubernetes statefulsets associated with training job %s", req.TrainingId)
+	sets, err := s.k8sClient.AppsV1beta1().StatefulSets(config.GetLearnerNamespace()).List(metav1.ListOptions{LabelSelector: selector})
+	if err == nil {
+		logr.Debugf(" Stateful for job with name '%s' found by querying kubernetes.", req.Name)
+		for _, set := range sets.Items {
+			logr.Infof(" Deleting stateful '%s'", set.ObjectMeta.Name)
+			err := s.k8sClient.AppsV1beta1().StatefulSets(config.GetLearnerNamespace()).Delete(set.ObjectMeta.Name, backgroundDeleteOpts)
+			if err != nil {
+				logr.WithError(err).Errorf(" Deleting kubernetes stateful '%s' failed", set.ObjectMeta.Name)
 			}
 		}
 	}
 	counter.With(progress, deploymentsDeletedPhaseComplete).Add(1)
 
-	logr.Debugf("(LCM KillTrainingJob) Checking if there are kubernetes replica sets associated with training job %s", req.TrainingId)
-	replicaSets, err := s.k8sClient.Extensions().ReplicaSets(config.GetLearnerNamespace()).List(metav1.ListOptions{LabelSelector: selector})
-	if err == nil {
-		for _, rs := range replicaSets.Items {
-			logr.Debugf("(LCM KillTrainingJob) Deleting replica set '%s'", rs.ObjectMeta.Name)
-			err := s.k8sClient.Extensions().ReplicaSets(config.GetLearnerNamespace()).Delete(rs.ObjectMeta.Name, deleteOpts)
-			if err != nil {
-				logr.WithError(err).Errorf("(LCM KillTrainingJob) Deleting kubernetes replica set '%s' failed", rs.ObjectMeta.Name)
-			}
-		}
-	}
-	counter.With(progress, replicaSetsDeletedPhaseComplete).Add(1)
-
 	if viper.GetString(config.LCMDeploymentKey) == config.HybridEnv {
-		logr.Debugf("(LCM KillTrainingJob) LCM is running in a hybrid deployment. Checking if there are minikube deployments associated with training job %s", req.TrainingId)
-		deploys, err = s.jmK8sClient.Extensions().Deployments(config.GetPodNamespace()).List(metav1.ListOptions{LabelSelector: selector})
+		logr.Debugf(" LCM is running in a hybrid deployment. Checking if there are minikube deployments associated with training job %s", req.TrainingId)
+		deploys, err = s.jmK8sClient.AppsV1beta1().Deployments(config.GetPodNamespace()).List(metav1.ListOptions{LabelSelector: selector})
 		if err == nil {
-			logr.Debugf("(LCM KillTrainingJob) Deployments for job with name '%s' found on minikube.", req.Name)
+			logr.Infof(" Deployments for job with name '%s' found on minikube.", req.Name)
 			for _, deploy := range deploys.Items {
-				logr.Debugf("(LCM KillTrainingJob) Deleting deployment '%s'", deploy.ObjectMeta.Name)
-				err := s.jmK8sClient.Extensions().Deployments(config.GetPodNamespace()).Delete(deploy.ObjectMeta.Name, deleteOpts)
+				logr.Debugf(" Deleting deployment '%s'", deploy.ObjectMeta.Name)
+				err := s.jmK8sClient.AppsV1beta1().Deployments(config.GetPodNamespace()).Delete(deploy.ObjectMeta.Name, backgroundDeleteOpts)
 				if err != nil {
-					logr.WithError(err).Errorf("(LCM KillTrainingJob) Deleting kubernetes deployment '%s' failed", deploy.ObjectMeta.Name)
+					logr.WithError(err).Errorf(" Deleting kubernetes deployment '%s' failed", deploy.ObjectMeta.Name)
 				}
 			}
 			time.Sleep(10 * time.Second)
 		}
-
-		logr.Debugf("(LCM KillTrainingJob) LCM is running in a hybrid deployment. Checking if there are minikube replica sets associated with training job %s", req.TrainingId)
-		replicaSets, err := s.jmK8sClient.Extensions().ReplicaSets(config.GetPodNamespace()).List(metav1.ListOptions{LabelSelector: selector})
-		if err == nil {
-			for _, rs := range replicaSets.Items {
-				logr.Debugf("(LCM KillTrainingJob) Deleting replica set '%s'", rs.ObjectMeta.Name)
-				err := s.jmK8sClient.Extensions().ReplicaSets(config.GetPodNamespace()).Delete(rs.ObjectMeta.Name, deleteOpts)
-				if err != nil {
-					logr.WithError(err).Errorf("(LCM KillTrainingJob) Deleting kubernetes replica set '%s' failed", rs.ObjectMeta.Name)
-				}
-			}
-		}
 	}
 
-	// delete pods
-	if !strings.Contains(config.GetDebugLearnerOptions(), config.NoCleanup) {
-		logr.Debugf("(LCM KillTrainingJob) Checking if there are kubernetes learner PODS associated with training job %s", req.TrainingId)
-		pods, err := s.k8sClient.Core().Pods(config.GetLearnerNamespace()).List(metav1.ListOptions{LabelSelector: selector})
-		if err == nil {
-			for _, pod := range pods.Items {
-				logr.Debugf("(LCM KillTrainingJob) Deleting pod '%s'", pod.ObjectMeta.Name)
-				err := s.k8sClient.Core().Pods(config.GetLearnerNamespace()).Delete(pod.ObjectMeta.Name, deleteOpts)
-				if err != nil {
-					logr.WithError(err).Errorf("(LCM KillTrainingJob) Deleting kubernetes pod '%s' failed", pod.ObjectMeta.Name)
-				}
-			}
-		}
-		if viper.GetString(config.LCMDeploymentKey) == config.HybridEnv {
-			pods, err := s.jmK8sClient.Core().Pods(config.GetPodNamespace()).List(metav1.ListOptions{LabelSelector: selector})
-			if err == nil {
-				for _, pod := range pods.Items {
-					logr.Debugf("(LCM KillTrainingJob) Deleting pod '%s'", pod.ObjectMeta.Name)
-					err := s.jmK8sClient.Core().Pods(config.GetPodNamespace()).Delete(pod.ObjectMeta.Name, deleteOpts)
-					if err != nil {
-						logr.WithError(err).Errorf("(LCM KillTrainingJob) Deleting kubernetes pod '%s' failed", pod.ObjectMeta.Name)
-					}
-				}
-			}
-		}
-	}
-	counter.With(progress, podsDeletedPhaseComplete).Add(1)
-
-	logr.Debugf("(LCM KillTrainingJob) Checking if there are kubernetes learner persistent volume claims associated with training job %s", req.TrainingId)
-	claims, err := s.k8sClient.Core().PersistentVolumeClaims(config.GetLearnerNamespace()).List(metav1.ListOptions{LabelSelector: selector})
+	logr.Debugf(" Checking if there are kubernetes learner persistent volume claims associated with training job %s", req.TrainingId)
+	claims, err := s.k8sClient.CoreV1().PersistentVolumeClaims(config.GetLearnerNamespace()).List(metav1.ListOptions{LabelSelector: selector})
 	if err == nil {
 		for _, claim := range claims.Items {
-			logr.Debugf("(LCM KillTrainingJob) Deleting persistent volume claim '%s'", claim.ObjectMeta.Name)
-			err := s.k8sClient.Core().PersistentVolumeClaims(config.GetLearnerNamespace()).Delete(claim.ObjectMeta.Name, deleteOpts)
+			logr.Infof(" Deleting persistent volume claim '%s'", claim.ObjectMeta.Name)
+			err := s.k8sClient.CoreV1().PersistentVolumeClaims(config.GetLearnerNamespace()).Delete(claim.ObjectMeta.Name, backgroundDeleteOpts)
 			if err != nil {
-				logr.WithError(err).Errorf("(LCM KillTrainingJob) Deleting kubernetes persistent volume '%s' failed", claim.ObjectMeta.Name)
+				logr.WithError(err).Errorf(" Deleting kubernetes persistent volume '%s' failed", claim.ObjectMeta.Name)
 			}
 		}
 	}
 	counter.With(progress, pvsDeletedPhaseComplete).Add(1)
 
-	logr.Debugf("(LCM KillTrainingJob) Checking if there are kubernetes learner COS mount secrets associated with training job %s", req.TrainingId)
-	secrets, err := s.k8sClient.Core().Secrets(config.GetLearnerNamespace()).List(metav1.ListOptions{LabelSelector: selector})
+	logr.Debugf(" Checking if there are kubernetes learner COS mount secrets associated with training job %s", req.TrainingId)
+	secrets, err := s.k8sClient.CoreV1().Secrets(config.GetLearnerNamespace()).List(metav1.ListOptions{LabelSelector: selector})
 	if err == nil {
 		for _, secret := range secrets.Items {
-			logr.Debugf("(LCM KillTrainingJob) Deleting Secret '%s'", secret.ObjectMeta.Name)
-			err := s.k8sClient.Core().Secrets(config.GetLearnerNamespace()).Delete(secret.ObjectMeta.Name, deleteOpts)
+			logr.Infof(" Deleting Secret '%s'", secret.ObjectMeta.Name)
+			err := s.k8sClient.CoreV1().Secrets(config.GetLearnerNamespace()).Delete(secret.ObjectMeta.Name, backgroundDeleteOpts)
 			if err != nil {
-				logr.WithError(err).Errorf("(LCM KillTrainingJob) Deleting kubernetes Secret '%s' failed", secret.ObjectMeta.Name)
+				logr.WithError(err).Errorf(" Deleting kubernetes Secret '%s' failed", secret.ObjectMeta.Name)
 			}
 		}
 	}
@@ -400,9 +336,6 @@ func (s *lcmService) KillTrainingJob(ctx context.Context, req *service.JobKillRe
 	//After Deleting the application, delete the etcd directory.
 	s.etcdClient.DeleteKeyWithOpts(req.TrainingId, logr, clientv3.WithPrefix())
 	counter.With(progress, etcdKeysDeletedPhaseComplete).Add(1)
-
-	go s.resourceSnapshotOnDeletion(req, logr)
-
 	return &service.JobKillResponse{}, nil
 }
 
@@ -427,7 +360,7 @@ func manageDistributedJob(s *lcmService, req *service.JobDeploymentRequest, trai
 	case config.HybridEnv:
 		{
 			logr.Debugf("(LCM manageDistributedJob) LCM is running in a hybrid deployment. Deploying Job Monitor in minikube instead of the learner namespace")
-			_, errJMDeploy := s.jmK8sClient.Extensions().Deployments(config.GetPodNamespace()).Create(deploySpec)
+			_, errJMDeploy := s.jmK8sClient.AppsV1beta1().Deployments(config.GetPodNamespace()).Create(deploySpec)
 			if errJMDeploy != nil {
 				logr.WithError(errJMDeploy).Errorf("(LCM manageDistributedJob) Could not connect to minikube and/or deploy job monitor for Training Job %s. Problem may either be in reaching the kubernetes API server or in creating a deployment", req.TrainingId)
 				return errJMDeploy
@@ -448,8 +381,8 @@ func manageDistributedJob(s *lcmService, req *service.JobDeploymentRequest, trai
 		}
 	default:
 		{
-			logr.Debugf("(LCM manageDistributedJob) LCM is running in a fully remote mode. Deploying Job Monitor in the learner namespace.")
-			_, errJMDeploy := s.k8sClient.Extensions().Deployments(config.GetLearnerNamespace()).Create(deploySpec)
+			logr.Infof("(LCM manageDistributedJob) LCM is running in a fully remote mode. Deploying Job Monitor in the learner namespace.")
+			_, errJMDeploy := s.k8sClient.AppsV1beta1().Deployments(config.GetLearnerNamespace()).Create(deploySpec)
 			if errJMDeploy != nil {
 				logr.WithError(errJMDeploy).Errorf("(LCM manageDistributedJob) Could not connect to learner kube cluster and/or deploy job monitor for Training Job %s. Problem may either be in reaching the kubernetes API server or in creating a deployment", req.TrainingId)
 				return errJMDeploy
@@ -466,13 +399,13 @@ func manageDistributedJob(s *lcmService, req *service.JobDeploymentRequest, trai
 		logr.Debugf("(LCM manageDistributedJob) Checking whether Job Monitor Started for Training Job %s", req.TrainingId)
 
 		if viper.GetString(config.LCMDeploymentKey) == config.HybridEnv {
-			jmDeploy, err = s.jmK8sClient.Extensions().Deployments(config.GetPodNamespace()).Get(jmName, metav1.GetOptions{})
+			jmDeploy, err = s.jmK8sClient.AppsV1beta1().Deployments(config.GetPodNamespace()).Get(jmName, metav1.GetOptions{})
 			if err != nil {
 				logr.WithError(err).Errorf("(LCM manageDistributedJob) Could not query minikube and/or find Job Monitor for Training Job %s", req.TrainingId)
 				return err
 			}
 		} else {
-			jmDeploy, err = s.k8sClient.Extensions().Deployments(config.GetLearnerNamespace()).Get(jmName, metav1.GetOptions{})
+			jmDeploy, err = s.k8sClient.AppsV1beta1().Deployments(config.GetLearnerNamespace()).Get(jmName, metav1.GetOptions{})
 			if err != nil {
 				logr.WithError(err).Errorf("(LCM manageDistributedJob) Could not query Kubernetes and/or find Job Monitor for Training Job %s", req.TrainingId)
 				logr.Infof("WARNING : Status updates for Training Job %s will likely be incorrect.", req.TrainingId)
@@ -499,8 +432,4 @@ func manageDistributedJob(s *lcmService, req *service.JobDeploymentRequest, trai
 	}
 
 	return err
-}
-
-func (s *lcmService) GetMetrics(ctx context.Context, req *service.GetMetricsRequest) (*service.GetMetricsResponse, error) {
-	return nil, fmt.Errorf("This call is deprecated and should not be used")
 }

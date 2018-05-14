@@ -67,7 +67,7 @@ func (o *inMemObjectStore) DownloadArchive(container string, object string) ([]b
 	if store[container] != nil {
 		return store[container][object], nil
 	}
-	return nil, fmt.Errorf("Container or object '%s/%s' not found", container, object)
+	return nil, fmt.Errorf("container or object '%s/%s' not found", container, object)
 }
 
 func (o *inMemObjectStore) DeleteArchive(container string, object string) error {

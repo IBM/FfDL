@@ -112,3 +112,5 @@ spec:
               - "grpc-health-checker --port 8443 --tls"
           initialDelaySeconds: 15
           timeoutSeconds: 2
+      imagePullSecrets:
+      - name: regcred

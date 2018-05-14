@@ -8,14 +8,13 @@ memory: 1Gb
 # Object stores that allow the system to retrieve training data.
 data_stores:
   - id: sl-internal-os
-    type: s3_datastore
+    type: mount_cos
     training_data:
-      container: tf_training_data
+      container: dlaas-ci-tf-training-data
     training_results:
-      container: tf_trained_model
+      container: dlaas-ci-trained-results-tf-training-data
     connection:
-      type: s3_datastore
-      auth_url: http://s3.default.svc.cluster.local
+      auth_url: https://s3-api.dal-us-geo.objectstorage.service.networklayer.com
       user_name: test
       password: test
 

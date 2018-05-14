@@ -1,0 +1,49 @@
+#-----------------------------------------------------------------------
+#                                                                   
+# This information contains sample code provided in source code form.
+# You may copy, modify, and distribute these sample programs in any 
+# form without payment to IBM for the purposes of developing, using,
+# marketing or distributing application programs conforming to the     
+# application programming interface for the operating platform for     
+# which the sample code is written. Notwithstanding anything to the 
+# contrary, IBM PROVIDES THE SAMPLE SOURCE CODE ON AN 'AS IS' BASIS 
+# AND IBM DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING,     
+# BUT NOT LIMITED TO, ANY IMPLIED WARRANTIES OR CONDITIONS OF          
+# MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A PARTICULAR      
+# PURPOSE, TITLE, AND ANY WARRANTY OR CONDITION OF NON-INFRINGEMENT.
+# IBM SHALL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,     
+# SPECIAL, EXEMPLARY OR ECONOMIC CONSEQUENTIAL DAMAGES ARISING OUT     
+# OF THE USE OR OPERATION OF THE SAMPLE SOURCE CODE. IBM SHALL NOT     
+# BE LIABLE FOR LOSS OF, OR DAMAGE TO, DATA, OR FOR LOST PROFITS,     
+# BUSINESS REVENUE, GOODWILL, OR ANTICIPATED SAVINGS. IBM HAS NO     
+# OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS 
+# OR MODIFICATIONS TO THE SAMPLE SOURCE CODE.                        
+#                                                                   
+#-------------------------------------------------------------------
+
+name: Distributed-horovod
+description: Distributed-horovod running benchmark tests from https://github.com/uber/horovod/blob/master/docs/benchmarks.md
+version: "1.0"
+gpus: 2
+memory: 16000MiB
+learners: 2
+
+# Object stores that allow the system to retrieve training data.
+# assumes that the training data required for mnist is already loaded
+data_stores:
+  - id: sl-internal-os
+    type: mount_cos
+    training_data:
+      container: dlaas-ci-asood-horovod-benchmarks
+    training_results:
+      container: dlaas-ci-trained-results-asood-horovod-benchmarks
+    connection:
+      auth_url: https://s3-api.dal-us-geo.objectstorage.service.networklayer.com
+      user_name: test
+      password: test
+
+framework:
+  name: tensorflow
+  version: "1.5-py3-horovod"
+  command: python tensorflow_mnist.py
+  # the command is basically running the above command via openmpi, feel free to remove  -x NCCL_DEBUG=INFO

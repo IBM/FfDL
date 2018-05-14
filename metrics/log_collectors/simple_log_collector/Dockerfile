@@ -39,7 +39,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     make \
     musl-dev \
     "python3.6" \
-    python3-pip 
+    python3-pip
 
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.5 1
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 3

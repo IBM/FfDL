@@ -44,9 +44,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.5 1
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 3
 
-RUN apt-get install -y --no-install-recommends python3-distutils
-
 RUN update-alternatives --config python3
+
+RUN apt-get install -y --no-install-recommends python3-distutils
 
 RUN pip3 install --upgrade pip
 RUN pip3 install grpcio==1.7.3 python-dateutil
