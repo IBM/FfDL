@@ -105,6 +105,8 @@ create-volumes:
 		./create_static_volumes_config.sh;
 
 deploy:           ## Deploy the services to Kubernetes
+	@docker images
+	@echo ${DOCKER_REPO}
 	@# deploy the stack via helm
 	@echo Deploying services to Kubernetes. This may take a while.
 	@if ! helm list > /dev/null 2>&1; then \
