@@ -221,7 +221,7 @@ minikube:         ## Configure Minikube (local Kubernetes)
 		minikube start --insecure-registry 9.0.0.0/8 --insecure-registry 10.0.0.0/8 \
 				--cpus $(MINIKUBE_CPUS) \
 				--memory $(MINIKUBE_RAM) \
-				--vm-driver=$(MINIKUBE_DRIVER) > /dev/null; \
+				--vm-driver=$(MINIKUBE_DRIVER) --apiserver-ips 127.0.0.1 --apiserver-name localhost > /dev/null; \
 		sleep 5; \
 	)
 	@set -o verbose; \
@@ -290,6 +290,9 @@ docker-build-ui:
 		(test ! `which docker-squash` || docker-squash -t $(DOCKER_REPO)/$(DOCKER_NAMESPACE)/$(IMAGE_NAME_PREFIX)ui $(DOCKER_REPO)/$(DOCKER_NAMESPACE)/$(IMAGE_NAME_PREFIX)ui)))
 
 docker-build-base:
+	if [ "$(VM_TYPE)" = "minikube" ]; then \
+		eval $$(minikube docker-env); \
+	fi; \
 	(cd etc/dlaas-service-base; make build)
 
 docker-build-logcollectors:

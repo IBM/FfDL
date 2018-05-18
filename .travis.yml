@@ -33,6 +33,8 @@ script:
   - export MAKE_ARGS=--no-print-directory
   # compile and build Docker images
   - glide -q install
+  - make $MAKE_ARGS docker-build-base
+  - make $MAKE_ARGS gen-certs
   - make $MAKE_ARGS build
   - make $MAKE_ARGS docker-build
   # deploy services
