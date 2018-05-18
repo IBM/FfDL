@@ -108,10 +108,6 @@ deploy:           ## Deploy the services to Kubernetes
 	@docker images
 	@echo $(DOCKER_REPO)
 	@echo $(DOCKER_PULL_POLICY)
-	@docker pull docker.io/ffdl/ffdl-trainer:user-travis
-	@echo "--"
-	@docker pull ffdl/ffdl-trainer:user-travis
-	@echo "---"
 	@# deploy the stack via helm
 	@echo Deploying services to Kubernetes. This may take a while.
 	@if ! helm list > /dev/null 2>&1; then \
