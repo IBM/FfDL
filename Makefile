@@ -106,7 +106,12 @@ create-volumes:
 
 deploy:           ## Deploy the services to Kubernetes
 	@docker images
-	@echo ${DOCKER_REPO}
+	@echo $(DOCKER_REPO)
+	@echo $(DOCKER_PULL_POLICY)
+	@docker run -it docker.io/ffdl/ffdl-trainer:user-travis bash -c exit
+	@echo "--"
+	@docker run -it ffdl/ffdl-trainer:user-travis bash -c exit
+	@echo "---"
 	@# deploy the stack via helm
 	@echo Deploying services to Kubernetes. This may take a while.
 	@if ! helm list > /dev/null 2>&1; then \
