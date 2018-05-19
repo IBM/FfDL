@@ -40,7 +40,7 @@ script:
   # deploy services
   - make $MAKE_ARGS deploy
   # submit a test job
-  - make $MAKE_ARGS test-submit
+  - make $MAKE_ARGS test-push-data-hostmount
 
 notifications:
   email: false
