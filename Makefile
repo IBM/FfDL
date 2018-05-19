@@ -375,11 +375,19 @@ test-submit-minikube-run-test:      ## Submit test training job
         				if echo $$output | grep 'COMPLETED'; then \
         					echo 'Job completed'; exit 0; \
         				fi; \
+        				echo "Pods:"; \
         				kubectl get pods ; \
-        				echo "Debug output:"; \
+        				echo "ConfigMap learner-config:"; \
+        				kubectl get cm/learner-config -o yaml ; \
+        				echo "ConfigMap learner-entrypoint-files:"; \
+        				kubectl get cm/learner-entrypoint-files -o yaml ; \
+        				echo "Statefulsets:"; \
         				kubectl get statefulsets | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl get statefulsets '{}' -o yaml; \
-        				kubectl get pods | grep lcm- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
-        				kubectl get pods | grep jobmonitor- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
+        				echo "LCM:"; \
+        				kubectl get pods | grep lcm- | awk '{print $$1}' | xargs -I '{}' kubectl logs pod '{}'; \
+        				echo "Jobmonitor:"; \
+        				kubectl get pods | grep jobmonitor- | awk '{print $$1}' | xargs -I '{}' kubectl logs pod '{}'; \
+        				echo "Learner:"; \
         				kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
         				kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
         				echo $$output; \
