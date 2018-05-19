@@ -368,7 +368,7 @@ test-submit-minikube-run-test:      ## Submit test training job
 		(cd etc/examples/$(TEST_SAMPLE); pwd; $(CLI_CMD) train manifest-hostmount.yml .); \
 		echo Test job submitted. Track the status via '"'DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$(TEST_USER) DLAAS_PASSWORD=test $(CLI_CMD) list'"'. ; \
 		sleep 10; \
-        		(for i in $$(seq 1 50); do output=$$($(CLI_CMD) list 2>&1 | grep training-); \
+        		(for i in $$(seq 1 5); do output=$$($(CLI_CMD) list 2>&1 | grep training-); \
         				if echo $$output | grep 'FAILED'; then \
         					echo 'Job failed'; exit 1; \
         				fi; \
@@ -377,10 +377,13 @@ test-submit-minikube-run-test:      ## Submit test training job
         				fi; \
         				kubectl get pods ; \
         				echo "Debug output:"; \
+        				kubectl get statefulsets | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl get statefulsets '{}' -o yaml; \
+        				kubectl get pods | grep lcm- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
+        				kubectl get pods | grep jobmonitor- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
         				kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
         				kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
         				echo $$output; \
-        				sleep 20; \
+        				sleep 60; \
         		done; exit 1) || \
         		($(CLI_CMD) list; \
         			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
