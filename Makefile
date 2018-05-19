@@ -351,7 +351,19 @@ test-submit:      ## Submit test training job
 		cat etc/examples/tf-model/manifest_testrun.yml ; \
 		(cd etc/examples/$(TEST_SAMPLE); pwd; $(CLI_CMD) train manifest_testrun.yml .); \
 		rm -f etc/examples/tf-model/manifest_testrun.yml ; \
-		echo Test job submitted. Track the status via '"'DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$(TEST_USER) DLAAS_PASSWORD=test $(CLI_CMD) list'"'. ;
+		echo Test job submitted. Track the status via '"'DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$(TEST_USER) DLAAS_PASSWORD=test $(CLI_CMD) list'"'. ; \
+		sleep 10; \
+        		(for i in $$(seq 1 50); do output=$$($(CLI_CMD) list 2>&1 | grep training-); \
+        				if echo $$output | grep 'FAILED'; then echo 'Job failed'; exit 1; fi; \
+        				if echo $$output | grep 'COMPLETED'; then echo 'Job completed'; exit 0; fi; \
+        				echo $$output; \
+        				sleep 20; \
+        		done; exit 1) || \
+        		($(CLI_CMD) list; \
+        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
+        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
+        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c load-data; \
+        exit 1);
 
 test-localmount-submit:      ## Submit test training job
 	@# make sure the buckets with training data exist
