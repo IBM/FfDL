@@ -539,6 +539,54 @@ test-submit-minikube-run-test:      ## Submit test training job
 
 test-submit-minikube-ci: test-push-data-hostmount test-submit-minikube-run-test
 
+test-push-data-hostmount:      ## Test
+	@# Pushes test data to S3 buckets.
+	@echo Copying test data to host mount area
+	@s3_ip=$$(kubectl get po/storage-0 -o=jsonpath='{.status.hostIP}'); \
+        	sudo mkdir /cosdata; \
+        	sudo mkdir /cosdata/local-dlaas-ci-tf-training-data; \
+        	sudo mkdir /cosdata/mnist_lmdb_data; \
+        	sudo mkdir /cosdata/local-dlaas-ci-trained-results-tf-training-data; \
+        	for file in t10k-images-idx3-ubyte.gz t10k-labels-idx1-ubyte.gz train-images-idx3-ubyte.gz train-labels-idx1-ubyte.gz; do \
+               		test -e $(TMPDIR)/$$file || wget -q -O $(TMPDIR)/$$file http://yann.lecun.com/exdb/mnist/$$file; \
+               		cp $(TMPDIR)/$$file /cosdata/local-dlaas-ci-tf-training-data; \
+        	done; \
+        	for phase in train test; do \
+               		for file in data.mdb lock.mdb; do \
+                      		tmpfile=$(TMPDIR)/$$phase.$$file; \
+                      		test -e $$tmpfile || wget -q -O $$tmpfile https://github.com/albarji/caffe-demos/raw/master/mnist/mnist_"$$phase"_lmdb/$$file; \
+                      		mkdir /cosdata/mnist_lmdb_data/$$phase; \
+                      		cp $$tmpfile /cosdata/mnist_lmdb_data/$$phase; \
+               		done; \
+        	done;
+
+test-submit-minikube-ci: test-push-data-hostmount      ## Submit test training job
+	@echo Downloading Docker images
+	@if [ "$(VM_TYPE)" = "minikube" ]; then \
+			eval $(minikube docker-env); docker images | grep tensorflow | grep latest > /dev/null || docker pull tensorflow/tensorflow > /dev/null; \
+		fi
+	@node_ip=$$(make --no-print-directory kubernetes-ip); \
+		echo "Submitting example training job ($(TEST_SAMPLE))"; \
+		restapi_port=$$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}'); \
+		restapi_url=http://$$node_ip:$$restapi_port; \
+		echo REST URL: $$restapi_url; \
+		export DLAAS_URL=http://$$node_ip:$$restapi_port; export DLAAS_USERNAME=$(TEST_USER); export DLAAS_PASSWORD=test; \
+		echo Executing in etc/examples/$(TEST_SAMPLE): DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$$DLAAS_USERNAME DLAAS_PASSWORD=test $(CLI_CMD) train manifest.yml . ; \
+		(cd etc/examples/$(TEST_SAMPLE); pwd; $(CLI_CMD) train manifest-hostmount.yml .); \
+		echo Test job submitted. Track the status via '"'DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$(TEST_USER) DLAAS_PASSWORD=test $(CLI_CMD) list'"'. ; \
+		sleep 10; \
+        		(for i in $$(seq 1 50); do output=$$($(CLI_CMD) list 2>&1 | grep training-); \
+        				if echo $$output | grep 'FAILED'; then echo 'Job failed'; exit 1; fi; \
+        				if echo $$output | grep 'COMPLETED'; then echo 'Job completed'; exit 0; fi; \
+        				echo $$output; \
+        				sleep 20; \
+        		done; exit 1) || \
+        		($(CLI_CMD) list; \
+        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
+        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
+        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c load-data; \
+        exit 1);
+
 test-submit:      ## Submit test training job
 	@# make sure the buckets with training data exist
 	@echo Downloading Docker images and test training data. This may take a while.
