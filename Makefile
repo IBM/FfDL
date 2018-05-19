@@ -439,7 +439,9 @@ test-localmount-submit:      ## Submit test training job
 			if echo $$output | grep 'FAILED'; then echo 'Job failed'; exit 1; fi; \
 			if echo $$output | grep 'COMPLETED'; then echo 'Job completed'; exit 0; fi; \
 			echo $$output; \
-			sleep 20; \
+			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
+			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
+			sleep 40; \
 		done;
 
 #			 || \
