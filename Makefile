@@ -225,6 +225,8 @@ test-job-submit:      ## Submit test training job
         		(for i in $$(seq 1 50); do output=$$($(CLI_CMD) list 2>&1 | grep training-); \
         				if echo $$output | grep 'FAILED'; then echo 'Job failed'; exit 1; fi; \
         				if echo $$output | grep 'COMPLETED'; then echo 'Job completed'; exit 0; fi; \
+						kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
+						kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
         				echo $$output; \
         				sleep 20; \
         		done; exit 1) || \
@@ -649,9 +651,7 @@ test-localmount-submit:      ## Submit test training job
 			if echo $$output | grep 'FAILED'; then echo 'Job failed'; exit 1; fi; \
 			if echo $$output | grep 'COMPLETED'; then echo 'Job completed'; exit 0; fi; \
 			echo $$output; \
-			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
-			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
-			sleep 40; \
+			sleep 20; \
 		done;
 
 #			 || \
