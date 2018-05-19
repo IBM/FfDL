@@ -353,7 +353,7 @@ test-push-data-hostmount:      ## Test
                		done; \
         	done;
 
-test-submit-minikube-ci: test-push-data-hostmount      ## Submit test training job
+test-submit-minikube-run-test:      ## Submit test training job
 	@echo Downloading Docker images
 	@if [ "$(VM_TYPE)" = "minikube" ]; then \
 			eval $(minikube docker-env); docker images | grep tensorflow | grep latest > /dev/null || docker pull tensorflow/tensorflow > /dev/null; \
@@ -379,6 +379,8 @@ test-submit-minikube-ci: test-push-data-hostmount      ## Submit test training j
         			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
         			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c load-data; \
         exit 1);
+
+test-submit-minikube-ci: test-push-data-hostmount test-submit-minikube-run-test
 
 test-submit:      ## Submit test training job
 	@# make sure the buckets with training data exist
