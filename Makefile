@@ -543,10 +543,13 @@ test-push-data-hostmount:      ## Test
 	@# Pushes test data to S3 buckets.
 	@echo Copying test data to host mount area
 	@s3_ip=$$(kubectl get po/storage-0 -o=jsonpath='{.status.hostIP}'); \
+			id ; \
+			echo $HOME ; \
         	sudo mkdir /cosdata; \
         	sudo mkdir /cosdata/local-dlaas-ci-tf-training-data; \
         	sudo mkdir /cosdata/mnist_lmdb_data; \
         	sudo mkdir /cosdata/local-dlaas-ci-trained-results-tf-training-data; \
+        	sudo chmod 777 -R /cosdata ; \
         	for file in t10k-images-idx3-ubyte.gz t10k-labels-idx1-ubyte.gz train-images-idx3-ubyte.gz train-labels-idx1-ubyte.gz; do \
                		test -e $(TMPDIR)/$$file || wget -q -O $(TMPDIR)/$$file http://yann.lecun.com/exdb/mnist/$$file; \
                		cp $(TMPDIR)/$$file /cosdata/local-dlaas-ci-tf-training-data; \
