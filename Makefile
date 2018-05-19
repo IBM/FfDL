@@ -334,7 +334,7 @@ test-push-data-hostmount:      ## Test
 	@echo Copying test data to host mount area
 	@s3_ip=$$(kubectl get po/storage-0 -o=jsonpath='{.status.hostIP}'); \
 			id ; \
-			echo $HOME ; \
+			echo ${HOME} ; \
         	sudo mkdir /cosdata; \
         	sudo mkdir /cosdata/local-dlaas-ci-tf-training-data; \
         	sudo mkdir /cosdata/mnist_lmdb_data; \
@@ -345,10 +345,10 @@ test-push-data-hostmount:      ## Test
                		cp $(TMPDIR)/$$file /cosdata/local-dlaas-ci-tf-training-data; \
         	done; \
         	for phase in train test; do \
+        			mkdir /cosdata/mnist_lmdb_data/$$phase; \
                		for file in data.mdb lock.mdb; do \
                       		tmpfile=$(TMPDIR)/$$phase.$$file; \
                       		test -e $$tmpfile || wget -q -O $$tmpfile https://github.com/albarji/caffe-demos/raw/master/mnist/mnist_"$$phase"_lmdb/$$file; \
-                      		mkdir /cosdata/mnist_lmdb_data/$$phase; \
                       		cp $$tmpfile /cosdata/mnist_lmdb_data/$$phase; \
                		done; \
         	done;
