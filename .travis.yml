@@ -1,7 +1,5 @@
 sudo: required
 
-dist: xenial
-
 branches:
   only:
     - master
