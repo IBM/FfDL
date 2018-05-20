@@ -382,7 +382,7 @@ test-submit-minikube-run-test:      ## Submit test training job
         				echo "Dumping Statefulsets" ; \
         				kubectl get statefulsets | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl get statefulsets '{}' -o yaml; \
         				echo "LCM:"; \
-        				kubectl get pods | grep lcm- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}'; \
+        				kubectl logs --selector=service=ffdl-lcm ; \
         				echo "Trainer:"; \
                         kubectl get pods | grep trainer- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}'; \
         				echo "Jobmonitor:"; \
