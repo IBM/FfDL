@@ -464,9 +464,13 @@ func NewLifecycleManagerClient(cc *grpc.ClientConn) LifecycleManagerClient {
 }
 
 func (c *lifecycleManagerClient) DeployTrainingJob(ctx context.Context, in *JobDeploymentRequest, opts ...grpc.CallOption) (*JobDeploymentResponse, error) {
+	fmt.Print("in client-side DeployTrainingJob\n")
 	out := new(JobDeploymentResponse)
-	err := grpc.Invoke(ctx, "/service.LifecycleManager/DeployTrainingJob", in, out, c.cc, opts...)
+	fmt.Print("in client-side DeployTrainingJob, calling invoke\n")
+	err := grpc.Invoke(ctx, "/service.LifecycleManager/DeployTrainingJob\n", in, out, c.cc, opts...)
+	fmt.Print("in client-side DeployTrainingJob, back from invoke\n")
 	if err != nil {
+		fmt.Printf("invoke returned error: %s\n", err)
 		return nil, err
 	}
 	return out, nil
@@ -503,11 +507,14 @@ func RegisterLifecycleManagerServer(s *grpc.Server, srv LifecycleManagerServer) 
 }
 
 func _LifecycleManager_DeployTrainingJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	fmt.Printf("In _LifecycleManager_DeployTrainingJob_Handler\n");
 	in := new(JobDeploymentRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
+	fmt.Printf("In _LifecycleManager_DeployTrainingJob_Handler, back from new(JobDeploymentRequest)\n");
 	if interceptor == nil {
+		fmt.Printf("In _LifecycleManager_DeployTrainingJob_Handler, calling srv.(LifecycleManagerServer).DeployTrainingJob(ctx, in))\n");
 		return srv.(LifecycleManagerServer).DeployTrainingJob(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
@@ -515,8 +522,10 @@ func _LifecycleManager_DeployTrainingJob_Handler(srv interface{}, ctx context.Co
 		FullMethod: "/service.LifecycleManager/DeployTrainingJob",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		fmt.Printf("In _LifecycleManager_DeployTrainingJob_Handler, calling (2) srv.(LifecycleManagerServer).DeployTrainingJob(ctx, req.(*JobDeploymentRequest))\n");
 		return srv.(LifecycleManagerServer).DeployTrainingJob(ctx, req.(*JobDeploymentRequest))
 	}
+	fmt.Printf("In _LifecycleManager_DeployTrainingJob_Handler, returning interceptor\n");
 	return interceptor(ctx, in, info, handler)
 }
 
