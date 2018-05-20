@@ -172,11 +172,13 @@ func (s *lcmService) DeployTrainingJob(ctx context.Context, req *service.JobDepl
 	logr.Debug("Entry DeployTrainingJob")
 
 	totalTrainingCounter.With("framework", req.Framework).Add(1)
+	logr.Debug("Calling updateJobStatus")
 	err := updateJobStatus(req.TrainingId, grpc_trainer_v2.Status_PENDING, req.UserId, service.StatusMessages_NORMAL_OPERATION.String(), client.ErrCodeNormal, logr)
 	if err != nil {
 		logr.WithError(err).Errorf("(deployDistributedTrainingJob) Before deploying job, error while calling Trainer service client update for trainingID %s , but still carrying on ", req.TrainingId)
 	}
 
+	logr.Debug("Calling s.deployDistributedTrainingJob")
 	go s.deployDistributedTrainingJob(ctx, req, logr)
 
 	return &service.JobDeploymentResponse{Name: req.Name}, nil
