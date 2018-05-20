@@ -397,6 +397,8 @@ func constructLearnerContainer(req *service.JobDeploymentRequest, envVars []v1co
 	memInBytes := int64(calcMemory(req.Resources) * 1024 * 1024)
 	memCount := v1resource.NewQuantity(memInBytes, v1resource.DecimalSI)
 
+	logr.Info("Entry into constructLearnerContainer()")
+
 	//argh!!! this should be abstracted out as well
 	command := "for i in ${!ALERTMANAGER*} ${!DLAAS*} ${!ETCD*} ${!GRAFANA*} ${!HOSTNAME*} ${!KUBERNETES*} ${!MONGO*} ${!PUSHGATEWAY*}; do unset $i; done;"
 	//FIXME need to have the learner IDs start from 1 rather than 0
