@@ -381,6 +381,8 @@ test-submit-minikube-run-test:      ## Submit test training job
         				kubectl get statefulsets | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl get statefulsets '{}' -o yaml; \
         				echo "LCM:"; \
         				kubectl get pods | grep lcm- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}'; \
+        				echo "Trainer:"; \
+                        kubectl get pods | grep trainer- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}'; \
         				echo "Jobmonitor:"; \
         				kubectl get pods | grep jobmonitor- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}'; \
         				echo "Learner:"; \
