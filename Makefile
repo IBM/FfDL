@@ -377,10 +377,10 @@ test-submit-minikube-run-test:      ## Submit test training job
         				fi; \
         				echo "Pods:"; \
         				kubectl get pods ; \
-        				echo "ConfigMap learner-config:"; \
-        				kubectl get cm/learner-config -o yaml ; \
-        				echo "ConfigMap learner-entrypoint-files:"; \
-        				kubectl get cm/learner-entrypoint-files -o yaml ; \
+#        				echo "ConfigMap learner-config:"; \
+#        				kubectl get cm/learner-config -o yaml ; \
+#        				echo "ConfigMap learner-entrypoint-files:"; \
+#        				kubectl get cm/learner-entrypoint-files -o yaml ; \
         				echo "Statefulsets:"; \
         				kubectl get statefulsets | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl get statefulsets '{}' -o yaml; \
         				echo "LCM:"; \

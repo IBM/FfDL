@@ -9,6 +9,7 @@ services:
 
 env:
   - CHANGE_MINIKUBE_NONE_USER=true
+  - DLAAS_ENV=dev
 
 before_script:
   # install Go
