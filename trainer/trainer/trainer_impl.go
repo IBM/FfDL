@@ -2112,13 +2112,14 @@ func (s *trainerService) submitJobToLCM(tr *TrainingRecord, logr *logger.LocLogg
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
+	logr.Debugf("Submitting training job to LCM: %s", tr.JobID)
 	_, err = lcm.Client().DeployTrainingJob(ctx, jobConfig)
 	if err != nil {
 		logr.Errorf("Cannot deploy training job with id %s: %s", tr.TrainingID, err.Error())
 		return gerrf(codes.Internal, grpcErrorDesc(err))
 	}
 
-	logr.Printf("training job %s submitted to lcm", tr.TrainingID)
+	logr.Infof("training job %s submitted to lcm", tr.TrainingID)
 
 	// capture the gpu usage when the job is submitted to LCM
 	gpusUsed := tr.Training.Resources.Gpus

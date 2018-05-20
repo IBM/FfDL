@@ -162,17 +162,22 @@ func (s *lcmService) DeployTrainingJob(ctx context.Context, req *service.JobDepl
 		"name":      req.Name,
 		"framework": req.Framework,
 		"gpus":      req.Resources.Gpus,
-		"cpus":      req.Resources.Gpus,
-		"memory":    req.Resources.Gpus,
+		"cpus":      req.Resources.Cpus,
+		"memory":    req.Resources.Memory,
 	}))
 
+	logr.Debug("Entry DeployTrainingJob")
+
 	totalTrainingCounter.With("framework", req.Framework).Add(1)
+	logr.Debug("Calling updateJobStatus")
 	err := updateJobStatus(req.TrainingId, grpc_trainer_v2.Status_PENDING, req.UserId, service.StatusMessages_NORMAL_OPERATION.String(), client.ErrCodeNormal, logr)
 	if err != nil {
 		logr.WithError(err).Errorf("(deployDistributedTrainingJob) Before deploying job, error while calling Trainer service client update for trainingID %s , but still carrying on ", req.TrainingId)
 	}
 
+	logr.Debug("Calling s.deployDistributedTrainingJob")
 	go s.deployDistributedTrainingJob(ctx, req, logr)
+	logr.Debug("Back from s.deployDistributedTrainingJob")
 	return &service.JobDeploymentResponse{Name: req.Name}, nil
 }
 
@@ -199,6 +204,7 @@ func (s *lcmService) HaltTrainingJob(ctx context.Context, req *service.JobHaltRe
 
 //default deploy job function.
 func (s *lcmService) deployDistributedTrainingJob(ctx context.Context, req *service.JobDeploymentRequest, logr *logger.LocLoggingEntry) {
+	logr.Debugf("Entry into lcmService->deployDistributedTrainingJob")
 
 	numLearners := int(req.GetResources().Learners)
 	useNativeDistribution := false //always use native since we don't support PS anymore
