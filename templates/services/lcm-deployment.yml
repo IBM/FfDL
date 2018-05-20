@@ -113,7 +113,7 @@ spec:
               name: lcm-secrets
               key: DLAAS_ETCD_PREFIX
         - name: DLAAS_PUSH_METRICS_ENABLED
-          value: "true"
+          value: "false"
         command: ["/bin/sh", "-c"]
         args: ["DLAAS_PORT=8443 /main"]
         resources:
