@@ -148,16 +148,19 @@ func newService() (*lcmService, error) {
 		etcdClient:  coordinator,
 	}
 
+	logr.Debug("LCM Registering service")
 	s.RegisterService = func() {
 		service.RegisterLifecycleManagerServer(s.Server, s)
 	}
 
+	logr.Debug("returning from newService() %v", s)
 	return s, nil
 }
 
 //Deploys a training job in DLaaS. Retained for compatibility with other DLaaS microservices
 func (s *lcmService) DeployTrainingJob(ctx context.Context, req *service.JobDeploymentRequest) (*service.JobDeploymentResponse, error) {
 	//extend the logger with required fields and this logr will be passed around
+	logrus.StandardLogger().Debugf("Entry DeployTrainingJob function")
 	logr := logger.LocLogger(InitLogger(req.TrainingId, req.UserId).WithFields(logrus.Fields{
 		"name":      req.Name,
 		"framework": req.Framework,
