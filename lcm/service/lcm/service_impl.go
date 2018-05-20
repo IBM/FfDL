@@ -148,11 +148,13 @@ func newService() (*lcmService, error) {
 		etcdClient:  coordinator,
 	}
 
+	logr.Debug("LCM Registering service")
 	s.RegisterService = func() {
 		service.RegisterLifecycleManagerServer(s.Server, s)
 	}
 	logr.Debug("LCM registered service %v", s)
 
+	logr.Debug("returning from newService() %v", s)
 	return s, nil
 }
 
