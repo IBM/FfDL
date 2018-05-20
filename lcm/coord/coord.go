@@ -150,7 +150,7 @@ func (instance *coordinator) Get(path string, log *logger.LocLoggingEntry, opts 
 		return nil, nrerr
 	}
 
-	log.Debugf("GET key with value %v and length %d", response.Kvs, len(response.Kvs))
+	log.Debugf("GET key with value %v and length %d, path=%s", response.Kvs, len(response.Kvs), path)
 
 	var result []EtcdKVGetResponse
 	for _, val := range response.Kvs {
@@ -160,7 +160,7 @@ func (instance *coordinator) Get(path string, log *logger.LocLoggingEntry, opts 
 		})
 	}
 
-	log.Debugf("GET result: %v", result)
+	log.Debugf("GET result: %+v", result)
 
 	return result, nrerr
 

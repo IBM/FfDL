@@ -375,9 +375,11 @@ test-submit-minikube-run-test:      ## Submit test training job
         				if echo $$output | grep 'COMPLETED'; then \
         					echo 'Job completed'; exit 0; \
         				fi; \
-        				echo "Pods:"; \
-        				kubectl get pods --all-namespaces ; \
-        				echo "Statefulsets:" ; \
+        				echo "kubectl dump objects:"; \
+        				kubectl get pod,pvc,pv,sc,deploy,svc,statefulset,secrets --show-all  -o wide ;
+        				echo "kubectl dump secrets:"; \
+        				kubectl get secrets  -o yaml \
+        				echo "Dumping Statefulsets" ; \
         				kubectl get statefulsets | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl get statefulsets '{}' -o yaml; \
         				echo "LCM:"; \
         				kubectl get pods | grep lcm- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}'; \
