@@ -467,7 +467,7 @@ func configKey2EnvVar(key string) string {
 
 // setLogLevel sets the logging level based on the environment
 func setLogLevel() {
-	viper.SetDefault(LogLevelKey, "warn")
+	viper.SetDefault(LogLevelKey, "debug")  // FIXME Should be warn
 
 	env := viper.GetString(EnvKey)
 	if env == "dev" || env == "test" {
