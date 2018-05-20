@@ -160,6 +160,8 @@ func (instance *coordinator) Get(path string, log *logger.LocLoggingEntry, opts 
 		})
 	}
 
+	log.Debugf("GET result: %v", result)
+
 	return result, nrerr
 
 }

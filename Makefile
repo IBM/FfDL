@@ -376,7 +376,7 @@ test-submit-minikube-run-test:      ## Submit test training job
         					echo 'Job completed'; exit 0; \
         				fi; \
         				echo "Pods:"; \
-        				kubectl get pods ; \
+        				kubectl get pods --all-namespaces ; \
         				echo "Statefulsets:" ; \
         				kubectl get statefulsets | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl get statefulsets '{}' -o yaml; \
         				echo "LCM:"; \
