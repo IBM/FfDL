@@ -381,8 +381,6 @@ test-submit-minikube-run-test:      ## Submit test training job
         				kubectl get secrets  -o yaml ; \
         				echo "Dumping Statefulsets" ; \
         				kubectl get statefulsets | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl get statefulsets '{}' -o yaml; \
-        				echo "Distro version"; \
-        				lsb_release -a || true ; \
         				echo "LCM:"; \
         				kubectl get pods | grep lcm- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}'; \
         				echo "Trainer:"; \

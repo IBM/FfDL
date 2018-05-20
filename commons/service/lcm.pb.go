@@ -467,7 +467,7 @@ func (c *lifecycleManagerClient) DeployTrainingJob(ctx context.Context, in *JobD
 	fmt.Print("in client-side DeployTrainingJob\n")
 	out := new(JobDeploymentResponse)
 	fmt.Print("in client-side DeployTrainingJob, calling invoke\n")
-	err := grpc.Invoke(ctx, "/service.LifecycleManager/DeployTrainingJob\n", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/service.LifecycleManager/DeployTrainingJob", in, out, c.cc, opts...)
 	fmt.Print("in client-side DeployTrainingJob, back from invoke\n")
 	if err != nil {
 		fmt.Printf("invoke returned error: %s\n", err)
