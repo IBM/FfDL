@@ -73,7 +73,7 @@ func populateJobMonitorEnvVariablesAndLabels(req *service.JobDeploymentRequest, 
 		},
 		v1core.EnvVar{
 			Name:  "DLAAS_PUSH_METRICS_ENABLED",
-			Value: strconv.FormatBool(true),
+			Value: strconv.FormatBool(false),
 		},
 
 		getEnvVarFromLCMSecret("DLAAS_ETCD_ADDRESS"),
