@@ -384,6 +384,9 @@ test-submit-minikube-run-test:      ## Submit test training job
         				echo "================:"; \
         				echo "LCM:"; \
         				kubectl logs --selector=service=ffdl-lcm ; \
+        				echo "---------------- previous:"; \
+        				kubectl logs -p --selector=service=ffdl-lcm ; \
+        				echo "---------------- Describe:"; \
         				kubectl describe pods --selector=service=ffdl-lcm ; \
         				echo "================:"; \
         				echo "Trainer:"; \
