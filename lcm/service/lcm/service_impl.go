@@ -43,6 +43,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	k8srest "k8s.io/client-go/rest"
+	"fmt"
 )
 
 // Confuse `go vet' to not check this `Errorf' call. :(
@@ -160,6 +161,8 @@ func newService() (*lcmService, error) {
 //Deploys a training job in DLaaS. Retained for compatibility with other DLaaS microservices
 func (s *lcmService) DeployTrainingJob(ctx context.Context, req *service.JobDeploymentRequest) (*service.JobDeploymentResponse, error) {
 	//extend the logger with required fields and this logr will be passed around
+	fmt.Printf("*** IN DeployTrainingJob !!!\n")
+	logrus.SetLevel(logrus.DebugLevel)
 	logrus.StandardLogger().Debugf("Entry DeployTrainingJob function")
 	logr := logger.LocLogger(InitLogger(req.TrainingId, req.UserId).WithFields(logrus.Fields{
 		"name":      req.Name,
@@ -169,6 +172,7 @@ func (s *lcmService) DeployTrainingJob(ctx context.Context, req *service.JobDepl
 		"memory":    req.Resources.Memory,
 	}))
 
+	fmt.Printf("*** Entry DeployTrainingJob !!!\n")
 	logr.Debug("Entry DeployTrainingJob")
 
 	totalTrainingCounter.With("framework", req.Framework).Add(1)
@@ -178,9 +182,11 @@ func (s *lcmService) DeployTrainingJob(ctx context.Context, req *service.JobDepl
 		logr.WithError(err).Errorf("(deployDistributedTrainingJob) Before deploying job, error while calling Trainer service client update for trainingID %s , but still carrying on ", req.TrainingId)
 	}
 
+	fmt.Printf("*** Calling s.deployDistributedTrainingJob !!!\n")
 	logr.Debug("Calling s.deployDistributedTrainingJob")
 	go s.deployDistributedTrainingJob(ctx, req, logr)
 	logr.Debug("Back from s.deployDistributedTrainingJob")
+	fmt.Printf("*** Back from s.deployDistributedTrainingJob !!!\n")
 	return &service.JobDeploymentResponse{Name: req.Name}, nil
 }
 
