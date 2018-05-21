@@ -19,7 +19,7 @@ restapi:
   version: dummy
   port: 0
   replicas: 1
-  cpus: 100m
+  cpus: 50m
   memory: 64Mi
 lcm:
   version: dummy
@@ -33,7 +33,7 @@ trainingdata:
   version: dummy
   port: 0
   replicas: 1
-  cpus: 100m
+  cpus: 50m
   memory: 64Mi
 learner:
   tag: master-97
@@ -44,7 +44,7 @@ databroker:
 webui:
   version: dummy
   port: 0
-  cpus: 100m
+  cpus: 50m
   memory: 64Mi
 mongo:
   address: localhost:27017
