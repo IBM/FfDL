@@ -9,7 +9,7 @@ if ! [ -x "$(command -v go)" ]; then
     echo "export GOROOT=/usr/local/go" >> ~/.profile
     export GOPATH=$HOME/go
     echo "export GOPATH=$HOME/go" >> ~/.profile
-    export PATH=\$GOPATH/bin:\$GOROOT/bin:\$PATH
+    export PATH=${GOPATH}/bin:${GOROOT}/bin:$PATH
     echo "export PATH=\$GOPATH/bin:\$GOROOT/bin:\$PATH" >> ~/.profile
     source ~/.profile
     go version && go env

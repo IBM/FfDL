@@ -5,6 +5,7 @@ declare -a arrNodes=($(docker ps --format '{{.Names}}' | grep "kube-node-\|kube-
 #echo "docker login --username=$DOCKER_USER --password=$DOCKER_PASS https://$DOCKER_REPO"
 #docker login --username=$DOCKER_USER --password=$DOCKER_PASS https://$DOCKER_REPO
 
+docker login -u="$USER" -p="7312mInalM4n" $(hostname).$(dnsdomainname)
 DOCKER_AUTH=$(cat ~/.docker/config.json | jq ".auths.\"$DOCKER_REPO\".auth")
 echo $DOCKER_AUTH
 cat <<_EOF > config.json
