@@ -135,6 +135,8 @@ biases = {
 # Construct model
 pred = conv_net(x, weights, biases, dropout)
 
+scores = tf.nn.softmax(pred, name="y_output")
+
 # Define loss and optimizer
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y))
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
@@ -174,6 +176,8 @@ with tf.Session() as sess:
 
     classification_inputs = tf.saved_model.utils.build_tensor_info(x)
     classification_outputs_classes = tf.saved_model.utils.build_tensor_info(predictor)
+    classification_outputs_scores = tf.saved_model.utils.build_tensor_info(scores)
+    
 
     classification_signature = (
         tf.saved_model.signature_def_utils.build_signature_def(
@@ -183,7 +187,9 @@ with tf.Session() as sess:
             },
             outputs={
                 tf.saved_model.signature_constants.CLASSIFY_OUTPUT_CLASSES:
-                    classification_outputs_classes
+                    classification_outputs_classes,
+                tf.saved_model.signature_constants.CLASSIFY_OUTPUT_SCORES:
+                    classification_outputs_scores
             },
             method_name=tf.saved_model.signature_constants.CLASSIFY_METHOD_NAME))
 
