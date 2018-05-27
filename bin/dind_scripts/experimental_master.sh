@@ -1,8 +1,8 @@
 #!/bin/bash
+sudo chown -R ffdlr /home/ffdlr
 chmod +x build_ffdl.sh compile_s3fs.sh create_user.sh import_registry_certificates.sh install_docker.sh install_go.sh install_kubernetes.sh install_nfs.sh install_registry.sh launch_kubernetes.sh launch_registry.sh s3_driver.sh
 echo "This script assumes that you have created a user, e.g. via create_user.sh, and are now logged in as that user."
 
-sudo chown -R ffdlr /home/ffdlr
 ./install_docker.sh
 . install_go.sh
 ./install_kubernetes.sh
