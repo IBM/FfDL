@@ -1,6 +1,7 @@
 #!/bin/bash
 chmod +x build_ffdl.sh create_user.sh import_registry_certificates.sh install_docker.sh install_go.sh install_kubernetes.sh install_nfs.sh install_registry.sh launch_kubernetes.sh launch_registry.sh s3_driver.sh
-./create_user.sh
+echo "This script assumes that you have created a user, e.g. via create_user.sh, and are now logged in as that user."
+
 ./install_docker.sh
 . install_go.sh
 ./install_kubernetes.sh
@@ -14,6 +15,7 @@ export DOCKER_REPO_PASS=7312mInalM4n
 export VM_TYPE=none
 ./launch_registry.sh
 ./launch_kubernetes.sh
+sudo chown -R ffdlr /home/ffdlr/.kube/
 ./import_registry_certificates.sh
 ./s3_driver.sh
 
