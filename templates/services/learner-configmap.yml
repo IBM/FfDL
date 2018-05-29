@@ -44,6 +44,7 @@ data:
   caffe2_gpu_c2v0.8.1.cuda8.cudnn7.ubuntu16.04_CURRENT: master-39
   caffe2_cpu_c2v0.8.0.cpu.full.ubuntu16.04_CURRENT: master-39
   caffe2_gpu_latest_CURRENT: master-39
+  h2o3_cpu_latest_CURRENT: manual
 ---
 
 apiVersion: v1
