@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -d "/home/fpk/docker-registry" ]; then
+if [ -d "/home/$USER/docker-registry" ]; then
     echo "Registry seems to exist. Nothing to do."
     exit 0
 fi
