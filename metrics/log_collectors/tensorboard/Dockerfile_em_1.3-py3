@@ -22,7 +22,7 @@ LABEL maintainer="Scott Boag <scott_boag@us.ibm.com>"
 RUN pip3 install keras h5py tensor2tensor
 
 #RUN pip3 install --upgrade pip
-RUN pip install pip>=9.1.0
+RUN pip install pip>=9.0.1
 RUN pip3 install -U setuptools
 RUN pip3 install grpcio==1.7.3 python-dateutil pyyaml
 
