@@ -71,6 +71,30 @@ where PUBLIC_IP belongs to the node the REST API runs on. It can be found via `k
 In order to setup FfDL with all dependencies on a fresh SoftLayer instance, please execute `bin/dind_scripts/experimental_master.sh`.
 It is advisable to run it in your current shell, i.e. `. experimental_master.sh`.
 
+Getting from a fresh system to a running FfDL job should look like this:
+```bash
+ssh root@machine.sl.cloud9.ibm.com
+mkdir -p /home/user/go/src/github.com/IBM/ && cd $_
+git clone https://github.com/IBM/FfDL.git && cd FfDL
+# git remote add upstream https://github.com/IBM/FfDL.git
+# git fetch --all
+# git checkout master && git pull upstream master
+# git fetch upstream pull/79/head:pr-79
+# git checkout pr-79
+cd bin/dind_scripts/
+chmod +x create_user.sh
+. create_user.sh
+
+ssh user@machine.sl.cloud9.ibm.com
+cd /home/user/go/src/github.com/IBM/FfDL/bin/dind_scripts/
+sudo chmod +x experimental_master.sh
+. experimental_master.sh
+
+export AWS_ACCESS_KEY_ID=...
+export AWS_SECRET_ACCESS_KEY=...
+make test-submit
+```
+
 ### Build and Deploy
 
 Build FfDL source: `make build`
