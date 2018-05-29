@@ -56,6 +56,7 @@ const (
 	torchFrameworkName           string = "torch"
 	caffe2FrameworkName          string = "caffe2"
 	pytorchFrameworkName         string = "pytorch"
+	h2o3FrameworkName            string = "h2o3"
 	customFrameworkName          string = "custom"
 	numRetries                          = 5
 	maxGPUsPerNode                      = 4

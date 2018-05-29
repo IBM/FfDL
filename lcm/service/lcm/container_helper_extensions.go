@@ -31,6 +31,8 @@ func extendLearnerContainer(learner *v1core.Container, req *service.JobDeploymen
 		learnerImage = "caffe2ai/caffe2:" + req.Version
 	case pytorchFrameworkName:
 		learnerImage = "pytorch/pytorch:" + req.Version
+	case h2o3FrameworkName:
+		learnerImage = "nkpng2k/h2o3:" + req.Version
 	case customFrameworkName:
 		learnerImage = req.Version
 	default:
