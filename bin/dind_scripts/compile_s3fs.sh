@@ -7,3 +7,12 @@ cd s3fs-fuse
 ./autogen.sh
 ./configure CPPFLAGS='-I/usr/local/opt/openssl/include'
 make
+
+mkdir -p $GOPATH/src/github.com/IBM
+mkdir -p $GOPATH/bin
+cd $GOPATH/src/github.com/IBM/
+git clone https://github.com/IBM/ibmcloud-object-storage-plugin.git
+cd ibmcloud-object-storage-plugin
+make
+make provisioner
+make driver

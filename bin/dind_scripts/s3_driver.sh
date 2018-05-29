@@ -1,12 +1,4 @@
 #!/bin/bash
-mkdir -p $GOPATH/src/github.com/IBM
-mkdir -p $GOPATH/bin
-cd $GOPATH/src/github.com/IBM/
-git clone https://github.com/IBM/ibmcloud-object-storage-plugin.git
-cd ibmcloud-object-storage-plugin
-make
-make provisioner
-make driver
 
 kubectl create secret docker-registry regcred --docker-server=${DOCKER_REPO} --docker-username=${DOCKER_REPO_USER} --docker-password=${DOCKER_REPO_PASS} --docker-email=unknown@docker.io
 docker tag ibmcloud-object-storage-plugin ${DOCKER_REPO}/ibmcloud-object-storage-plugin
