@@ -11,6 +11,7 @@
   * 2.6. [Model Deployment and Training](#26-model-deployment-and-training)
     * 2.6.1. [Train models using FfDL CLI](#261-train-models-using-ffdl-cli)
     * 2.6.2. [Train models using FfDL UI](#262-train-models-using-ffdl-ui)
+    * 2.6.3. [Deploy models using Seldon-Core](#263-deploy-models-using-seldon-core)
 3. [Object Store for FfDL](#3-object-store-for-ffdl)
   * 3.1. [FfDL Local Object Store](#31-ffdl-local-object-store)
   * 3.2. [Cloud Object Store](#32-cloud-object-store)
@@ -123,6 +124,9 @@ After training your models, you can run `$CLI_CMD logs <Job ID>` to view your mo
 To train your models using FfDL UI, simply upload your manifest file and model definition zip in the correspond fields and click `Submit Training Job`
 
 ![ui-example](images/ui-example.png)
+
+#### 2.6.3 Deploy Models using Seldon-Core
+Trained models can be deployed and served via REST and gRPC endpoints using [Seldon-Core](https://github.com/SeldonIO/seldon-core). For examples, see [here](../community/FfDL-Seldon/README.md)
 
 ## 3. Object Store for FfDL
 We will use the [Amazon's S3 command line interface](https://aws.amazon.com/cli/) to access the object store. To set up a user environment to access object store, please follow instructions at [AWS cli setup page](http://docs.aws.amazon.com/cli/latest/userguide/installing.html) and [Using Amazon S3 with the AWS cli](http://docs.aws.amazon.com/cli/latest/userguide/cli-s3.html).
