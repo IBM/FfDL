@@ -20,19 +20,19 @@ s2i build . seldonio/seldon-core-s2i-python2 seldonio/ffdl-mnist:0.1
 To deploy the model you need to create the deployment resource from the template ```ffdl-mnist-deployment.json```. You will need to set:
 
  * TRAINING_ID : Your FfDL Training ID
- * BUCKET_KEY : The key for the bucket where your model is stored
- * BUCKET_URL : The URL for your Bucket
+ * BUCKET_NAME : The name of the bucket containing your model
 
-You will need to create a kubernetes secret containing your bucket secret. You can use the ```bucket-secret.yaml``` as a template, e.g.:
+You will also need to create a kubernetes secret containing your bucket endpoint url, key and secret. You can use the ```bucket-secret.yaml``` as a template, e.g.:
 
  * edit ```bucket-secret.yaml```
- * Enter the base64 secret and save
+ * Enter the base64 values for endpoint url, key, secret
+    * On a linux system running bash shell you could do the following to get your values, ```echo -n "my key" | base64```
  * run ```kubectl create -f bucket-secret.yaml```
 
 Create a deployment file by adding your settings, e.g. using sed below:
 
 ```
- cat ffdl-mnist-deployment.json | sed 's/%TRAINING_ID%/training-84hIKJViR/' | sed 's#%BUCKET_ENDPOINT_URL%#http://1.2.3.4:30537#' | sed 's/%BUCKET_KEY%/test/'  > ffdl-mnist-deployment_mydeploy.json
+cat ffdl-mnist-deployment.json | sed 's/%TRAINING_ID%/training-84hIKJViR/' | sed 's/%BUCKET_NAME%/tf_trained_model/'  > ffdl-mnist-deployment_mydeploy.json
 ```
 
 Deploy:

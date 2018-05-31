@@ -35,12 +35,30 @@
                     "value": "%TRAINING_ID%"
                   },
                   {
-                    "name": "BUCKET_ENDPOINT_URL",
-                    "value": "%BUCKET_ENDPOINT_URL%"
+                    "name": "BUCKET_NAME",
+                    "value": "%BUCKET_NAME%"
                   },
                   {
-                      "name": "BUCKET_KEY",
-		      "value" : "%BUCKET_KEY%"
+                    "valueFrom": {
+                      "secretKeyRef": {
+                          "localObjectReference": {
+			      "name" : "bucket-credentials"
+			  },
+                        "key": "endpoint"
+                      }
+                    },
+                    "name": "BUCKET_ENDPOINT_URL"
+                  },
+                  {
+                    "valueFrom": {
+                      "secretKeyRef": {
+                          "localObjectReference": {
+			      "name" : "bucket-credentials"
+			  },
+                        "key": "key"
+                      }
+                    },
+                      "name": "BUCKET_KEY"
                   },
                   {
                     "valueFrom": {

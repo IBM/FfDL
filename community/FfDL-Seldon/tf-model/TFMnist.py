@@ -8,8 +8,9 @@ class TFMnist(object):
     def __init__(self):
         training_id = os.environ.get("TRAINING_ID")
         endpoint_url = os.environ.get("BUCKET_ENDPOINT_URL")
+        bucket_name = os.environ.get("BUCKET_NAME")
         bucket_key = os.environ.get("BUCKET_KEY")
-        bucket_secret = os.environ.get("BUCKET_SECRET")        
+        bucket_secret = os.environ.get("BUCKET_SECRET")
         print("Training id:{} endpoint URL:{} key:{} secret:{}".format(training_id,endpoint_url,bucket_key,bucket_secret))
         
         self.class_names = ["class:{}".format(str(i)) for i in range(10)]
@@ -23,11 +24,10 @@ class TFMnist(object):
             aws_secret_access_key=bucket_secret,
         )
 
-        BUCKET_NAME = 'tf_trained_model' # replace with your bucket name
         KEY = training_id + '/saved_model.tar.gz' # replace with your object key
 
         try:
-            client.Bucket(BUCKET_NAME).download_file(KEY, 'saved_model.tar.gz')
+            client.Bucket(bucket_name).download_file(KEY, 'saved_model.tar.gz')
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == "404":
                 print("The object does not exist.")
