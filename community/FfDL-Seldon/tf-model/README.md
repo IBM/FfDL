@@ -14,7 +14,7 @@ The runtime MNIST scrorer is contained within a standalone [python class TFMnist
 ```
 s2i build . seldonio/seldon-core-s2i-python2 seldonio/ffdl-mnist:0.1
 ```
- * Push image to DockerHub or your Docker repo accessible from the FyDL cluster.
+ * Push image to DockerHub or your Docker repo accessible from the FfDL cluster.
 
 # Deploy Model
 To deploy the model you need to create the deployment resource from the template ```ffdl-mnist-deployment.json```. You will need to set:
