@@ -1,4 +1,4 @@
-# Deploy FyDL Trained Models with Seldon
+# Deploy FfDL Trained Models with Seldon
 
 [Seldon](https://github.com/SeldonIO/seldon-core) provides a deployment platform to allow machine learning models to be exposed via REST or gRPC endpoints. Runtime graphs of models, routers (e.g., AB-tests, Multi-Armed bandits) , transformers (e.g., Feature normalization) and combiners (e.g., ensemblers) can be described using a Custom Kubernetes Resource JSON/YAML and then deployed, scaled and managed.
 
@@ -6,7 +6,7 @@ Any FyDL model whose runtime inference can be packaged as a Docker container can
 
 # Install Seldon
 
-To install Seldon on your Kubernetes cluster next to FyDL see [here](https://github.com/SeldonIO/seldon-core/blob/master/docs/install.md).
+To install Seldon on your Kubernetes cluster next to FfDL see [here](https://github.com/SeldonIO/seldon-core/blob/master/docs/install.md).
 
 # Deployment Steps
 
