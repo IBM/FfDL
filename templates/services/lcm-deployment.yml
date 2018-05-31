@@ -76,6 +76,12 @@ spec:
               fieldPath: metadata.namespace
         - name: DLAAS_SHARED_VOLUME_STORAGE_CLASS
           value: {{.Values.lcm.shared_volume_storage_class}}
+        - name: DLAAS_LOAD_TRAINING_DATA_MEM_IN_MB
+          value: "{{.Values.lcm.load_training_data_mem_in_mb}}"
+        - name: DLAAS_MILLI_CPU
+          value: "{{.Values.lcm.milli_cpu}}"
+        - name: DLAAS_MEM_IN_MB
+          value: "{{.Values.lcm.mem_in_mb}}"
         - name: DLAAS_IMAGE_TAG
           value: {{.Values.restapi.version}}
         - name: DLAAS_IMAGE_PULL_POLICY

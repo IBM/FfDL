@@ -27,6 +27,9 @@ lcm:
   replicas: 1
   cpus: 100m
   memory: 64Mi
+  load_training_data_mem_in_mb: 300
+  milli_cpu: 60
+  mem_in_mb: 300
   # This will used for "volume.beta.kubernetes.io/storage-class" for the shared volume
   shared_volume_storage_class: ""
 trainingdata:

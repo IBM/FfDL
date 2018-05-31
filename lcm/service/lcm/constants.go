@@ -79,9 +79,9 @@ const (
 	loadModelMilliCPU=20
 	loadModelMemInMB=50
 	loadTrainingDataMilliCPU=20
-	loadTrainingDataMemInMB=300
-	logCollectorMilliCPU=60
-	logCollectorMemInMB=300
+	//loadTrainingDataMemInMB=300
+	//logCollectorMilliCPU=60
+	//logCollectorMemInMB=300
 	controllerMilliCPU=20
 	controllerMemInMB=100
 )

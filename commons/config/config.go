@@ -153,6 +153,10 @@ const (
 	ImagePullPolicy = "image_pull_policy"
 
 	SharedVolumeStorageClassKey = "shared_volume_storage_class"
+
+	loadTrainingDataMemInMBKey = "load_training_data_mem_in_mb"
+	logCollectorMilliCPUKey    = "milli_cpu"
+	logCollectorMemInMBKey     = "mem_in_mb"
 )
 
 var viperInitOnce sync.Once
@@ -210,6 +214,12 @@ func InitViper() {
 		viper.SetDefault(learnerKubeKeyFileKey, path.Join(learnerKubeSecretsRoot, "client.key"))
 		viper.SetDefault(learnerKubeCertFileKey, path.Join(learnerKubeSecretsRoot, "client.crt"))
 		viper.SetDefault(learnerKubeTokenFileKey, path.Join(learnerKubeSecretsRoot, "token"))
+
+		viper.SetDefault(loadTrainingDataMemInMBKey, 300)
+		viper.SetDefault(logCollectorMilliCPUKey, 60)
+		viper.SetDefault(logCollectorMemInMBKey, 300)
+		log.Debugf("Milli CPU is: %d", GetLogCollectorMilliCPU())
+		log.Debugf("Training Data Mem in MB is: %d", GetTrainingDataMemInMB())
 
 		viper.SetDefault(VolumeSize, "10GiB")
 
@@ -623,4 +633,20 @@ func getFileAtLocation(location string) string {
 //GetPushgatewayURL ...
 func GetPushgatewayURL() string {
 	return fmt.Sprintf("http://pushgateway:%s", "9091")
+}
+
+func GetTrainingDataMemInMB() int {
+	log.Infof("GetTrainingDataMemInMB() returns %d", viper.GetInt(loadTrainingDataMemInMBKey))
+	// return viper.GetInt(loadTrainingDataMemInMBKey)
+	return 306
+}
+
+func GetLogCollectorMilliCPU() int {
+	// return viper.GetInt(logCollectorMilliCPUKey)
+	return 61
+}
+
+func GetLogCollectorMemInMB() int {
+	// return viper.GetInt(logCollectorMemInMBKey)
+	return 301
 }

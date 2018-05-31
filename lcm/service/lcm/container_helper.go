@@ -263,8 +263,10 @@ func constructLogCollector(sharedVolumeMount v1core.VolumeMount, k8sClient kuber
 		vars = append(vars, v1core.EnvVar{Name: "EM_DESCRIPTION", Value: req.EvaluationMetricsSpec})
 	}
 
-	cpuCount := v1resource.NewMilliQuantity(int64(logCollectorMilliCPU), v1resource.DecimalSI)
-	memInBytes := int64(logCollectorMemInMB * 1024 * 1024)
+	//cpuCount := v1resource.NewMilliQuantity(int64(logCollectorMilliCPU), v1resource.DecimalSI)
+	cpuCount := v1resource.NewMilliQuantity(int64(config.GetLogCollectorMilliCPU()), v1resource.DecimalSI)
+	// memInBytes := int64(logCollectorMemInMB * 1024 * 1024)
+	memInBytes := int64(config.GetLogCollectorMemInMB() * 1024 * 1024)
 	memCount := v1resource.NewQuantity(memInBytes, v1resource.DecimalSI)
 
 	logCollectorContainer := v1core.Container{
@@ -311,7 +313,8 @@ func constructLoadTrainingDataContainer(sharedVolumeMount v1core.VolumeMount, jo
 	}
 
 	cpuCount := v1resource.NewMilliQuantity(int64(loadTrainingDataMilliCPU), v1resource.DecimalSI)
-	memInBytes := int64(loadTrainingDataMemInMB * 1024 * 1024)
+	//memInBytes := int64(loadTrainingDataMemInMB * 1024 * 1024)
+	memInBytes := int64(config.GetTrainingDataMemInMB() * 1024 * 1024)
 	memCount := v1resource.NewQuantity(memInBytes, v1resource.DecimalSI)
 
 	command := fmt.Sprintf(`load.sh |tee -a %s/load-data.log`, PodLevelLogDir)
