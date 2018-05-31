@@ -637,16 +637,13 @@ func GetPushgatewayURL() string {
 
 func GetTrainingDataMemInMB() int {
 	log.Infof("GetTrainingDataMemInMB() returns %d", viper.GetInt(loadTrainingDataMemInMBKey))
-	// return viper.GetInt(loadTrainingDataMemInMBKey)
-	return 306
+	return viper.GetInt(loadTrainingDataMemInMBKey)
 }
 
 func GetLogCollectorMilliCPU() int {
-	// return viper.GetInt(logCollectorMilliCPUKey)
-	return 61
+	return viper.GetInt(logCollectorMilliCPUKey)
 }
 
 func GetLogCollectorMemInMB() int {
-	// return viper.GetInt(logCollectorMemInMBKey)
-	return 301
+	return viper.GetInt(logCollectorMemInMBKey)
 }
