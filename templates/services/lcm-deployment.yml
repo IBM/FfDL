@@ -68,8 +68,8 @@ spec:
         env:
         - name: DLAAS_POD_NAME
           valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
+            fieldRef:
+              fieldPath: metadata.name
         - name: DLAAS_POD_NAMESPACE
           valueFrom:
             fieldRef:
