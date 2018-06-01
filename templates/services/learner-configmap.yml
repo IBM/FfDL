@@ -7,10 +7,22 @@ data:
   tensorflow_cpu_latest-py3_CURRENT: manual
   tensorflow_gpu_latest-gpu-py3_CURRENT: manual
   tensorflow_gpu_latest-gpu_CURRENT: manual
+  tensorflow_gpu_1.8.0-gpu-py3_CURRENT: manual
+  tensorflow_gpu_1.8.0-gpu_CURRENT: manual
+  tensorflow_cpu_1.8.0_CURRENT: manual
+  tensorflow_cpu_1.8.0-py3_CURRENT: manual
+  tensorflow_gpu_1.7.0-gpu-py3_CURRENT: manual
+  tensorflow_gpu_1.7.0-gpu_CURRENT: manual
+  tensorflow_cpu_1.7.0_CURRENT: manual
+  tensorflow_cpu_1.7.0-py3_CURRENT: manual
   tensorflow_gpu_1.6.0-gpu-py3_CURRENT: manual
   tensorflow_gpu_1.6.0-gpu_CURRENT: manual
   tensorflow_cpu_1.6.0_CURRENT: manual
   tensorflow_cpu_1.6.0-py3_CURRENT: manual
+  tensorflow_gpu_1.5.1-gpu-py3_CURRENT: manual
+  tensorflow_gpu_1.5.1-gpu_CURRENT: manual
+  tensorflow_cpu_1.5.1_CURRENT: manual
+  tensorflow_cpu_1.5.1-py3_CURRENT: manual
   tensorflow_gpu_1.5.0-gpu-py3_CURRENT: manual
   tensorflow_gpu_1.5.0-gpu_CURRENT: manual
   tensorflow_cpu_1.5.0_CURRENT: manual
