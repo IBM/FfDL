@@ -7,7 +7,7 @@ Train the [Tensorflow MNIST model](https://github.com/IBM/FfDL/tree/master/etc/e
 # Wrap the Runtime Scorer
 You can skip this step if you are happy to use the already packaged image ```seldonio/ffdl-mnist``` from DockerHub.
 
-The runtime MNIST scrorer is contained within a standalone [python class TFMnist.py](./tf-model/TFMnist.py). This needs to be packaged in a Docker container to run within Seldon. For this we use [Redhat's Source-to-image](https://github.com/openshift/source-to-image).
+The runtime MNIST scrorer is contained within a standalone [python class TFMnist.py](./TFMnist.py). This needs to be packaged in a Docker container to run within Seldon. For this we use [Redhat's Source-to-image](https://github.com/openshift/source-to-image).
 
  * Install [S2I](https://github.com/openshift/source-to-image#installation)
  * From the tf-model folder run, (*change seldonio to your Docker repo*):
