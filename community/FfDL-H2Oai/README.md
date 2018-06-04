@@ -6,8 +6,10 @@ H2O is an open source, in-memory, distributed, fast, and scalable machine learni
 
 # Deployment Steps
 
-1. Launch FfDL
- 
-
+1. Follow steps to deploy FfDL from the [user guide](https://github.com/IBM/FfDL/blob/master/docs/user-guide.md)
+2. Add some data, either follow the user guide to store the data locally or host the data in a cloud storage bucket and pull it at runtime.
+3. Change the manifest.yaml to the settings that you want
+4. Once FfDL is deployed in your Kubernetes cluster, use the CLI or GUI to deploy H2O
 
 # Examples
+sample deployment scripts are hosted under: FfDL/community/FfDL-H2Oai
