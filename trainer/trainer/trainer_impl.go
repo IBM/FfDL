@@ -994,7 +994,6 @@ func (s *trainerService) deleteJobFromQueue(trainingID string, gpuType string, l
 
 func (s *trainerService) DeleteTrainingJob(ctx context.Context,
 	req *grpc_trainer_v2.DeleteRequest) (*grpc_trainer_v2.DeleteResponse, error) {
-	start := time.Now()
 
 	logr := logger.LocLogger(logWith(req.TrainingId, req.UserId))
 	logr.Debugf("DeleteTrainingJob called")
