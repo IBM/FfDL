@@ -184,7 +184,7 @@ func fetchImageNameFromEvaluationMetrics(evalMetricsString string,
 				// Assume the image name has been validated upstream
 				logCollectorImageShortName = imageType.(string)
 				if logCollectorImageShortName == "tensorboard" || logCollectorImageShortName == "tensorboard_extractor" {
-					// For the moment we're just going to use TF 1.3, but the tag should change to be non-version
+					// TODO For the moment we're just going to use TF 1.3, but the tag should change to be non-version
 					// specific, and we should just use latest TF.
 					logCollectorImageShortName = fmt.Sprintf("%s_extract", "tensorboard")
 				}
