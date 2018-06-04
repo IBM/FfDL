@@ -16,6 +16,7 @@ TEST_USER = test-user
 SET_LOCAL_ROUTES ?= 0
 MINIKUBE_RAM ?= 4096
 MINIKUBE_CPUS ?= 3
+MINIKUBE_DRIVER ?= xhyve
 MINIKUBE_BRIDGE ?= $(shell (ifconfig | grep -e "^bridge100:" || ifconfig | grep -e "^bridge0:") | sed 's/\(.*\):.*/\1/')
 UI_REPO = git@github.com:IBM/FfDL-dashboard.git
 CLI_CMD = $(shell pwd)/cli/bin/ffdl-$(UNAME_SHORT)
@@ -103,7 +104,7 @@ minikube:         ## Configure Minikube (local Kubernetes)
 	@which minikube > /dev/null || (echo Please install Minikube; exit 1)
 	@minikube ip > /dev/null 2>&1 || ( \
 		echo "Starting up Minikube"; \
-		minikube start --insecure-registry 9.0.0.0/8 --insecure-registry 10.0.0.0/8 --cpus $(MINIKUBE_CPUS) --memory $(MINIKUBE_RAM) > /dev/null; \
+		minikube start --insecure-registry 9.0.0.0/8 --insecure-registry 10.0.0.0/8 --cpus $(MINIKUBE_CPUS) --memory $(MINIKUBE_RAM) --vm-driver=$(MINIKUBE_DRIVER) > /dev/null; \
 		sleep 5; \
 	)
 	@minikube ip > /dev/null 2>&1 && ( \
