@@ -690,7 +690,6 @@ func (s *trainerService) CreateTrainingJob(ctx context.Context, req *grpc_traine
 }
 
 func (s *trainerService) GetTrainingJob(ctx context.Context, req *grpc_trainer_v2.GetRequest) (*grpc_trainer_v2.GetResponse, error) {
-	start := time.Now()
 
 	logr := logger.LocLogger(logWith(req.TrainingId, req.UserId))
 
@@ -702,15 +701,11 @@ func (s *trainerService) GetTrainingJob(ctx context.Context, req *grpc_trainer_v
 	returned := false
 	defer func() {
 		returned = true
-		now := time.Now()
-		logr.Debugf("GetTrainingJob returning at %v, %v before deadline", now, deadline.Sub(now))
 	}()
 
 	done := ctx.Done()
-	logr.Debugf("GetTrainingJob now is %v, context deadline is %v, duration %v", start, deadline, deadline.Sub(start))
 	go func() {
 		_ = <-done
-		logr.Debugf("GetTrainingJob done at %v, returned=%v, started at %v", time.Now(), returned, start)
 	}()
 
 	tr, err := s.repo.Find(req.TrainingId)
@@ -721,9 +716,6 @@ func (s *trainerService) GetTrainingJob(ctx context.Context, req *grpc_trainer_v
 		logr.WithError(err).Errorf("Cannot retrieve training record")
 		return nil, err
 	}
-
-	now := time.Now()
-	logr.Debugf("GetTrainingJob got training job record at %v, %s from start", now, now.Sub(start))
 
 	if tr.UserID != req.UserId {
 		msg := fmt.Sprint("User does not have permission to read training data")
@@ -762,9 +754,6 @@ func (s *trainerService) GetTrainingStatusID(ctx context.Context, req *grpc_trai
 }
 
 func (s *trainerService) UpdateTrainingJob(ctx context.Context, req *grpc_trainer_v2.UpdateRequest) (*grpc_trainer_v2.UpdateResponse, error) {
-	logr := logger.LocLogger(logWith(req.TrainingId, req.UserId))
-	logr.Debugf("UpdateTrainingJob called for training %s", req.TrainingId)
-
 	return updateTrainingJobPostLock(s, req)
 }
 
@@ -1018,15 +1007,11 @@ func (s *trainerService) DeleteTrainingJob(ctx context.Context,
 	returned := false
 	defer func() {
 		returned = true
-		now := time.Now()
-		logr.Debugf("DeleteTrainingJob returning at %v, %v before deadline", now, deadline.Sub(now))
 	}()
 
 	done := ctx.Done()
-	logr.Debugf("DeleteTrainingJob now is %v, context deadline is %v, duration %v", start, deadline, deadline.Sub(start))
 	go func() {
 		_ = <-done
-		logr.Debugf("DeleteTrainingJob done at %v, returned=%v, started at %v", time.Now(), returned, start)
 	}()
 
 	s.metrics.deleteTrainingJobCounter.Add(1)
@@ -1041,9 +1026,6 @@ func (s *trainerService) DeleteTrainingJob(ctx context.Context,
 		return nil, err
 	}
 
-	now := time.Now()
-	logr.Debugf("DeleteTrainingJob got training job record at %v, %s from start", now, now.Sub(start))
-
 	// We've noticed that deleting from the TDS can take several minutes, and we don't want to delay this
 	// call due to that. This is a temporary workaround until we find out root cause of the TDS slowdowns.
 	go func() {
@@ -1056,9 +1038,6 @@ func (s *trainerService) DeleteTrainingJob(ctx context.Context,
 		if err != nil {
 			logr.WithError(err).Warn("deleteJobFromTDS returned error")
 		}
-
-		now = time.Now()
-		logr.Debugf("DeleteTrainingJob cleaned up job in TDS at %v, %s from start", now, now.Sub(start))
 	}()
 
 	var job *grpc_trainer_v2.Job
@@ -1100,9 +1079,6 @@ func (s *trainerService) DeleteTrainingJob(ctx context.Context,
 				return
 			}
 			logr.Debugf("Kubernetes job '%s' does not longer exist.", job.JobId)
-
-			now = time.Now()
-			logr.Debugf("DeleteTrainingJob killed job in LCM at %v, %s from start", now, now.Sub(start))
 		}()
 
 		// delete model content from data store
@@ -1112,19 +1088,12 @@ func (s *trainerService) DeleteTrainingJob(ctx context.Context,
 			// log this error, but continue with deleting the training record anyway
 		}
 
-		now = time.Now()
-		logr.Debugf("DeleteTrainingJob deleted model from object store at %v, %s from start", now, now.Sub(start))
-
 		// delete from DB
 		err = s.repo.Delete(job.TrainingId)
 		if err != nil {
 			logr.WithError(err).Errorf("Failed to delete training job '%s' from database", job.TrainingId)
 			return nil, err
 		}
-
-		now = time.Now()
-		logr.Debugf("DeleteTrainingJob deleted model from mongo at %v, %s from start", now, now.Sub(start))
-
 		return &grpc_trainer_v2.DeleteResponse{TrainingId: job.JobId}, nil
 	}
 	return nil, gerrf(codes.NotFound, "Training with id '%s' not found.", req.TrainingId)

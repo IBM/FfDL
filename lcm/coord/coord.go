@@ -86,7 +86,7 @@ type ValueSequence interface {
 	GetAll(log *logger.LocLoggingEntry) ([]string, error)
 }
 
-//Config ..config passed to the coordinator
+// Config passed to the coordinator
 type Config struct {
 	Endpoints []string
 	Prefix    string
@@ -95,20 +95,18 @@ type Config struct {
 	Password  string
 }
 
-//EtcdKVGetResponse ...
 type EtcdKVGetResponse struct {
 	Key   string
 	Value string
 }
 
-//EtcdKVPutResponse ...
 type EtcdKVPutResponse struct {
 	Key      string
 	Value    string
 	Revision int64
 }
 
-//NewCoordinator ... create a new instance of coordinator. Passes the error back to client in case error is encountered
+// Create a new instance of coordinator. Passes the error back to client in case error is encountered
 func NewCoordinator(config Config, log *logger.LocLoggingEntry) (Coordinator, error) {
 
 	log.Debugf("New coordinator request with endpoints %v , prefix %s, username %s, cert %s", config.Endpoints, config.Prefix, config.Username, config.Cert)
@@ -125,13 +123,13 @@ func NewCoordinator(config Config, log *logger.LocLoggingEntry) (Coordinator, er
 	return &coordinator, err
 }
 
-//Close ... close the underlying client
+// Close the underlying client
 func (instance *coordinator) Close(log *logger.LocLoggingEntry) {
 	log.Debugf("Closing coordinator")
 	instance.cli.Close()
 }
 
-//Get ... get the value corresponding to the key. If an error is encountered then the error is propogated back. Use clientv3.WithLastRev() as options if only last revision is required
+// Get the value corresponding to the key. If an error is encountered then the error is propogated back. Use clientv3.WithLastRev() as options if only last revision is required
 func (instance *coordinator) Get(path string, log *logger.LocLoggingEntry, opts ...clientv3.OpOption) ([]EtcdKVGetResponse, error) {
 
 	res, nrerr := retry(2, 5*time.Second, "ETCD_GET", log, func() (interface{}, error) {
@@ -166,7 +164,7 @@ func (instance *coordinator) Get(path string, log *logger.LocLoggingEntry, opts 
 
 }
 
-//Put ...put a given value against a key and return the last value of the key
+// Put a given value against a key and return the last value of the key
 func (instance *coordinator) Put(path string, value string, log *logger.LocLoggingEntry, opts ...clientv3.OpOption) (EtcdKVPutResponse, error) {
 
 	res, nrerr := retry(2, 5*time.Second, "ETCD_PUT", log, func() (interface{}, error) {
@@ -196,7 +194,7 @@ func (instance *coordinator) Put(path string, value string, log *logger.LocLoggi
 	return result, nrerr
 }
 
-//PutIfKeyExists ...put value if the key already exists
+// Put value if the key already exists
 func (instance *coordinator) PutIfKeyExists(path string, value string, log *logger.LocLoggingEntry, opts ...clientv3.OpOption) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -213,7 +211,7 @@ func (instance *coordinator) PutIfKeyExists(path string, value string, log *logg
 	return resp.Succeeded, err
 }
 
-//PutIfKeyMissing ...put a value only if key is missing
+// Put a value only if key is missing
 func (instance *coordinator) PutIfKeyMissing(path string, value string, log *logger.LocLoggingEntry, opts ...clientv3.OpOption) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -226,11 +224,10 @@ func (instance *coordinator) PutIfKeyMissing(path string, value string, log *log
 		log.WithError(err).Errorf("Exception while performing a transaction to update key %s , with value %s and options %v.", path, value, opts)
 		return false, err
 	}
-	//log.Debugf("Completed the  PutIfKeyMissing operation for key %s , value %s and opts %v with result %t", path, value, opts, resp.Succeeded)
 	return resp.Succeeded, err
 }
 
-//CompareAndSwap ...replaces an existing value with a new value
+// Replaces an existing value with a new value
 func (instance *coordinator) CompareAndSwap(path string, newValue string, expectedOldValue string, log *logger.LocLoggingEntry, opts ...clientv3.OpOption) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -250,7 +247,7 @@ func (instance *coordinator) CompareAndSwap(path string, newValue string, expect
 	return resp.Succeeded, err
 }
 
-//DeleteKeyIfExists ..delete key if it exists. Can do recursive delete, or pattern matching delete with prefix. use DeleteKeyWithOpts for that
+// Delete key if it exists. Can do recursive delete, or pattern matching delete with prefix. use DeleteKeyWithOpts for that
 func (instance *coordinator) DeleteKeyIfExists(path string, log *logger.LocLoggingEntry, opts ...clientv3.OpOption) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -270,7 +267,7 @@ func (instance *coordinator) DeleteKeyIfExists(path string, log *logger.LocLoggi
 	return resp.Succeeded, err
 }
 
-//DeleteKeyWithOpts .. with options provided. Does not do a ifExists check. Use the passed options to delete recursively
+// With options provided. Does not do a ifExists check. Use the passed options to delete recursively
 func (instance *coordinator) DeleteKeyWithOpts(path string, log *logger.LocLoggingEntry, opts ...clientv3.OpOption) error {
 
 	_, nrerr := retry(2, 5*time.Second, "ETCD_GET", log, func() (interface{}, error) {
@@ -291,7 +288,7 @@ func (instance *coordinator) DeleteKeyWithOpts(path string, log *logger.LocLoggi
 	return nrerr
 }
 
-//WatchPath ...watches a given path. Optinally can recursively watch with prefix
+// Watches a given path. Optinally can recursively watch with prefix
 func (instance *coordinator) WatchPath(ctx context.Context, path string, log *logger.LocLoggingEntry, opts ...clientv3.OpOption) clientv3.WatchChan {
 
 	log.Debugf("setting up watch against path %s with options %v", path, opts)
@@ -299,7 +296,7 @@ func (instance *coordinator) WatchPath(ctx context.Context, path string, log *lo
 	return rch
 }
 
-// GrantExpiringLease ..creates an ephemeral node and just prods it once. caller needs to explicitly keep the lease alive
+// Creates an ephemeral node and just prods it once. caller needs to explicitly keep the lease alive
 func (instance *coordinator) GrantExpiringLease(leaseTimeout int64, log *logger.LocLoggingEntry) (*clientv3.LeaseGrantResponse, error) {
 	lease, err := instance.cli.Grant(context.TODO(), leaseTimeout)
 	if err != nil {
@@ -311,7 +308,7 @@ func (instance *coordinator) GrantExpiringLease(leaseTimeout int64, log *logger.
 	return lease, err
 }
 
-// RefreshLease ..prod lease once to keep it alive
+// Prod lease once to keep it alive
 func (instance *coordinator) RefreshLease(leaseID clientv3.LeaseID, log *logger.LocLoggingEntry) (*clientv3.LeaseKeepAliveResponse, error) {
 	//prod once to keep alive
 	leaseResponse, kaerr := instance.cli.KeepAliveOnce(context.TODO(), leaseID)
@@ -319,7 +316,7 @@ func (instance *coordinator) RefreshLease(leaseID clientv3.LeaseID, log *logger.
 	return leaseResponse, kaerr
 }
 
-// GetLeaseDetails ...details of lease, including TTL and keys associated
+// Details of lease, including TTL and keys associated
 func (instance *coordinator) GetLeaseDetails(leaseID clientv3.LeaseID, log *logger.LocLoggingEntry) (*clientv3.LeaseTimeToLiveResponse, error) {
 
 	res, nrerr := retry(2, 5*time.Second, "ETCD_LEASE_DETAILS", log, func() (interface{}, error) {
@@ -340,7 +337,7 @@ func (instance *coordinator) GetLeaseDetails(leaseID clientv3.LeaseID, log *logg
 	return leaseDetails, nrerr
 }
 
-// RevokeLease ...revoke lease and deletes all the associated keys
+// Revoke lease and deletes all the associated keys
 func (instance *coordinator) RevokeLease(leaseID clientv3.LeaseID, log *logger.LocLoggingEntry) error {
 
 	_, nrerr := retry(2, 5*time.Second, "ETCD_REVOKE_LEASE", log, func() (interface{}, error) {
@@ -362,7 +359,7 @@ func (instance *coordinator) RevokeLease(leaseID clientv3.LeaseID, log *logger.L
 	return nrerr
 }
 
-// NewQueue ... creates a new queue with the given name
+// Creates a new queue with the given name
 func (instance *coordinator) NewQueue(queueName string, log *logger.LocLoggingEntry) *queueHandler {
 	log.Infof("Creating new message queue '%s'", queueName)
 	queue := &queueHandler{
@@ -372,19 +369,19 @@ func (instance *coordinator) NewQueue(queueName string, log *logger.LocLoggingEn
 	return queue
 }
 
-// Enqueue ... puts a message to the queue
+// Puts a message to the queue
 func (instance *queueHandler) Enqueue(message string, log *logger.LocLoggingEntry) error {
 	log.Infof("Putting message to queue '%s'", instance.queueName)
 	return instance.queue.Enqueue(message)
 }
 
-// Dequeue ... pulls a message from the queue
+// Pulls a message from the queue
 func (instance *queueHandler) Dequeue(log *logger.LocLoggingEntry) (string, error) {
 	log.Infof("Pulling message from queue '%s'", instance.queueName)
 	return instance.queue.Dequeue()
 }
 
-// NewValueSequence ... creates a new value sequence with the given name (key prefix)
+// Creates a new value sequence with the given name (key prefix)
 func (instance *coordinator) NewValueSequence(sequenceName string, log *logger.LocLoggingEntry) *valueSequenceHandler {
 	log.Infof("Creating new value sequence '%s'", sequenceName)
 	sequence := &valueSequenceHandler{
@@ -394,7 +391,7 @@ func (instance *coordinator) NewValueSequence(sequenceName string, log *logger.L
 	return sequence
 }
 
-// AddNew ... adds a new value to the sequence
+// Adds a new value to the sequence
 func (instance *valueSequenceHandler) AddNew(value string, log *logger.LocLoggingEntry) error {
 	log.Infof("Adding new value to sequence '%s'", instance.keyPrefix)
 	newKey := fmt.Sprintf("%s/%v", instance.keyPrefix, time.Now().UnixNano())
@@ -406,7 +403,7 @@ func (instance *valueSequenceHandler) AddNew(value string, log *logger.LocLoggin
 	return err
 }
 
-// GetAll ... returns the full list of values in the sequence
+// Returns the full list of values in the sequence
 func (instance *valueSequenceHandler) GetAll(log *logger.LocLoggingEntry) ([]string, error) {
 	log.Infof("Getting historical values for sequence '%s'", instance.keyPrefix)
 	var result []string
@@ -487,7 +484,7 @@ func handleError(err error, log *logger.LocLoggingEntry) bool {
 	return retry
 }
 
-//basic retry function that needs to be replaced with exponentatial retry
+// Basic retry function that needs to be replaced with exponentatial retry
 func retry(attempts int, interval time.Duration, description string, log *logger.LocLoggingEntry, logic func() (interface{}, error), condition func(error) bool) (interface{}, error) {
 	var err error
 	var result interface{}

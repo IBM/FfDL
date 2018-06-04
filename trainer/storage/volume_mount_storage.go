@@ -23,10 +23,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
+//const (
 	// DataStoreTypeNotImplemented is the name that represents an in-memory data store
-	DataStoreTypeVolumeMount = "volume_mount_datastore"
-)
+	//DataStoreTypeVolumeMount = "volume_mount_datastore"
+//)
 
 type volumeMountStorage struct {
 	conf    map[string]string

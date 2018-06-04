@@ -75,10 +75,6 @@ docker-push:
 		exit 1; \
 	else \
 		docker login --username=${DOCKER_REPO_USER} --password=${DOCKER_REPO_PASS} https://${DOCKER_REPO}; \
-		docker tag ${DOCKER_NAMESPACE}/emetrics_file_extractor:${IMAGE_TAG} ${DOCKER_REPO}/${DOCKER_NAMESPACE}/emetrics_file_extractor:${IMAGE_TAG} && docker rmi ${DOCKER_NAMESPACE}/emetrics_file_extractor:${IMAGE_TAG}; \
-		docker tag ${DOCKER_NAMESPACE}/log_collector:${IMAGE_TAG} ${DOCKER_REPO}/${DOCKER_NAMESPACE}/log_collector:${IMAGE_TAG} && docker rmi ${DOCKER_NAMESPACE}/log_collector:${IMAGE_TAG}; \
-		docker tag ${DOCKER_NAMESPACE}/regex_extractor:${IMAGE_TAG} ${DOCKER_REPO}/${DOCKER_NAMESPACE}/regex_extractor:${IMAGE_TAG} && docker rmi ${DOCKER_NAMESPACE}/regex_extractor:${IMAGE_TAG}; \
-		docker tag ${DOCKER_NAMESPACE}/tensorboard_extract:${IMAGE_TAG} ${DOCKER_REPO}/${DOCKER_NAMESPACE}/tensorboard_extract:${IMAGE_TAG} && docker rmi ${DOCKER_NAMESPACE}/tensorboard_extract:${IMAGE_TAG}; \
 		for i in $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep ${DOCKER_REPO}/${DOCKER_NAMESPACE} | grep :${IMAGE_TAG} | grep -v '<none>'); do \
 			echo "docker push $$i"; \
 			docker push $$i; \

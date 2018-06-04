@@ -38,8 +38,7 @@ func PopulateLearnerEnvVariablesAndLabels(existingEnvVars []v1core.EnvVar, train
 
 }
 
-//FIXME for now not changing this much and just whitelisting rather than makign the list explicit
-//need to make this function more testable
+//FIXME For now not changing this much and just whitelisting rather than making the list explicit - need to make this function more testable
 func generateLearnerContainerEnvVars(envVars []v1core.EnvVar, mountTrainingDataStoreInLearner, mountResultsStoreInLearner bool) []v1core.EnvVar {
 
 	var whitelisted = map[string]struct{}{
@@ -67,7 +66,7 @@ func generateLearnerContainerEnvVars(envVars []v1core.EnvVar, mountTrainingDataS
 			if _, exists := whitelisted[ev.Name]; exists {
 				vars = append(vars, ev)
 			} else {
-				// don't include this var.
+				// Don't include this var.
 			}
 		}
 		return vars
@@ -75,7 +74,7 @@ func generateLearnerContainerEnvVars(envVars []v1core.EnvVar, mountTrainingDataS
 
 	filteredVars := getLearnerContainerEnvVars(envVars)
 
-	//argh!! this code was already there
+	// This code was already there
 	vars := make([]v1core.EnvVar, 0, len(filteredVars))
 	var checkpointDir string
 	for _, ev := range filteredVars {

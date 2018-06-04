@@ -184,7 +184,7 @@ func fetchImageNameFromEvaluationMetrics(evalMetricsString string,
 				// Assume the image name has been validated upstream
 				logCollectorImageShortName = imageType.(string)
 				if logCollectorImageShortName == "tensorboard" || logCollectorImageShortName == "tensorboard_extractor" {
-					// For the moment we're just going to use TF 1.3, but the tag should change to be non-version
+					// TODO For the moment we're just going to use TF 1.3, but the tag should change to be non-version
 					// specific, and we should just use latest TF.
 					logCollectorImageShortName = fmt.Sprintf("%s_extract", "tensorboard")
 				}
@@ -263,9 +263,7 @@ func constructLogCollector(sharedVolumeMount v1core.VolumeMount, k8sClient kuber
 		vars = append(vars, v1core.EnvVar{Name: "EM_DESCRIPTION", Value: req.EvaluationMetricsSpec})
 	}
 
-	//cpuCount := v1resource.NewMilliQuantity(int64(logCollectorMilliCPU), v1resource.DecimalSI)
 	cpuCount := v1resource.NewMilliQuantity(int64(config.GetLogCollectorMilliCPU()), v1resource.DecimalSI)
-	// memInBytes := int64(logCollectorMemInMB * 1024 * 1024)
 	memInBytes := int64(config.GetLogCollectorMemInMB() * 1024 * 1024)
 	memCount := v1resource.NewQuantity(memInBytes, v1resource.DecimalSI)
 
@@ -313,7 +311,6 @@ func constructLoadTrainingDataContainer(sharedVolumeMount v1core.VolumeMount, jo
 	}
 
 	cpuCount := v1resource.NewMilliQuantity(int64(loadTrainingDataMilliCPU), v1resource.DecimalSI)
-	//memInBytes := int64(loadTrainingDataMemInMB * 1024 * 1024)
 	memInBytes := int64(config.GetTrainingDataMemInMB() * 1024 * 1024)
 	memCount := v1resource.NewQuantity(memInBytes, v1resource.DecimalSI)
 
@@ -402,7 +399,7 @@ func constructLearnerContainer(req *service.JobDeploymentRequest, envVars []v1co
 
 	logr.Info("Entry into constructLearnerContainer()")
 
-	//argh!!! this should be abstracted out as well
+	// TODO this should be abstracted out as well
 	command := "for i in ${!ALERTMANAGER*} ${!DLAAS*} ${!ETCD*} ${!GRAFANA*} ${!HOSTNAME*} ${!KUBERNETES*} ${!MONGO*} ${!PUSHGATEWAY*}; do unset $i; done;"
 	//FIXME need to have the learner IDs start from 1 rather than 0
 	var cmd string

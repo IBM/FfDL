@@ -40,9 +40,9 @@ const (
 )
 
 const (
-	numRetries             = 10
+	// numRetries             = 10
 	insuffResourcesRetries = 40
-	ctxTimeout             = 10 * time.Second
+	// ctxTimeout             = 10 * time.Second
 	pollingInterval        = 60 * time.Second
 )
 

@@ -422,18 +422,16 @@ func getLogsOrMetrics(params models.GetLogsParams, isMetrics bool) middleware.Re
 	if params.ModelID == "wstest" {
 		logr.Debug("is wstest")
 		timeout = 2 * time.Minute
-
 	} else if isFollow {
-		// Make this a *very* long time out.  In the longer run, if we
-		// push to a message queue, we can hopefully just subscribe to a web
-		// socket.
+		// Make this a *very* long time out.
+		// TODO In the longer run, if we push to a message queue, we can hopefully just subscribe to a web socket.
 		timeout = 80 * time.Hour
 	} else {
 		timeout = 3 * time.Minute
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
-	// don't cancel here as we are passing the cancel function to others.
+	// Don't cancel here as we are passing the cancel function to others.
 
 	// HACK FOR WS TEST
 	if params.ModelID == "wstest" {
@@ -483,15 +481,13 @@ func getLogsOrMetrics(params models.GetLogsParams, isMetrics bool) middleware.Re
 		defer trainer.Close()
 		defer cancel()
 
-		//logr.Debugln("w.WriteHeader(200)")
 		w.WriteHeader(200)
 		// w.Header().Set("Transfer-Encoding", "chunked")
 		var onelinebytes []byte
 		for {
 			var logFrame *grpc_trainer_v2.ByteStreamResponse
-			// logr.Debugln("CALLING stream.Recv()")
 			logFrame, err := stream.Recv()
-			// time.Sleep(time.Second * 2)
+
 			if logFrame == nil {
 				if err != io.EOF && err != nil {
 					logr.WithError(err).Errorf("stream.Recv() returned error")
@@ -499,7 +495,7 @@ func getLogsOrMetrics(params models.GetLogsParams, isMetrics bool) middleware.Re
 				break
 			}
 			if isMetrics {
-				var bytesBuf []byte = logFrame.GetData()
+				var bytesBuf = logFrame.GetData()
 				if bytesBuf != nil {
 
 					byteReader := bytes.NewReader(bytesBuf)
@@ -518,13 +514,12 @@ func getLogsOrMetrics(params models.GetLogsParams, isMetrics bool) middleware.Re
 								}
 
 								_, err := w.Write(lineBytes)
-								//logr.Debugf("w.Write(bytes) says %d bytes written", n)
+
 								if err != nil && err != io.EOF {
 									logr.Errorf("getTrainingLogs(2) Write returned error: %s", err.Error())
 								}
-								// logr.Debugln("if f, ok := w.(http.Flusher); ok {")
+
 								if f, ok := w.(http.Flusher); ok {
-									logr.Debugln("f.Flush()")
 									f.Flush()
 								}
 							} else {
@@ -543,20 +538,16 @@ func getLogsOrMetrics(params models.GetLogsParams, isMetrics bool) middleware.Re
 			} else {
 				var bytes []byte = logFrame.GetData()
 				if bytes != nil {
-					//logr.Debugln("w.Write(bytes) len = %d", len(bytes))
 					_, err := w.Write(bytes)
-					//logr.Debugf("w.Write(bytes) says %d bytes written", n)
 					if err != nil && err != io.EOF {
 						logr.Errorf("getTrainingLogs(2) Write returned error: %s", err.Error())
 					}
-					//logr.Debugln("if f, ok := w.(http.Flusher); ok {")
 					if f, ok := w.(http.Flusher); ok {
 						logr.Debugln("f.Flush()")
 						f.Flush()
 					}
 				}
 			}
-			//logr.Debugln("bottom of for")
 		}
 	})
 }
@@ -610,7 +601,6 @@ func makeGrpcSearchTypeFromRestSearchType(st string) grpc_training_data_v1.Query
 
 func getEMetrics(params training_data.GetEMetricsParams) middleware.Responder {
 	logr := logger.LocLogger(logWithEMetricsParams(params))
-	logr.Debug("function entry")
 
 	trainingData, err := trainingDataClient.NewTrainingDataClient()
 	if err != nil {
@@ -696,13 +686,11 @@ func getEMetrics(params training_data.GetEMetricsParams) middleware.Responder {
 	response := training_data.NewGetEMetricsOK().WithPayload(&restmodels.V1EMetricsList{
 		Models: trimmedList,
 	})
-	logr.Debug("function exit")
 	return response
 }
 
 func getLoglines(params training_data.GetLoglinesParams) middleware.Responder {
 	logr := logger.LocLogger(logWithLoglinesParams(params))
-	logr.Debug("function entry")
 
 	trainingData, err := trainingDataClient.NewTrainingDataClient()
 	if err != nil {
@@ -787,7 +775,6 @@ func getLoglines(params training_data.GetLoglinesParams) middleware.Responder {
 	response := training_data.NewGetLoglinesOK().WithPayload(&restmodels.V1LogLinesList{
 		Models: trimmedList,
 	})
-	logr.Debug("function exit")
 	return response
 }
 
@@ -934,11 +921,11 @@ func serveLogHandler(trainer trainerClient.TrainerClient, stream grpc_trainer_v2
 						logr.WithError(errWrite).Errorf("serveLogHandler Write returned error")
 						break
 					}
-					logr.Debugf("wrote %d bytes", n)
+					logr.Debugf("Wrote %d bytes.", n)
 				}
 			}
 
-			// either EOF or error reading from trainer
+			// Either EOF or error reading from trainer
 			if err != nil {
 				logr.WithError(err).Debugf("Breaking from Recv() loop")
 				break
@@ -962,8 +949,6 @@ func getTrainingLogsWS(trainer trainerClient.TrainerClient, params models.GetLog
 }
 
 func serveLogHandlerTest(logr *logger.LocLoggingEntry, cancel context.CancelFunc) websocket.Handler {
-	logr.Debugf("In serveLogHandlerTest")
-
 	return func(ws *websocket.Conn) {
 		defer ws.Close()
 		defer cancel()

@@ -114,34 +114,6 @@ func extendLearnerVolumes(volumeSpecs []v1core.Volume, logr *logger.LocLoggingEn
 	return volumeSpecs
 }
 
-//func extendLearnerDeployment(deployment *v1beta1.Deployment) {
-//
-//	// learner entrypoint files volume
-//	learnerEntrypointFilesVolume := v1core.Volume{
-//		Name: learnerEntrypointFilesVolume,
-//		VolumeSource: v1core.VolumeSource{
-//			ConfigMap: &v1core.ConfigMapVolumeSource{
-//				LocalObjectReference: v1core.LocalObjectReference{
-//					Name: learnerEntrypointFilesVolume,
-//				},
-//			},
-//		},
-//	}
-//	deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, learnerEntrypointFilesVolume)
-//
-//	if doMountHostData() {
-//		hostDataVolume := v1core.Volume{
-//			Name: hostDataMountVolume,
-//			VolumeSource: v1core.VolumeSource{
-//				HostPath: &v1core.HostPathVolumeSource{
-//					Path: hostDataMountPath,
-//				},
-//			},
-//		}
-//		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, hostDataVolume)
-//	}
-//}
-
 func dataBrokerImageNameExtended(dockerRegistry string, dataBrokerType string, dataBrokerTag string) string {
 	imagePrefix := getImagePrefix()
 	return fmt.Sprintf("%s/%sdatabroker_%s:%s", dockerRegistry, imagePrefix, dataBrokerType, dataBrokerTag)
@@ -166,7 +138,6 @@ func doMountHostData() bool {
 	if mountPath == "1" || mountPath == "true" {
 		return true
 	}
-	// return exists(hostDataMountPath) || true
 	return false
 }
 

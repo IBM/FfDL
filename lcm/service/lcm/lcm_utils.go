@@ -76,33 +76,33 @@ func createEtcdNodes(lcm *lcmService, jobName string, userID string, trainingID 
 	return nil
 }
 
-//helper function to construct a job monitor name from job name
+// Helper function to construct a job monitor name from job name
 func constructJMName(jobName string) string {
 	jmName := "jobmonitor-" + jobName
 	return jmName
 }
 
-//helper function to construct a learner name from job name
+// Helper function to construct a learner name from job name
 func constructLearnerName(learnerID int, jobName string) string {
 	return "learner-" + strconv.Itoa(learnerID) + "-" + jobName
 }
 
-//helper function to construct a learnerHelper name from job name
+// Helper function to construct a learnerHelper name from job name
 func constructLearnerHelperName(learnerID int, jobName string) string {
 	return "lhelper-" + strconv.Itoa(learnerID) + "-" + jobName
 }
 
-//helper function to construct a learner service name from job name
+// Helper function to construct a learner service name from job name
 func constructLearnerServiceName(learnerID int, jobName string) string {
 	return constructLearnerName(learnerID, jobName)
 }
 
-//helper function to construct a learner service name from job name
+// Helper function to construct a learner PVC name from job name
 func constructLearnerVolumeClaimName(learnerID int, jobName string) string {
 	return constructLearnerName(learnerID, jobName)
 }
 
-//helper function to construct a parameter server name from job name
+// Helper function to construct a parameter server name from job name
 func constructPSName(jobName string) string {
 	psName := "grpc-ps-" + jobName
 	return psName

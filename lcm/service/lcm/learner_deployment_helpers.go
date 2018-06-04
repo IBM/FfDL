@@ -368,7 +368,6 @@ func volumesForHelper(req *service.JobDeploymentRequest, logr *logger.LocLogging
 		}
 
 	} else if useDynamicExternalVolume {
-		logr.Infof("Using dynamic external volume...")
 		sharedVolumeClaim := constructVolumeClaim(req.Name, config.GetLearnerNamespace(),
 			volumeSize, map[string]string{"training_id": req.TrainingId}, logr)
 		logr.Infof("Using dynamic external volume for Training %s with name %s",
