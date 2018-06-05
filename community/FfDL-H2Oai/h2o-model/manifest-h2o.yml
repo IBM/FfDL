@@ -3,8 +3,8 @@ description: H2O-3 Model Using H2O AutoML
 version: "1.0"
 learners: 2
 gpus: 0
-cpus: 0.5
-memory: 1Gb
+cpus: 1
+memory: 2Gb
 
 # Object stores that allow the system to retrieve training data
 data_stores:
