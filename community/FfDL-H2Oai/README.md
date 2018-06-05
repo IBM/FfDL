@@ -9,6 +9,8 @@ H2O is an open source, in-memory, distributed, fast, and scalable machine learni
 1. Follow steps to deploy FfDL from the [user guide](https://github.com/IBM/FfDL/blob/master/docs/user-guide.md)
 2. Add some data, either follow the user guide to store the data locally or host the data in a cloud storage bucket and pull it at runtime.
 3. Change the manifest.yaml to the settings that you want
+  * NOTE: It is recommended that you allocate at least 4x the amount of memory as the size of the dataset you are trying to run H2O with.
+  * EXAMPLE: 1.5GB Dataset --> 6.0 GB Memory allocated
 4. Once FfDL is deployed in your Kubernetes cluster, use the CLI or GUI to deploy H2O
 
 # Examples
