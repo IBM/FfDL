@@ -236,7 +236,7 @@ CLI_CMD=$(pwd)/cli/bin/ffdl-$(if [ "$(uname)" = "Darwin" ]; then echo 'osx'; els
 $CLI_CMD train etc/examples/tf-model/manifest.yml etc/examples/tf-model
 ```
 
-Congratulation, you had submitted your first job on FfDL. You can check your FfDL status either from the FfDL UI or simply run `$CLI_CMD list`
+Congratulations, you had submitted your first job on FfDL. You can check your FfDL status either from the FfDL UI or simply run `$CLI_CMD list`
 
 > You can learn about how to create your own model definition files and `manifest.yaml` at [user guild](docs/user-guide.md#2-create-new-models-with-ffdl).
 
@@ -273,7 +273,7 @@ done
 $CLI_CMD train etc/examples/caffe-model/manifest.yml etc/examples/caffe-model
 ```
 
-Congratulation, now you know how to deploy jobs with different deep learning framework. To learn more about your job execution results,
+Congratulations, now you know how to deploy jobs with different deep learning framework. To learn more about your job execution results,
 you can simply run `$CLI_CMD logs <MODEL_ID>`
 
 > If you no longer need any of the MNIST dataset we used in this example, you can simply delete the `tmp` repository.
