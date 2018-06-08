@@ -1,0 +1,96 @@
+{
+  "apiVersion": "machinelearning.seldon.io\/v1alpha1",
+  "kind": "SeldonDeployment",
+  "metadata": {
+    "labels": {
+      "app": "seldon"
+    },
+    "name": "ffdl-pymnist"
+  },
+  "spec": {
+    "annotations": {
+      "project_name": "FfDL Tensorflow MNIST",
+      "deployment_version": "v1"
+    },
+    "name": "pymnist",
+    "oauth_key": "oauth-key-pymnist",
+    "oauth_secret": "oauth-secret",
+    "predictors": [
+      {
+        "componentSpec": {
+          "spec": {
+            "containers": [
+              {
+                "image": "seldonio/ffdl-pymnist:0.1",
+                "imagePullPolicy": "IfNotPresent",
+                "name": "classifier",
+                "resources": {
+                  "requests": {
+                    "memory": "1Mi"
+                  }
+                },
+                "env": [
+                  {
+                    "name": "TRAINING_ID",
+                    "value": "%TRAINING_ID%"
+                  },
+                  {
+                    "name": "BUCKET_NAME",
+                    "value": "%BUCKET_NAME%"
+                  },
+                  {
+                    "valueFrom": {
+                      "secretKeyRef": {
+                          "localObjectReference": {
+			      "name" : "bucket-credentials"
+			  },
+                        "key": "endpoint"
+                      }
+                    },
+                    "name": "BUCKET_ENDPOINT_URL"
+                  },
+                  {
+                    "valueFrom": {
+                      "secretKeyRef": {
+                          "localObjectReference": {
+			      "name" : "bucket-credentials"
+			  },
+                        "key": "key"
+                      }
+                    },
+                      "name": "BUCKET_KEY"
+                  },
+                  {
+                    "valueFrom": {
+                      "secretKeyRef": {
+                          "localObjectReference": {
+			      "name" : "bucket-credentials"
+			  },
+                        "key": "secret"
+                      }
+                    },
+                    "name": "BUCKET_SECRET"
+                  }
+                ]
+              }
+            ],
+            "terminationGracePeriodSeconds": 20
+          }
+        },
+        "graph": {
+          "children": [],
+          "name": "classifier",
+          "endpoint": {
+            "type": "REST"
+          },
+          "type": "MODEL"
+        },
+        "name": "pytorch-model",
+        "replicas": 1,
+        "annotations": {
+          "predictor_version": "v1"
+        }
+      }
+    ]
+  }
+}
