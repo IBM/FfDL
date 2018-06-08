@@ -32,6 +32,7 @@ Currently, Fabric for Deep Learning supports following community frameworks
 | [pytorch](https://hub.docker.com/r/pytorch/pytorch/)       | v0.2, latest | CPU, GPU |
 | [caffe2](https://hub.docker.com/r/caffe2ai/caffe2/)        | c2v0.8.1.cpu.full.ubuntu14.04, c2v0.8.0.cpu.full.ubuntu16.04 | CPU |
 | [caffe2](https://hub.docker.com/r/caffe2ai/caffe2/)        | c2v0.8.1.cuda8.cudnn7.ubuntu16.04, latest | GPU |
+| [h2o3](https://hub.docker.com/r/opsh2oai/h2o3-ffdl/)    | latest | CPU |
 
 You can deploy models based on these frameworks and then train your models using the FfDL CLI or FfDL UI.
 
