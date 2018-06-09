@@ -9,7 +9,7 @@
   },
   "spec": {
     "annotations": {
-      "project_name": "FfDL Tensorflow MNIST",
+      "project_name": "FfDL PyTorch MNIST",
       "deployment_version": "v1"
     },
     "name": "pymnist",
