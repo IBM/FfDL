@@ -51,12 +51,13 @@ const (
 
 const (
 	psPort                       int32  = 50051
-	caffeFrameworkName                  = "caffe"
-	tfFrameworkName                     = "tensorflow"
-	// torchFrameworkName           string = "torch"
-	caffe2FrameworkName                 = "caffe2"
-	pytorchFrameworkName                = "pytorch"
-	customFrameworkName                 = "custom"
+	caffeFrameworkName           string = "caffe"
+	tfFrameworkName              string = "tensorflow"
+	torchFrameworkName           string = "torch"
+	caffe2FrameworkName          string = "caffe2"
+	pytorchFrameworkName         string = "pytorch"
+	customFrameworkName          string = "custom"
+	h2o3FrameworkName            string = "h2o3"
 	numRetries                          = 5
 	//maxGPUsPerNode                      = 4
 

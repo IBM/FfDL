@@ -51,7 +51,7 @@ var gerrf = grpc.Errorf
 
 var (
 	//NativeFrameworks which support native distribution
-	NativeFrameworks = []string{"tensorflow", "caffe2", "mxnet", "horovod"}
+	NativeFrameworks = []string{"tensorflow", "caffe2", "mxnet", "horovod", "h2o3"}
 	totalTrainingCounter, finishedTrainingCounter,
 	failedToLaunchTrainingsCounter metrics.Counter
 )

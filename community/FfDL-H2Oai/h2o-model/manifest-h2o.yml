@@ -1,0 +1,28 @@
+name: h2o3_automl
+description: H2O-3 Model Using H2O AutoML
+version: "1.0"
+learners: 2
+gpus: 0
+cpus: 1
+memory: 2Gb
+
+# Object stores that allow the system to retrieve training data
+data_stores:
+  - id: il-internal-os
+    type: s3_datastore
+    training_data:
+      container: h2o3_training_data
+    training_results:
+      container: h2o3_trained_model
+    connection:
+      type: s3_datastore
+      auth_url: http://s3.default.svc.cluster.local
+      user_name: test
+      password: test
+
+framework:
+  name: "h2o3"
+  version: "latest"
+  command: >
+    ./h2o3-cluster.sh;
+    if [ "$LEARNER_ID" == "1" ]; then python h2o3_baseline.py --trainDataFile ${DATA_DIR}/higgs_train_10k.csv --target response --memory 1; fi;

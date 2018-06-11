@@ -27,7 +27,7 @@ FfDL is a collaboration platform for:
 
 * Follow the appropriate instructions for standing up your Kubernetes cluster using [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) or [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)
 
-* The minimum recommended capacity for FfDL is 4GB Memory and 2 CPUs.
+* The minimum recommended capacity for FfDL is 4GB Memory and 3 CPUs.
 
 ## Usage Scenarios
 
@@ -221,7 +221,36 @@ do
 done
 ```
 
-4. Next, let's download all the necessary training and testing images in [LMDB format](https://en.wikipedia.org/wiki/Lightning_Memory-Mapped_Database) for our Caffe model
+4. Now you should have all the necessary training data set in your object storage. Let's go ahead to set up your restapi endpoint
+and default credentials for Deep Learning as a Service. Once you done that, you can start running jobs using the FfDL CLI (executable
+binary).
+
+```shell
+restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}')
+export DLAAS_URL=http://$node_ip:$restapi_port; export DLAAS_USERNAME=test-user; export DLAAS_PASSWORD=test;
+
+# Obtain the correct CLI for your machine and run the training job with our default TensorFlow model
+CLI_CMD=$(pwd)/cli/bin/ffdl-$(if [ "$(uname)" = "Darwin" ]; then echo 'osx'; else echo 'linux'; fi)
+$CLI_CMD train etc/examples/tf-model/manifest.yml etc/examples/tf-model
+```
+
+Congratulations, you had submitted your first job on FfDL. You can check your FfDL status either from the FfDL UI or simply run `$CLI_CMD list`
+
+> You can learn about how to create your own model definition files and `manifest.yaml` at [user guild](docs/user-guide.md#2-create-new-models-with-ffdl).
+
+5. If you want to run your job via the FfDL UI, simply run the below command to create your model zip file.
+
+```shell
+# Replace tf-model with the model you want to zip
+pushd etc/examples/tf-model && zip ../tf-model.zip * && popd
+```
+
+Then, upload `tf-model.zip` and `manifest.yml` (The default TensorFlow model) in the `etc/examples/` repository as shown below.
+Then, click `Submit Training Job` to run your job.
+
+![ui-example](docs/images/ui-example.png)
+
+6. (Optional) Since it's simple and straightforward to submit jobs with different deep learning framework on FfDL, let's try to run a Caffe Job. Download all the necessary training and testing images in [LMDB format](https://en.wikipedia.org/wiki/Lightning_Memory-Mapped_Database) for our Caffe model
 and upload those images to your mnist_lmdb_data bucket.
 
 ```shell
@@ -236,45 +265,16 @@ do
 done
 ```
 
-5. Now you should have all the necessary training data set in your object storage. Let's go ahead to set up your restapi endpoint
-and default credentials for Deep Learning as a Service. Once you done that, you can start running jobs using the FfDL CLI (executable
-binary).
-
-```shell
-restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}')
-export DLAAS_URL=http://$node_ip:$restapi_port; export DLAAS_USERNAME=test-user; export DLAAS_PASSWORD=test;
-
-# Obtain the correct CLI for your machine and run the training job with our default TensorFlow model
-CLI_CMD=cli/bin/ffdl-$(if [ "$(uname)" = "Darwin" ]; then echo 'osx'; else echo 'linux'; fi)
-$CLI_CMD train etc/examples/tf-model/manifest.yml etc/examples/tf-model
-```
-
-Congratulations, you had submitted your first job on FfDL. You can check your FfDL status either from the FfDL UI or simply run `$CLI_CMD list`
-
-> You can learn about how to create your own model definition files and `manifest.yaml` at [user guild](docs/user-guide.md#2-create-new-models-with-ffdl).
-
-6. Since it's simple and straightforward to submit jobs with different deep learning framework on FfDL, let's try to run a Caffe Job.
+7. Now train your Caffe Job.
 
 ```shell
 $CLI_CMD train etc/examples/caffe-model/manifest.yml etc/examples/caffe-model
 ```
 
-Congratulation, now you know how to deploy jobs with different deep learning framework. To learn more about your job execution results,
+Congratulations, now you know how to deploy jobs with different deep learning framework. To learn more about your job execution results,
 you can simply run `$CLI_CMD logs <MODEL_ID>`
 
 > If you no longer need any of the MNIST dataset we used in this example, you can simply delete the `tmp` repository.
-
-7. If you want to run your job via the FfDL UI, simply run the below command to create your model zip file.
-
-```shell
-# Replace tf-model with the model you want to zip
-pushd etc/examples/tf-model && zip ../tf-model.zip * && popd
-```
-
-Then, upload `tf-model.zip` and `manifest.yml` (The default TensorFlow model) in the `etc/examples/` repository as shown below.
-Then, click `Submit Training Job` to run your job.
-
-![ui-example](docs/images/ui-example.png)
 
 ### 6.2. Using Cloud Object Storage
 
@@ -371,6 +371,8 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
   make sure to follow the standard Go directory layout (see [Prerequisites section]{#Prerequisites}).
 
 * To remove FfDL on your Cluster, simply run `make undeploy`
+
+* When using the FfDL CLI to train a model, make sure your directory path doesn't have backslash `/` at the end.
 
 ## 9. References
 
