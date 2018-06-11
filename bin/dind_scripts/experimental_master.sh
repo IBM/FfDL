@@ -27,6 +27,7 @@ export HAS_STATIC_VOLUMES=True
 export PUBLIC_IP=10.192.0.3
 export SHARED_VOLUME_STORAGE_CLASS=""
 cd $GOPATH/src/github.com/IBM/FfDL
+kubectl create secret docker-registry regcred --docker-server=${DOCKER_REPO} --docker-username=${DOCKER_REPO_USER} --docker-password=${DOCKER_REPO_PASS} --docker-email=unknown@docker.io
 make docker-build docker-push create-volumes deploy
 
 echo "\nFfDL installed."

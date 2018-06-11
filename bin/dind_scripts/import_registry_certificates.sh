@@ -26,7 +26,7 @@ do
    docker exec -d $node mkdir -p /root/.docker/
    docker cp config.json $node:/root/.docker/config.json
    docker exec -i $node /bin/bash <<'_EOF'
-apt-get install -y nfs-common libfuse2 libxml2 curl libcurl3
+apt-get update && apt-get install -y libssl1.0.2 nfs-common libfuse2 libxml2 curl libcurl3
 update-ca-certificates
 service docker restart
 exit
