@@ -10,7 +10,7 @@ You can skip this step if you are happy to use the already packaged image ```sel
 The runtime MNIST scrorer is contained within a standalone [python class PyMnist.py](./PyMnist.py). This needs to be packaged in a Docker container to run within Seldon. For this we use [Redhat's Source-to-image](https://github.com/openshift/source-to-image).
 
  * Install [S2I](https://github.com/openshift/source-to-image#installation)
- * From the pytorch-model folder run, (*change seldonio to your Docker repo*):
+ * From the pytorch-model folder run the following s2i build. You will need to change *seldonio* to your Docker repo. You will need at least 8GB for your local Docker.
 ```
 s2i build . seldonio/seldon-core-s2i-python2 seldonio/ffdl-pymnist:0.1
 ```
