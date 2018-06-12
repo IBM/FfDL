@@ -12,6 +12,8 @@ FfDL is a collaboration platform for:
 
 ![ffdl-architecture](docs/images/ffdl-architecture.png)
 
+To know more about the architectural details, please read the [design document](design/design_docs.md).
+
 ## Prerequisites
 
 * `kubectl`: The Kubernetes command line interface (https://kubernetes.io/docs/tasks/tools/install-kubectl/)
