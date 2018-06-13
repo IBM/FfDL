@@ -35,6 +35,7 @@ data:
   tensorflow_gpu_1.3.0-gpu_CURRENT: manual
   tensorflow_cpu_1.3.0_CURRENT: manual
   tensorflow_cpu_1.3.0-py3_CURRENT: manual
+  h2o3_cpu_latest_CURRENT: manual
   caffe_cpu_cpu_CURRENT: master-39
   caffe_gpu_gpu_CURRENT: master-39
   caffe_cpu_intel_CURRENT: master-39
