@@ -19,4 +19,5 @@ To deploy your models on Seldon you need to
 # Examples
 
 [train and deploy a Tensorflow MNIST classififer.](./tf-model/README.md)
+[train and deploy a PyTorch MNIST classififer.](./pytorch-model/README.md)
 
