@@ -1,0 +1,7 @@
+.ipynb_checkpoints/
+manifest.yml
+*sample*
+*model*
+*.py
+*.npz
+report.txt
