@@ -18,7 +18,7 @@
 FROM dlaas-service-base:ubuntu16.04
 
 # Set environment variables.
-ENV ETCD_VERSION=3.2.10
+ENV ETCD_VERSION=3.3.3
 
 # Install etcdctl from repository.
 RUN apt-get install curl && \

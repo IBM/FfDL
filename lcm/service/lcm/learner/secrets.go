@@ -27,6 +27,11 @@ type COSVolumeSecret struct {
 	ID, TrainingID, Username, APIKey string
 }
 
+//SSHVolumeSecret ...
+type SSHVolumeSecret struct {
+	ID, TrainingID, Framework, Version string
+}
+
 //Secrets ...
 type Secrets struct {
 	TrainingDataSecret *COSVolumeSecret

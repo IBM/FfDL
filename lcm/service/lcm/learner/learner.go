@@ -1,17 +1,14 @@
 package learner
 
 import (
-	"github.com/spf13/viper"
-	"github.com/IBM/FfDL/commons/config"
 	v1beta1 "k8s.io/api/apps/v1beta1"
 	v1core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 //CreatePodSpec ...
-func CreatePodSpec(containers []v1core.Container, volumes []v1core.Volume, labels map[string]string, nodeSelector map[string]string) v1core.PodTemplateSpec {
+func CreatePodSpec(containers []v1core.Container, volumes []v1core.Volume, labels map[string]string, nodeSelector map[string]string, imagePullSecret string) v1core.PodTemplateSpec {
 	labels["service"] = "dlaas-learner" //label that denies ingress/egress
-	imagePullSecret := viper.GetString(config.LearnerImagePullSecretKey)
 	automountSeviceToken := false
 	return v1core.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{

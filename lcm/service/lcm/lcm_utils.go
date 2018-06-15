@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 package lcm
 
 import (
@@ -23,19 +24,21 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cenkalti/backoff"
+	"gopkg.in/yaml.v2"
+
 	"github.com/IBM/FfDL/commons/config"
 
 	"github.com/IBM/FfDL/commons/logger"
 	"github.com/IBM/FfDL/commons/service"
 	"github.com/IBM/FfDL/commons/util"
+	"github.com/IBM/FfDL/lcm/coord"
 
 	"github.com/IBM/FfDL/trainer/client"
 	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
 	"golang.org/x/net/context"
-	v1core "k8s.io/api/core/v1"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/scheme"
 )
 
 //creates all the znodes used by a training job before it is deployed
@@ -62,47 +65,36 @@ func createEtcdNodes(lcm *lcmService, jobName string, userID string, trainingID 
 		}
 	}
 
-	if numOfLearners > 1 {
-		path := trainingID + "/" + "parameter-server"
-		pathCreated, error := lcm.etcdClient.PutIfKeyMissing(path, "", logr)
-		if error != nil {
-			return error
-		}
-		if !pathCreated {
-			return fmt.Errorf("Failed to create the path %v , since it was already present", path)
-		}
-	}
-
 	return nil
 }
 
-// Helper function to construct a job monitor name from job name
+//helper function to construct a job monitor name from job name
 func constructJMName(jobName string) string {
 	jmName := "jobmonitor-" + jobName
 	return jmName
 }
 
-// Helper function to construct a learner name from job name
+//helper function to construct a learner name from job name
 func constructLearnerName(learnerID int, jobName string) string {
 	return "learner-" + strconv.Itoa(learnerID) + "-" + jobName
 }
 
-// Helper function to construct a learnerHelper name from job name
+//helper function to construct a learnerHelper name from job name
 func constructLearnerHelperName(learnerID int, jobName string) string {
 	return "lhelper-" + strconv.Itoa(learnerID) + "-" + jobName
 }
 
-// Helper function to construct a learner service name from job name
+//helper function to construct a learner service name from job name
 func constructLearnerServiceName(learnerID int, jobName string) string {
 	return constructLearnerName(learnerID, jobName)
 }
 
-// Helper function to construct a learner PVC name from job name
+//helper function to construct a learner service name from job name
 func constructLearnerVolumeClaimName(learnerID int, jobName string) string {
 	return constructLearnerName(learnerID, jobName)
 }
 
-// Helper function to construct a parameter server name from job name
+//helper function to construct a parameter server name from job name
 func constructPSName(jobName string) string {
 	psName := "grpc-ps-" + jobName
 	return psName
@@ -124,67 +116,31 @@ func getStorageSize(r *service.ResourceRequirements) int64 {
 
 // Return the name of a volume to use for a job.
 func getStaticVolume(logr *logger.LocLoggingEntry) string {
+	type Items struct {
+		Name   string `yaml:"name"`
+		Label  string `yaml:"label"`
+		Status string `yaml:"status"`
+	}
+	type Volumes struct {
+		Volumes []Items `yaml:"static-volumes-v2"`
+	}
 
-	// Read file with PVC specs.
-	logr.Debugf("entry into getStaticVolume")
-	pvcsFile := "/etc/static-volumes/PVCs.yaml"
-	bytes, err := ioutil.ReadFile(pvcsFile)
+	var staticVolumes Volumes
+	pvcConfigMap := "/etc/static-volumes-v2/PVCs-v2.yaml"
+	bytes, err := ioutil.ReadFile(pvcConfigMap)
 	if err != nil {
-		logr.Warnf("Unable to load %s: %s", pvcsFile, err)
+		logr.Warnf("Unable to load %s: %s", pvcConfigMap, err)
 		return ""
 	}
-
-	// Read top level object.
-	obj, err := runtime.Decode(scheme.Codecs.UniversalDeserializer(), bytes)
+	err = yaml.Unmarshal(bytes, &staticVolumes)
 	if err != nil {
-		logr.Errorf("Error decoding volume spec file: %s", err)
 		return ""
 	}
 
-	// Make sure it's a list.
-	var pvcList *v1core.List
-
-	switch obj := obj.(type) {
-	case *v1core.List:
-		pvcList = obj
-	//case *v1core.PersistentVolumeClaim:
-	//	pvcList = new(v1core.List)
-	//	pvcList = append(pvcList.Items, obj)
-	default:
-		logr.Errorf("Decoded object is not a list.")
-		return ""
+	if len(staticVolumes.Volumes) > 0 {
+		n := rand.Int() % len(staticVolumes.Volumes)
+		return staticVolumes.Volumes[n].Name
 	}
-
-	// Iterate through list.
-	volumes := []string{}
-	for _, item := range pvcList.Items {
-		// Parse for PVC object
-		pvcObj, err := runtime.Decode(scheme.Codecs.UniversalDeserializer(), item.Raw)
-		if err != nil {
-			logr.Errorf("Error decoding item in list: %s", err)
-			continue
-		}
-		var pvc *v1core.PersistentVolumeClaim
-		switch pvcObj := pvcObj.(type) {
-		case *v1core.PersistentVolumeClaim:
-			pvc = pvcObj
-		default:
-			logr.Errorf("Decoded object is not a PVC.")
-			continue
-		}
-
-		// Add PVC name to list.
-		volumes = append(volumes, pvc.Name)
-	}
-
-	// Return a random volume.
-	logr.Debugf("static volumes: %s", volumes)
-	if len(volumes) > 0 {
-		n := rand.Int() % len(volumes)
-		logr.Debugf("returning a volume: %d", n)
-		return volumes[n]
-	}
-
 	return ""
 }
 
@@ -300,4 +256,35 @@ func isJobDone(jobStatus string, logr *logger.LocLoggingEntry) bool {
 // This label is used to configure Calico network policy rules for the pod.
 func setServiceTypeLabel(spec *metav1.ObjectMeta, value string) {
 	spec.Labels["service"] = value
+}
+
+func k8sInteractionBackoff() *backoff.ExponentialBackOff {
+	back := backoff.NewExponentialBackOff()
+	back.MaxElapsedTime = 3 * time.Minute
+	back.MaxInterval = 1 * time.Minute
+	return back
+}
+
+func etdInteractionBackoff(maxElapsedTime, maxInterval time.Duration) *backoff.ExponentialBackOff {
+	back := backoff.NewExponentialBackOff()
+	back.MaxElapsedTime = maxElapsedTime
+	back.MaxInterval = maxInterval
+	return back
+}
+
+//onError function on how to deal with the scenario if connecting to coordinator failed. the error is still returned in case
+func coordinator(logr *logger.LocLoggingEntry) (coord.Coordinator, error) {
+
+	var instance coord.Coordinator
+	var err error
+	err = backoff.
+		RetryNotify(func() error {
+			instance, err = coord.NewCoordinator(coord.Config{Endpoints: config.GetEtcdEndpoints(), Prefix: config.GetEtcdPrefix(),
+				Cert: config.GetEtcdCertLocation(), Username: config.GetEtcdUsername(), Password: config.GetEtcdPassword()}, logr)
+			return err
+		}, etdInteractionBackoff(1*time.Minute, 30*time.Second), func(err error, t time.Duration) {
+			logr.WithError(err).Errorf("failed to establish connection with etcd")
+		})
+
+	return instance, err
 }

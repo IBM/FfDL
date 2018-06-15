@@ -22,7 +22,6 @@ import (
 	v1core "k8s.io/api/core/v1"
 	v1resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"github.com/IBM/FfDL/commons/logger"
 	"github.com/spf13/viper"
 	"github.com/IBM/FfDL/commons/config"
 )
@@ -42,19 +41,15 @@ var supportedVolumeSizes = []v1resource.Quantity{
 }
 
 // GetVolumeClaim returns a PersistentVolumeClaim struct for the given volume size (specified in bytes).
-func GetVolumeClaim(volumeSize int64, logr *logger.LocLoggingEntry) (*v1core.PersistentVolumeClaim, error) {
+func GetVolumeClaim(volumeSize int64) (*v1core.PersistentVolumeClaim, error) {
 	quantity := getStorageQuantity(volumeSize)
 	if quantity == nil {
-		err := errors.New("Unable to find matching storage quantity")
-		logr.WithError(err).Debugf("getStorageQuantity returned error")
-		return nil, err
+		return nil, errors.New("Unable to find matching storage quantity")
 	}
 
 	class := getStorageClass(volumeSize)
 	if class == "" {
-		err := errors.New("Unable to find matching storage class")
-		logr.WithError(err).Debugf("getStorageClass returned error")
-		return nil, err
+		return nil, errors.New("Unable to find matching storage class")
 	}
 
 	claim := &v1core.PersistentVolumeClaim{

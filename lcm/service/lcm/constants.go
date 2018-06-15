@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 package lcm
 
 const (
@@ -50,7 +51,8 @@ const (
 )
 
 const (
-	psPort                       int32  = 50051
+	psPort             int32  = 50051
+	// FfDL Change: Specialized for FfDL
 	caffeFrameworkName           string = "caffe"
 	tfFrameworkName              string = "tensorflow"
 	torchFrameworkName           string = "torch"
@@ -81,11 +83,16 @@ const (
 	loadModelMilliCPU=20
 	loadModelMemInMB=50
 	loadTrainingDataMilliCPU=20
+	// FfDL Change: parameterized
+	//loadTrainingDataMemInMB=100
+	//logCollectorMilliCPU=20
+	//logCollectorMemInMB=100
 	controllerMilliCPU=20
 	controllerMemInMB=100
 )
 
 const (
+	component                       = "component"
 	reason                          = "reason"
 	framework                       = "framework"
 	progress                        = "progress"
@@ -98,9 +105,7 @@ const (
 	killed                          = "job_killed"
 	servicesDeletedPhaseComplete    = "servicesDeletedPhaseComplete"
 	deploymentsDeletedPhaseComplete = "deploymentsDeletedPhaseComplete"
-	replicaSetsDeletedPhaseComplete = "replicaSetsDeletedPhaseComplete"
 	jobsDeletedPhaseComplete        = "jobsDeletedPhaseComplete"
-	podsDeletedPhaseComplete        = "podsDeletedPhaseComplete"
 	pvsDeletedPhaseComplete         = "pvsDeletedPhaseComplete"
 	secretsDeletedPhaseComplete     = "secretsDeletedPhaseComplete"
 	etcdKeysDeletedPhaseComplete    = "etcdKeysDeletedPhaseComplete"

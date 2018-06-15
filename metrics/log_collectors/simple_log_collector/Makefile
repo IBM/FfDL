@@ -22,7 +22,7 @@ IMAGE_TAG ?= user-$(WHOAMI)
 
 IMAGE_NAME?=${DOCKER_REPO}/${DOCKER_NAMESPACE}/log_collector:${IMAGE_TAG}
 
-all: build
+all: build push
 
 DOCKER_OPTIONS ?=
 
@@ -30,6 +30,9 @@ build:
 	cp -r ../training_data_service_client .
 	docker build -q ${DOCKER_OPTIONS} -t ${DOCKER_REPO}/${DOCKER_NAMESPACE}/log_collector:${IMAGE_TAG} -f Dockerfile .
 	rm -r training_data_service_client
+
+push:
+	docker push ${REPO}/log_collector:${IMAGE_TAG}
 
 imagename:
 	echo $(IMAGE_NAME)

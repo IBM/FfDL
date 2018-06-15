@@ -19,10 +19,12 @@ package storage
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"strconv"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -36,6 +38,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/spf13/viper"
 	"github.com/IBM/FfDL/commons/logger"
+
+	"github.com/IBM/FfDL/trainer/instrumentation"
 )
 
 const (
@@ -44,6 +48,7 @@ const (
 	DataStoreTypeMountCOSS3 = "mount_cos"
 	DataStoreTypeS3 = "s3_datastore"
 	defaultRegion   = "us-standard"
+	contextTimeout  = 30 * time.Second
 )
 
 type s3ObjectStore struct {
@@ -73,6 +78,9 @@ func NewS3ObjectStore(conf map[string]string) (DataStore, error) {
 func (os *s3ObjectStore) Connect() error {
 	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 
+	cl := instrumentation.NewCallLogger(nil, "Connect", logr)
+	defer cl.Returned()
+
 	cfg := aws.NewConfig().
 		WithEndpoint(os.conf[AuthURLKey]).
 		WithRegion(os.getRegion()).
@@ -88,11 +96,13 @@ func (os *s3ObjectStore) Connect() error {
 		return err
 	}
 	os.session = sess
+	cl.Observe("created new aws session")
 
 	// make deployment outside SL work for local env
 	replaceS3ObjectStoreURL(os.session)
 	os.conf[AuthURLKey] = *os.session.Config.Endpoint
 	os.client = s3.New(os.session)
+
 	return nil
 }
 
@@ -110,6 +120,12 @@ func (os *s3ObjectStore) usePathStyleAddressing() bool {
 
 func (os *s3ObjectStore) UploadArchive(container string, object string, payload []byte) error {
 	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
+	defer cancel()
+	cl := instrumentation.NewCallLogger(ctx, "UploadArchive", logr)
+	defer cl.Returned()
+
 	if os.client == nil {
 		return ErrNotConnected
 	}
@@ -132,16 +148,23 @@ func (os *s3ObjectStore) UploadArchive(container string, object string, payload 
 		Key:    aws.String(object),
 		Body:   bytes.NewReader(payload),
 	}
-	_, err = uploader.Upload(upParams)
+	_, err = uploader.UploadWithContext(ctx, upParams)
 	if err != nil {
 		logr.Errorf("Uploading archive %s/%s failed: %s", container, object, err.Error())
 		return err
 	}
+	cl.Observe("uploaded archive to s3")
 	return nil
 }
 
 func (os *s3ObjectStore) DownloadArchive(container string, object string) ([]byte, error) {
 	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
+	defer cancel()
+	cl := instrumentation.NewCallLogger(ctx, "DownloadArchive", logr)
+	defer cl.Returned()
+
 	if os.client == nil {
 		return nil, ErrNotConnected
 	}
@@ -153,16 +176,23 @@ func (os *s3ObjectStore) DownloadArchive(container string, object string) ([]byt
 	}
 	var payload []byte
 	buff := aws.NewWriteAtBuffer(payload)
-	_, err := downloader.Download(buff, input)
+	_, err := downloader.DownloadWithContext(ctx, buff, input)
 	if err != nil {
 		logr.Errorf("Downloading archive %s/%s failed: %s", container, object, err.Error())
 		return nil, err
 	}
+	cl.Observe("downloaded file to s3")
 	return buff.Bytes(), nil
 }
 
 func (os *s3ObjectStore) DeleteArchive(container string, object string) error {
 	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
+	defer cancel()
+	cl := instrumentation.NewCallLogger(ctx, "DeleteArchive", logr)
+	defer cl.Returned()
+
 	if os.client == nil {
 		return ErrNotConnected
 	}
@@ -170,11 +200,12 @@ func (os *s3ObjectStore) DeleteArchive(container string, object string) error {
 		Bucket: aws.String(container),
 		Key:    aws.String(object),
 	}
-	_, err := os.client.DeleteObject(input)
+	_, err := os.client.DeleteObjectWithContext(ctx, input)
 	if err != nil {
 		logr.Errorf("Deleting archive %s/%s failed: %s", container, object, err.Error())
 		return err
 	}
+	cl.Observe("deleted archive in s3")
 
 	// check if no more
 	resp, err := os.client.ListObjects(&s3.ListObjectsInput{
@@ -476,6 +507,13 @@ func (os *s3ObjectStore) DownloadTrainedModelLogFile(path string, numLearners in
 }
 
 func (os *s3ObjectStore) ContainerExists(name string) (bool, error) {
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
+	defer cancel()
+	cl := instrumentation.NewCallLogger(ctx, "ContainerExists", logr)
+	defer cl.Returned()
+
 	if os.client == nil {
 		return false, ErrNotConnected
 	}
@@ -487,7 +525,7 @@ func (os *s3ObjectStore) ContainerExists(name string) (bool, error) {
 	params := &s3.HeadBucketInput{
 		Bucket: aws.String(name),
 	}
-	_, err := os.client.HeadBucket(params)
+	_, err := os.client.HeadBucketWithContext(ctx, params)
 
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
@@ -496,6 +534,7 @@ func (os *s3ObjectStore) ContainerExists(name string) (bool, error) {
 			}
 		}
 	}
+	cl.Observe("container exists in s3")
 	return err == nil, err
 }
 
@@ -507,38 +546,56 @@ func (os *s3ObjectStore) Disconnect() {
 
 func (os *s3ObjectStore) createBucket(name string) error {
 	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
+	defer cancel()
+	cl := instrumentation.NewCallLogger(ctx, "createBucket", logr)
+	defer cl.Returned()
+
 	params := &s3.CreateBucketInput{
 		Bucket: aws.String(name),
 		CreateBucketConfiguration: &s3.CreateBucketConfiguration{
 			LocationConstraint: aws.String(os.getRegion()),
 		},
 	}
-	_, err := os.client.CreateBucket(params)
+	_, err := os.client.CreateBucketWithContext(ctx, params)
 	if err != nil {
 		logr.Errorf("Creating bucket failed: %s", err.Error())
 		return err
 	}
+	cl.Observe("created bucket in s3")
 	return nil
 }
 
 func (os *s3ObjectStore) deleteBucket(name string) error {
 	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
+	defer cancel()
+	cl := instrumentation.NewCallLogger(ctx, "deleteBucket", logr)
+	defer cl.Returned()
+
 	params := &s3.DeleteBucketInput{
 		Bucket: aws.String(name),
 	}
-	_, err := os.client.DeleteBucket(params)
+	_, err := os.client.DeleteBucketWithContext(ctx, params)
 	if err != nil {
 		logr.Errorf("Deleting bucket failed: %s", err.Error())
 	}
+	cl.Observe("deleted bucket in s3")
 	return nil
 }
 
 // getRegion reads the viper config for a region, otherwise it will use a default.
 func (os *s3ObjectStore) getRegion() string {
-	if region, ok := os.conf[RegionKey]; ok {
-		return region
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+
+	region, ok := os.conf[RegionKey]
+	if !ok {
+		region = defaultRegion
 	}
-	return defaultRegion
+	logr.Debugf("s3ObjectStore using region: %s", region)
+	return region
 }
 
 // replaceS3ObjectStoreURL depending on the DLAAS_ENV variables we need to
