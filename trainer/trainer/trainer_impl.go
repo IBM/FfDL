@@ -1652,13 +1652,14 @@ func (s *trainerService) validateRequest(log *logrus.Entry, req *grpc_trainer_v2
 		return s.failCreateRequest("Framework version is not set", req, log)
 	}
 
+	// FfDL Change: FIXME: temporarily disable framework validation
 	// custom image check
-	if m.Framework.ImageLocation == nil {
-		if ok, msg := validateFrameworks(m.Framework); !ok {
-			return s.failCreateRequest(msg, req, log)
-		}
-	}
-
+	//if m.Framework.ImageLocation == nil {
+	//	if ok, msg := validateFrameworks(m.Framework); !ok {
+	//		return s.failCreateRequest(msg, req, log)
+	//	}
+	//}
+	//
 	if len(m.Content) == 0 {
 		return s.failCreateRequest("Model definition content is not set", req, log)
 	}
