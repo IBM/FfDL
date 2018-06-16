@@ -1,0 +1,8 @@
+keras>=2.1.6
+tensorflow>=1.8
+ipython>=5.0.0
+jupyter>=1.0.0
+requests>=2.12.0,<=2.18.4
+wget
+boto3
+git+git://github.com/IBM/adversarial-robustness-toolbox@master

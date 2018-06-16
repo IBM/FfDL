@@ -7,6 +7,7 @@ import torch.optim as optim
 import os
 import gzip
 import codecs
+import sys
 
 from torchvision import datasets, transforms
 from torch.autograd import Variable
@@ -171,3 +172,14 @@ def test():
 for epoch in range(1, args.epochs + 1):
     train(epoch)
     test()
+
+    
+os.makedirs(os.environ["RESULT_DIR"]+'/model')    
+model_path = os.environ["RESULT_DIR"]+"/model/model.dat"
+print("Saving model in {}".format(model_path))
+torch.save(model.state_dict(), model_path)
+
+os.system("(cd $RESULT_DIR/model;tar cvfz ../saved_model.tar.gz .)")
+print(str(os.listdir(os.environ["RESULT_DIR"])))
+print(os.environ["RESULT_DIR"])
+sys.stdout.flush()
