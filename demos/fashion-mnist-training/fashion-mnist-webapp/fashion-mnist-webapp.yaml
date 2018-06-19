@@ -1,0 +1,40 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: fashion-mnist-webapp
+  labels:
+    service: fashion-mnist-webapp
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: fashion-mnist-webapp
+      labels:
+        service: fashion-mnist-webapp
+    spec:
+      containers:
+      - name: fashion-mnist-webapp
+        # You can use your own webapp image below
+        image: journeycode/ffdl-webapp-demo:latest
+        imagePullPolicy: Always
+        env:
+          - name: MODEL_ENDPOINT
+            # Put down your Seldon model endpoint
+            value: <your Seldon model endpoint hosted on AMBASSADOR_API_IP>
+        ports:
+        - containerPort: 8088
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fashion-mnist-webapp
+  labels:
+    service: fashion-mnist-webapp
+spec:
+  ports:
+  - name: http
+    port: 8088
+    targetPort: 8088
+  type: LoadBalancer
+  selector:
+    service: fashion-mnist-webapp
