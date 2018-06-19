@@ -1,5 +1,5 @@
 
-# Fabric for Deep Learning Related publcations, talks and demos
+# Fabric for Deep Learning related demos, talks, videos, publications and more.
 
 This is a running list of FfDL demos to be used for conference talks and presentations. 
 
