@@ -1,6 +1,6 @@
 #!/usr/bin/env python
+# Example picked from https://raw.githubusercontent.com/uber/horovod/master/examples/tensorflow_mnist.py
 
-#example picked from https://raw.githubusercontent.com/uber/horovod/master/examples/tensorflow_mnist.py
 import os, sys
 import tensorflow as tf
 import horovod.tensorflow as hvd

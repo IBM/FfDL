@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-
 """Functions for downloading and reading MNIST data."""
+
 import gzip
 from six.moves import xrange
 from six.moves.urllib.request import urlretrieve
