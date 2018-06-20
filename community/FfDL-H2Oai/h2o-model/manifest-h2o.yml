@@ -23,6 +23,7 @@ data_stores:
 framework:
   name: "h2o3"
   version: "latest"
+  # h2o3-cluster.sh is the H2O entrypoint script to set up multi-node H2O cluster on FfDL
   command: >
     ./h2o3-cluster.sh;
     if [ "$LEARNER_ID" == "1" ]; then python h2o3_baseline.py --trainDataFile ${DATA_DIR}/higgs_train_10k.csv --target response --memory 1; fi;
