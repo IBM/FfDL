@@ -17,8 +17,10 @@ H2O is an open source, in-memory, distributed, fast, and scalable machine learni
 Sample deployment scripts are hosted under: FfDL/community/FfDL-H2Oai
 
 If you need a sample dataset, you can pull this toy dataset:
+
 Train Set:
 https://s3.amazonaws.com/h2o-public-test-data/smalldata/higgs/higgs_train_10k.csv
+
 Test Set:
 https://s3.amazonaws.com/h2o-public-test-data/smalldata/higgs/higgs_test_5k.csv
 
