@@ -113,6 +113,8 @@ Please refer to the [developer guide](docs/developer-guide.md) for more details.
 
 ## 5. Detailed Installation Instructions
 
+0. If you don't have a Kubernetes, you can create a [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) Kubernetes Cluster on your local machine.
+
 1. First, clone this repository and install the helm tiller on your Kubernetes cluster.
 ``` shell
 helm init
@@ -122,8 +124,42 @@ kubectl get pods --all-namespaces | grep tiller-deploy
 # kube-system   tiller-deploy-fb8d7b69c-pcvc2              1/1       Running
 ```
 
-2. Now let's install all the necessary FfDL components using helm install.
-> Note: If your Kubernetes Cluster version is 1.7 or below, please go to the [values.yaml](values.yaml) and change `k8s_1dot8_or_above` to **false**.
+2. Define the necessary environment variables.
+* For Kubeadm-DIND Cluster
+```shell
+export FFDL_PATH=$(pwd)
+export HAS_STATIC_VOLUMES=True
+export SHARED_VOLUME_STORAGE_CLASS=""
+```
+
+* For Cloud provider's Kubernetes Cluster.
+```shell
+export HAS_STATIC_VOLUMES=True
+export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold"
+```
+
+3. Install the Object Storage driver using helm install.
+* For Kubeadm-DIND Cluster
+```shell
+./s3_driver.sh
+helm install storage-plugin --set dind=true
+```
+
+* For Cloud provider's Kubernetes Cluster.
+```shell
+helm install storage-plugin
+```
+
+4. Create a static volume to store any metadata from FfDL.
+```shell
+pushd bin
+./create_static_volumes.sh
+./create_static_volumes_config.sh
+# Wait while kubectl get pvc shows static-volume-1 in state Pending
+popd
+```
+
+5. Now let's install all the necessary FfDL components using helm install.
 
 ``` shell
 helm install .
@@ -151,23 +187,17 @@ helm status $(helm list | grep ffdl | awk '{print $1}' | head -n 1) | grep STATU
 # STATUS: DEPLOYED
 ```
 
-3. Run the following script to configure Grafana for monitoring FfDL using the logging information from prometheus.
-> Note: If you are using a IBM Cloud Cluster, make sure you are logged in with `bx login`.
+6. Run the following script to configure Grafana for monitoring FfDL using the logging information from prometheus.
+> Note: If you are using a IBM Cloud Cluster, you can obtain your k8s public ip using `bx cs workers <cluster-name>`.
 
 ``` shell
-# If your Cluster is running on Minikube, replace "ibmcloud" to "minikube"
-# If your Cluster is not running on Minikube or IBM Cloud, replace "ibmcloud" to "none"
-export VM_TYPE=ibmcloud
-
-# Replace <Your Cluster Name> with your IBM Cloud Cluster Name if your cluster is on IBM Cloud.
-# Use export PUBLIC_IP if you are using a none VM_TYPE. A Cluster Public IP that can access your Cluster's NodePorts.
-export CLUSTER_NAME=<Your Cluster Name>
+export VM_TYPE=none
 export PUBLIC_IP=<Cluster Public IP>
 
 ./bin/grafana.init.sh
 ```
 
-4. Lastly, run the following commands to obtain your Grafana, FfDL Web UI, and FfDL restapi endpoints.
+7. Lastly, run the following commands to obtain your Grafana, FfDL Web UI, and FfDL restapi endpoints.
 ``` shell
 # Note: $(make --no-print-directory kubernetes-ip) simply gets the Public IP for your cluster.
 node_ip=$(make --no-print-directory kubernetes-ip)

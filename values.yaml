@@ -10,19 +10,19 @@ docker:
   image_prefix: ffdl-
   pullPolicy: IfNotPresent
 trainer:
-  version: dummy
+  version: v0.1
   port: 0
   replicas: 1
   cpus: 100m
   memory: 64Mi
 restapi:
-  version: dummy
+  version: v0.1
   port: 0
   replicas: 1
   cpus: 50m
   memory: 64Mi
 lcm:
-  version: dummy
+  version: v0.1
   port: 0
   replicas: 1
   cpus: 100m
@@ -33,7 +33,7 @@ lcm:
   # This will used for "volume.beta.kubernetes.io/storage-class" for the shared volume
   shared_volume_storage_class: ""
 trainingdata:
-  version: dummy
+  version: v0.1
   port: 0
   replicas: 1
   cpus: 50m
@@ -43,9 +43,9 @@ learner:
   docker_namespace: ffdl
   kubeSecret: lcm-secrets
 databroker:
-  tag: dummy
+  tag: v0.1
 webui:
-  version: dummy
+  version: v0.1
   port: 0
   cpus: 50m
   memory: 64Mi
