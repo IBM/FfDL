@@ -1,3 +1,5 @@
+*阅读本文的其他语言版本：[English](README.md)。*
+
 [![构建状态](https://travis-ci.org/IBM/FfDL.svg?branch=master)](https://travis-ci.org/IBM/FfDL)
 
 # Fabric for Deep Learning (FfDL)
