@@ -4,7 +4,7 @@
 
 H2O is an open source, in-memory, distributed, fast, and scalable machine learning and predictive analytics platform that allows you to build machine learning models on big data and provides easy productionalization of those models in an enterprise environment.
 
-![ffdl-h20](images/ffdl-h20.png)
+![ffdl-h20](images/ffdl-h203.png)
 
 # Deployment Steps
 
