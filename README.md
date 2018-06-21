@@ -113,7 +113,7 @@ Please refer to the [developer guide](docs/developer-guide.md) for more details.
 
 ## 5. Detailed Installation Instructions
 
-0. If you don't have a Kubernetes, you can create a [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) Kubernetes Cluster on your local machine. We recommend you give at least 4 CPUs and 8GB of memory to your Docker.
+0. If you don't have a Kubernetes Cluster, you can create a [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) Kubernetes Cluster on your local machine. We recommend you give at least 4 CPUs and 8GB of memory to your Docker.
 > For Mac users, visit the instructions on the [Docker website](https://docs.docker.com/docker-for-mac/#advanced) and learn how to give more memory to your Docker.
 
 1. First, clone this repository and install the helm tiller on your Kubernetes cluster.
@@ -136,6 +136,11 @@ kubectl get pods --all-namespaces | grep tiller-deploy
   ```shell
   # Change the storage class to what's available on your cloud provider.
   export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold"
+  if [ "$(uname)" = "Darwin" ]; then
+    sed -i '' s#"\"\""#"\"$SHARED_VOLUME_STORAGE_CLASS\""# values.yaml
+  else
+    sed -i s#"\"\""#"\"$SHARED_VOLUME_STORAGE_CLASS\""# values.yaml
+  fi
   ```
 
 3. Install the Object Storage driver using helm install.
