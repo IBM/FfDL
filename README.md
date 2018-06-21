@@ -141,7 +141,7 @@ export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold"
 3. Install the Object Storage driver using helm install.
 * For Kubeadm-DIND Cluster
 ```shell
-./s3_driver.sh
+./bin/s3_driver.sh
 helm install storage-plugin --set dind=true
 ```
 
