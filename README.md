@@ -1,4 +1,4 @@
-*Read this in other languages: [中国](README-cn.md).*
+*Read this in other languages: [中文](README-cn.md).*
 
 [![build status](https://travis-ci.org/IBM/FfDL.svg?branch=master)](https://travis-ci.org/IBM/FfDL)
 
