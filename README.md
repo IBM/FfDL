@@ -226,7 +226,7 @@ s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
   ```
 
 
-  * 7.b. For Cloud provider's Kubernetes Cluster.
+  * 7.b. For Cloud Kubernetes Cluster.
   > Note: If you are using IBM Cloud Cluster, you can obtain your k8s public ip using `bx cs workers <cluster-name>`.
 
   ``` shell
