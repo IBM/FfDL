@@ -156,12 +156,19 @@ kubectl get pods --all-namespaces | grep tiller-deploy
   ```
 
 4. Create a static volume to store any metadata from FfDL.
+
 ```shell
 pushd bin
 ./create_static_volumes.sh
 ./create_static_volumes_config.sh
 # Wait while kubectl get pvc shows static-volume-1 in state Pending
 popd
+```
+
+> If your cluster is getting an error with `error: current-context is not set`, you need to run the following commands to create your own context.
+```shell
+kubectl config set-context ffdl --user=cluster-admin
+kubectl config use-context ffdl
 ```
 
 5. Now let's install all the necessary FfDL components using helm install.
