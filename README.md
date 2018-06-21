@@ -166,10 +166,10 @@ popd
 ```
 
 > If your cluster is getting an error with `error: current-context is not set`, you need to run the following commands to create your own context.
-```shell
-kubectl config set-context ffdl --user=cluster-admin
-kubectl config use-context ffdl
-```
+>  ```shell
+>  kubectl config set-context ffdl --user=cluster-admin
+>  kubectl config use-context ffdl
+>  ```
 
 5. Now let's install all the necessary FfDL components using helm install.
 
