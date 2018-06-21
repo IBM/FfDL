@@ -125,26 +125,26 @@ kubectl get pods --all-namespaces | grep tiller-deploy
 ```
 
 2. Define the necessary environment variables.
-  2.a. For Kubeadm-DIND Cluster only
+  * 2.a. For Kubeadm-DIND Cluster only
   ```shell
   export FFDL_PATH=$(pwd)
   export SHARED_VOLUME_STORAGE_CLASS=""
   ```
 
-  2.b. For Cloud Kubernetes Cluster
+  * 2.b. For Cloud Kubernetes Cluster
   ```shell
   # Change the storage class to what's available on your cloud provider.
   export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold"
   ```
 
 3. Install the Object Storage driver using helm install.
-  3.a. For Kubeadm-DIND Cluster only
+  * 3.a. For Kubeadm-DIND Cluster only
   ```shell
   ./bin/s3_driver.sh
   helm install storage-plugin --set dind=true
   ```
 
-  3.b. For Cloud Kubernetes Cluster
+  * 3.b. For Cloud Kubernetes Cluster
   ```shell
   helm install storage-plugin
   ```
@@ -211,7 +211,7 @@ s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
   ```
 
 7. Run the following commands to configure Grafana for monitoring FfDL using the logging information from prometheus.
-  7.a. For Kubeadm-DIND Cluster only
+  * 7.a. For Kubeadm-DIND Cluster only
   ```shell
   export VM_TYPE=none
   export PUBLIC_IP=localhost
@@ -220,7 +220,7 @@ s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
   ```
 
 
-  7.b. For Cloud provider's Kubernetes Cluster.
+  * 7.b. For Cloud provider's Kubernetes Cluster.
   > Note: If you are using IBM Cloud Cluster, you can obtain your k8s public ip using `bx cs workers <cluster-name>`.
 
   ``` shell
