@@ -1,19 +1,4 @@
-{{ if .Values.dind }}
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: local-volume-1
-  labels:
-    type: local
-spec:
-  capacity:
-    storage: 20Gi
-  accessModes:
-    - ReadWriteMany
-  hostPath:
-    path: "/mnt"
-  persistentVolumeReclaimPolicy: Delete
-{{ else }}
+{{ if .Values.cloud }}
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:

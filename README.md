@@ -147,7 +147,7 @@ kubectl get pods --all-namespaces | grep tiller-deploy
   * 3.a. For Kubeadm-DIND Cluster only
   ```shell
   ./bin/s3_driver.sh
-  helm install storage-plugin --set dind=true
+  helm install storage-plugin --set dind=true,cloud=false
   ```
 
   * 3.b. For Cloud Kubernetes Cluster

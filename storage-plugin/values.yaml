@@ -6,3 +6,4 @@ image:
   pluginBuild: v0.1
   pullPolicy: IfNotPresent
 dind: false
+cloud: true
