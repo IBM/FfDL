@@ -113,7 +113,8 @@ Please refer to the [developer guide](docs/developer-guide.md) for more details.
 
 ## 5. Detailed Installation Instructions
 
-0. If you don't have a Kubernetes, you can create a [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) Kubernetes Cluster on your local machine.
+0. If you don't have a Kubernetes, you can create a [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) Kubernetes Cluster on your local machine. We recommend you give at least 4 CPUs and 8GB of memory to your Docker.
+> For Mac users, visit the instructions on the [Docker website](https://docs.docker.com/docker-for-mac/#advanced) and learn how to give more memory to your Docker.
 
 1. First, clone this repository and install the helm tiller on your Kubernetes cluster.
 ``` shell
