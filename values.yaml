@@ -1,7 +1,7 @@
 namespace: default
 env: dev
 k8s_1dot8_or_above: true
-has_static_volumes: false
+has_static_volumes: true
 services:
   expose_node_port: true
 docker:

@@ -125,30 +125,29 @@ kubectl get pods --all-namespaces | grep tiller-deploy
 ```
 
 2. Define the necessary environment variables.
-* For Kubeadm-DIND Cluster
-```shell
-export FFDL_PATH=$(pwd)
-export HAS_STATIC_VOLUMES=True
-export SHARED_VOLUME_STORAGE_CLASS=""
-```
+  2.a. For Kubeadm-DIND Cluster only
+  ```shell
+  export FFDL_PATH=$(pwd)
+  export SHARED_VOLUME_STORAGE_CLASS=""
+  ```
 
-* For Cloud provider's Kubernetes Cluster.
-```shell
-export HAS_STATIC_VOLUMES=True
-export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold"
-```
+  2.b. For Cloud Kubernetes Cluster
+  ```shell
+  # Change the storage class to what's available on your cloud provider.
+  export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold"
+  ```
 
 3. Install the Object Storage driver using helm install.
-* For Kubeadm-DIND Cluster
-```shell
-./bin/s3_driver.sh
-helm install storage-plugin --set dind=true
-```
+  3.a. For Kubeadm-DIND Cluster only
+  ```shell
+  ./bin/s3_driver.sh
+  helm install storage-plugin --set dind=true
+  ```
 
-* For Cloud provider's Kubernetes Cluster.
-```shell
-helm install storage-plugin
-```
+  3.b. For Cloud Kubernetes Cluster
+  ```shell
+  helm install storage-plugin
+  ```
 
 4. Create a static volume to store any metadata from FfDL.
 ```shell
@@ -187,25 +186,54 @@ helm status $(helm list | grep ffdl | awk '{print $1}' | head -n 1) | grep STATU
 # STATUS: DEPLOYED
 ```
 
-6. Run the following script to configure Grafana for monitoring FfDL using the logging information from prometheus.
-> Note: If you are using a IBM Cloud Cluster, you can obtain your k8s public ip using `bx cs workers <cluster-name>`.
-
-``` shell
-export VM_TYPE=none
-export PUBLIC_IP=<Cluster Public IP>
-
-./bin/grafana.init.sh
-```
-
-7. Lastly, run the following commands to obtain your Grafana, FfDL Web UI, and FfDL restapi endpoints.
-``` shell
-# Note: $(make --no-print-directory kubernetes-ip) simply gets the Public IP for your cluster.
-node_ip=$(make --no-print-directory kubernetes-ip)
-
-# Obtain all the necessary NodePorts for Grafana, Web UI, and RestAPI.
+6. Obtain the necessary port for Grafana, FfDL Web UI, local object storage, and FfDL restapi.
+```shell
 grafana_port=$(kubectl get service grafana -o jsonpath='{.spec.ports[0].nodePort}')
 ui_port=$(kubectl get service ffdl-ui -o jsonpath='{.spec.ports[0].nodePort}')
 restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}')
+s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
+```
+
+* For Kubeadm-DIND Cluster, we need to forward the port to the localhost machine since we don't want to exec into the docker image and install various dependencies.
+  - For Kubeadm-DIND Kubernetes 1.10
+  ```shell
+  kubectl port-forward svc/ffdl-ui $ui_port:80 &
+  kubectl port-forward svc/ffdl-restapi $restapi_port:80 &
+  kubectl port-forward svc/grafana $grafana_port:80 &
+  kubectl port-forward svc/s3 $s3_port:80 &
+  ```
+  - For Kubeadm-DIND Kubernetes 1.9 and below. You can obtain your pod names with `kubectl get pods`
+  ```shell
+  kubectl port-forward pod/<ffdl-ui pod name>$ui_port:8080 &
+  kubectl port-forward pod/<ffdl-restapi pod name>$restapi_port:8080 &
+  kubectl port-forward pod/<prometheus pod name> $grafana_port:3000 &
+  kubectl port-forward pod/storage-0 $s3_port:4572 &
+  ```
+
+7. Run the following commands to configure Grafana for monitoring FfDL using the logging information from prometheus.
+  7.a. For Kubeadm-DIND Cluster only
+  ```shell
+  export VM_TYPE=none
+  export PUBLIC_IP=localhost
+
+  ./bin/grafana.init.sh
+  ```
+
+
+  7.b. For Cloud provider's Kubernetes Cluster.
+  > Note: If you are using IBM Cloud Cluster, you can obtain your k8s public ip using `bx cs workers <cluster-name>`.
+
+  ``` shell
+  export VM_TYPE=none
+  export PUBLIC_IP=<Cluster Public IP>
+
+  ./bin/grafana.init.sh
+  ```
+
+8. Lastly, run the following commands to obtain your Grafana, FfDL Web UI, and FfDL restapi endpoints.
+``` shell
+# Note: $(make --no-print-directory kubernetes-ip) simply gets the Public IP for your cluster.
+node_ip=$(make --no-print-directory kubernetes-ip)
 
 # Echo statements to print out Grafana and Web UI URLs.
 echo "Monitoring dashboard: http://$node_ip:$grafana_port/ (login: admin/admin)"
@@ -218,8 +246,6 @@ Congratulation, FfDL is now running on your Cluster. Now you can go to [Step 6](
 
 In this example, we will run some simple jobs to train a convolutional network model using TensorFlow and Caffe. We will download a set of
 MNIST handwritten digit images, store them with Object Storage, and use the FfDL CLI to train a handwritten digit classification model.
-
-> Note: For Minikube, make sure you have the latest TensorFlow Docker image by running `docker pull tensorflow/tensorflow`
 
 ### 6.1. Using FfDL Local S3 Based Object Storage
 
@@ -316,8 +342,6 @@ you can simply run `$CLI_CMD logs <MODEL_ID>`
 ### 6.2. Using Cloud Object Storage
 
 In this section we will demonstrate how to run a TensorFlow job with training data stored in Cloud Object Storage.
-
-> Note: This also can be done with other Cloud providers' Object Storage, but we will demonstrate how to use IBM Cloud Object Storage in this instructions.
 
 1. Provision an S3 based Object Storage from your Cloud provider. Take note of your Authentication Endpoints, Access Key ID and Secret.
 
