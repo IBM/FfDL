@@ -374,7 +374,7 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 
 * To remove FfDL on your Cluster, simply run `make undeploy`
 
-* When using the FfDL CLI to train a model, make sure your directory path doesn't have backslash `/` at the end.
+* When using the FfDL CLI to train a model, make sure your directory path doesn't have slashes `/` at the end.
 
 ## 9. References
 
