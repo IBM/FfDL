@@ -5,7 +5,7 @@ metadata:
   name: {{ .Chart.Name }}
   namespace: kube-system
   labels:
-    app: {{ template "name" . }}
+    app: {{ .Chart.Name }}
 spec:
   strategy:
     type: RollingUpdate
@@ -13,7 +13,7 @@ spec:
   template:
     metadata:
       labels:
-        app: {{ template "name" . }}
+        app: {{ .Chart.Name }}
     spec:
       tolerations:
       - operator: "Exists"
