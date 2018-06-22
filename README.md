@@ -70,6 +70,7 @@ If you have [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-clust
 ``` shell
 export VM_TYPE=dind
 export PUBLIC_IP=localhost
+export SHARED_VOLUME_STORAGE_CLASS="";
 make quickstart-deploy
 ```
 
@@ -82,6 +83,9 @@ then deploy the platform services:
 ``` shell
 export VM_TYPE=none
 export PUBLIC_IP=<Cluster Public IP>
+
+# Change the storage class to what's available on your Cloud Kubernetes Cluster.
+export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold";
 make quickstart-deploy
 ```
 
@@ -125,13 +129,14 @@ kubectl get pods --all-namespaces | grep tiller-deploy
 
   * 2.b. For Cloud Kubernetes Cluster
   ```shell
-  # Change the storage class to what's available on your cloud provider.
+  # Change the storage class to what's available on your Cloud Kubernetes Cluster.
   export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold"
   ```
 
 3. Install the Object Storage driver using helm install.
   * 3.a. For Kubeadm-DIND Cluster only
   ```shell
+  export FFDL_PATH=$(pwd)
   ./bin/s3_driver.sh
   helm install storage-plugin --set dind=true,cloud=false
   ```
