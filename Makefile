@@ -104,6 +104,19 @@ quickstart-deploy:
 		helm init > /dev/null 2>&1; \
 		sleep 3; \
 	fi;
+	@if [ "$(VM_TYPE)" = "dind" ]; then \
+		SHARED_VOLUME_STORAGE_CLASS=""
+		./bin/s3_driver.sh
+		helm install storage-plugin --set dind=true,cloud=false
+	else \
+	  SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold"
+		helm install storage-plugin
+	fi;
+	@pushd bin
+	@./create_static_volumes.sh
+	@./create_static_volumes_config.sh
+	@# Wait while kubectl get pvc shows static-volume-1 in state Pending
+	@popd
 	@echo collecting existing pods
 	@while kubectl get pods --all-namespaces | \
 		grep -v RESTARTS | \
@@ -117,11 +130,11 @@ quickstart-deploy:
 		existing=$$(helm list | grep ffdl | awk '{print $$1}' | head -n 1); \
 		(if [ -z "$$existing" ]; then \
 			echo "Deploying the stack via Helm. This will take a while."; \
-			helm --debug install --set lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS . ; \
+			helm --debug install --set lcm.shared_volume_storage_class=$$SHARED_VOLUME_STORAGE_CLASS . ; \
 			sleep 10; \
 		else \
 			echo "Upgrading existing Helm deployment ($$existing). This will take a while."; \
-			helm --debug upgrade --set lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS $$existing . ; \
+			helm --debug upgrade --set lcm.shared_volume_storage_class=$$SHARED_VOLUME_STORAGE_CLASS $$existing . ; \
 		fi) & pid=$$!; \
 		sleep 5; \
 		while kubectl get pods --all-namespaces | \
@@ -598,6 +611,8 @@ kubernetes-ip:
 		elif [ "$(VM_TYPE)" = "ibmcloud" ]; then \
 			echo $$(bx cs workers $(CLUSTER_NAME) | grep Ready | awk '{ print $$2;exit }'); \
 		elif [ "$(VM_TYPE)" = "none" ]; then \
+			echo "$(PUBLIC_IP)"; \
+		else \
 			echo "$(PUBLIC_IP)"; \
 		fi
 

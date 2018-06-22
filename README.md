@@ -62,45 +62,33 @@ To know more about the architectural details, please read the [design document](
 
 There are multiple installation paths for installing FfDL locally ("1-click-install") or into an existing Kubernetes cluster.
 
-> Note: If your Kubernetes Cluster version is 1.7 or below, please go to the [values.yaml](values.yaml) and change `k8s_1dot8_or_above` to **false**.
+### 1.1 Installation using Kubeadm-DIND
 
-### 1.1 Installation using Minikube
-
-If you have Minikube installed on your machine, use these commands to deploy the FfDL platform:
+If you have [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) installed on your machine, use these commands to deploy the FfDL platform:
 ``` shell
-export VM_TYPE=minikube
-make minikube
-make deploy
+export VM_TYPE=dind
+make quickstart-deploy
 ```
 
 ### 1.2 Installation using Kubernetes Cluster
 
-To install FfDL to a proper Kubernetes cluster, make sure `kubectl` points to the right namespace,
+To install FfDL to any proper Kubernetes cluster, make sure `kubectl` points to the right namespace,
 then deploy the platform services:
 > Note: For PUBLIC_IP, put down one of your Cluster Public IP that can access your Cluster's NodePorts.
 
 ``` shell
 export VM_TYPE=none
 export PUBLIC_IP=<Cluster Public IP>
-make deploy
-```
-
-### 1.3 Installation using IBM Cloud Kubernetes Cluster
-
-To install FfDL to a proper IBM Cloud Kubernetes cluster, make sure `kubectl` points to the right namespace
-and your machine is logged in with `bx login`, then deploy the platform services:
-``` shell
-export VM_TYPE=ibmcloud
-export CLUSTER_NAME=<Your Cluster Name> # Replace <Your Cluster Name> with your IBM Cloud Cluster Name
-make deploy
+make quickstart-deploy
 ```
 
 ## 2. Test
 
 To submit a simple example training job that is included in this repo (see `etc/examples` folder):
 
-```
-make test-submit
+``` shell
+make test-push-data-s3
+make test-job-submit
 ```
 
 ## 3. Monitoring
