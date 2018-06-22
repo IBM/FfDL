@@ -62,7 +62,7 @@ To know more about the architectural details, please read the [design document](
 
 ## 1. Quick Start
 
-There are multiple installation paths for installing FfDL locally ("1-click-install") or into an existing Kubernetes cluster.
+There are multiple installation paths for installing FfDL locally ("1-click-install") or into an existing Kubernetes cluster. You can visit [Step 5](#5-detailed-installation-instructions) for more details on the deployment instructions.
 
 ### 1.1 Installation using Kubeadm-DIND
 
@@ -78,7 +78,7 @@ make quickstart-deploy
 
 To install FfDL to any proper Kubernetes cluster, make sure `kubectl` points to the right namespace,
 then deploy the platform services:
-> Note: For PUBLIC_IP, put down one of your Cluster Public IP that can access your Cluster's NodePorts.
+> Note: For PUBLIC_IP, put down one of your Cluster Public IP that can access your Cluster's NodePorts. For IBM Cloud, you can get your Public IP with `bx cs workers <cluster_name>`.
 
 ``` shell
 export VM_TYPE=none
