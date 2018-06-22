@@ -136,11 +136,6 @@ kubectl get pods --all-namespaces | grep tiller-deploy
   ```shell
   # Change the storage class to what's available on your cloud provider.
   export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold"
-  if [ "$(uname)" = "Darwin" ]; then
-    sed -i '' s#"\"\""#"\"$SHARED_VOLUME_STORAGE_CLASS\""# values.yaml
-  else
-    sed -i s#"\"\""#"\"$SHARED_VOLUME_STORAGE_CLASS\""# values.yaml
-  fi
   ```
 
 3. Install the Object Storage driver using helm install.
@@ -168,7 +163,7 @@ popd
 5. Now let's install all the necessary FfDL components using helm install.
 
 ``` shell
-helm install .
+helm install . --set lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS
 ```
 > Note: If you want to upgrade an older version of FfDL, run
 > `helm upgrade $(helm list | grep ffdl | awk '{print $1}' | head -n 1) .`

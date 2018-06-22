@@ -14,7 +14,7 @@ data_stores:
     training_results:
       container: tf_trained_model
     connection:
-      auth_url: http://localhost:32207
+      auth_url: http://s3.default.svc.cluster.local
       user_name: test
       password: test
 
