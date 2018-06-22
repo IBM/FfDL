@@ -38,6 +38,7 @@ Compile the code, generate certificates, and build the Docker images via:
 ```shell
 make build
 make gen-certs
+make docker-build-base
 make docker-build
 ```
 
