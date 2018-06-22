@@ -97,11 +97,18 @@ create-volumes:
 		./create_static_volumes_config.sh;
 
 deploy-plugin:
+	@# deploy the stack via helm
+	@echo Deploying services to Kubernetes. This may take a while.
+	@if ! helm list > /dev/null 2>&1; then \
+		echo 'Installing helm/tiller'; \
+		helm init > /dev/null 2>&1; \
+		sleep 5; \
+	fi;
 	@existingPlugin=$$(helm list | grep ibmcloud-object-storage-plugin | awk '{print $$1}' | head -n 1);
 	@if [ "$(VM_TYPE)" = "dind" ]; then \
 		export FFDL_PATH=$$(pwd); \
 		./bin/s3_driver.sh; \
-		sleep 5; \
+		sleep 10; \
 		(if [ -z "$$existingPlugin" ]; then \
 			helm install --set dind=true,cloud=false storage-plugin; \
 		else \
@@ -114,21 +121,12 @@ deploy-plugin:
 			helm upgrade $$existingPlugin storage-plugin; \
 		fi) & pid=$$!; \
 	fi;
-
-quickstart-deploy:
-	@# deploy the stack via helm
-	@echo Deploying services to Kubernetes. This may take a while.
-	@if ! helm list > /dev/null 2>&1; then \
-		echo 'Installing helm/tiller'; \
-		helm init > /dev/null 2>&1; \
-		sleep 5; \
-	fi;
-	@# deploy plugin
-	@make deploy-plugin
 	@echo "Wait while kubectl get pvc shows static-volume-1 in state Pending"
 	@./bin/create_static_volumes.sh
 	@./bin/create_static_volumes_config.sh
 	@sleep 3
+
+quickstart-deploy:
 	@echo "collecting existing pods"
 	@while kubectl get pods --all-namespaces | \
 		grep -v RESTARTS | \

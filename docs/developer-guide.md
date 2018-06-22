@@ -16,28 +16,46 @@ Install:
 * `Go` is very specific about directory layouts. Make sure to set your `$GOPATH` and clone this repo to a directory
 `$GOPATH/src/github.com/IBM/FfDL` before proceeding with the next steps.
 
-> If you are developing on Minikube, please run the following commands to configure your Minikube and set up the Docker client to use the Minikube's Docker Daemon. Then start to build your own Docker images.
-> ```shell
-> export VM_TYPE=minikube
-> make minikube
-> eval $(minikube docker-env)
-> ```
-
 Then, fetch the dependencies via:
-```
+```shell
 glide install
 ```
-Compile the code and build the Docker images via:
+
+Define the folloing environment variables:
+```shell
+export SHARED_VOLUME_STORAGE_CLASS=<StorageClass>
+export PUBLIC_IP=<IP_TO_CLUSTER>
+export DOCKER_REPO_USER=<REPOSITORY_USER> # Container Registry Username
+export DOCKER_REPO_PASS=<PASSWORD_TO_YOUR_REPOSITORY> # Container Registry Password
+export DOCKER_NAMESPACE=<NAMESPACE_ON_IBM_CLOUD> # Container Registry Namespace
+export DOCKER_PULL_POLICY=Always
+export DOCKER_REPO=<registry endpoint> # (e.g.) registry.ng.bluemix.net
+export VM_TYPE=none
+export HAS_STATIC_VOLUMES=True
 ```
+
+Compile the code, generate certificates, and build the Docker images via:
+```shell
 make build
+make gen-certs
+make docker-build-base
 make docker-build
+```
+
+If you want to push the images you just built, run:
+```shell
+make docker push
 ```
 
 Make sure `kubectl` points to the right target context/namespace, then deploy the services to your Kubernetes
 environment (using `helm`):
-```
+```shell
+make deploy-plugin
 make deploy
 ```
+
+## Troubleshooting
+If your Object Storage Driver is not successfully installed on your Kubernetes, you can following the step by step instructions at [ibmcloud-object-storage-plugin](https://github.com/IBM/ibmcloud-object-storage-plugin).
 
 ## Enable device plugin for GPU workloads with development build
 

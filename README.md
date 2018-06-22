@@ -26,8 +26,8 @@ To know more about the architectural details, please read the [design document](
 
 * `S3 CLI`: The [command-line interface](https://aws.amazon.com/cli/) to configure your Object Storage
 
-* An existing Kubernetes cluster (e.g., [Minikube](https://github.com/kubernetes/minikube) for local testing).
-  For Minikube, use the command `make minikube` to start Minikube and set up local network routes. Minikube **v0.25.1** is tested with Travis CI.
+* An existing Kubernetes cluster (e.g., [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) for local testing).
+  <!-- For Minikube, use the command `make minikube` to start Minikube and set up local network routes. Minikube **v0.25.1** is tested with Travis CI. -->
 
 * Follow the appropriate instructions for standing up your Kubernetes cluster using [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) or [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)
 
@@ -46,9 +46,8 @@ To know more about the architectural details, please read the [design document](
 ## Steps
 
 1. [Quick Start](#1-quick-start)
-  - 1.1 [Installation using Minikube](#11-installation-using-minikube)
+  - 1.1 [Installation using Kubeadm-DIND](#11-installation-using-kubeadm-dind)
   - 1.2 [Installation using Kubernetes Cluster](#12-installation-using-kubernetes-cluster)
-  - 1.3 [Installation using IBM Cloud Kubernetes Cluster](#13-installation-using-ibm-cloud-kubernetes-cluster)
 2. [Test](#2-test)
 3. [Monitoring](#3-monitoring)
 4. [Development](#4-development)
@@ -62,7 +61,7 @@ To know more about the architectural details, please read the [design document](
 
 ## 1. Quick Start
 
-There are multiple installation paths for installing FfDL locally ("1-click-install") or into an existing Kubernetes cluster.
+There are multiple installation paths for installing FfDL locally ("1-click-install") or into an existing Kubernetes cluster. You can visit [Step 5](#5-detailed-installation-instructions) for more details on the deployment instructions.
 
 ### 1.1 Installation using Kubeadm-DIND
 
@@ -71,6 +70,7 @@ If you have [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-clust
 export VM_TYPE=dind
 export PUBLIC_IP=localhost
 export SHARED_VOLUME_STORAGE_CLASS="";
+make deploy-plugin
 make quickstart-deploy
 ```
 
@@ -78,7 +78,7 @@ make quickstart-deploy
 
 To install FfDL to any proper Kubernetes cluster, make sure `kubectl` points to the right namespace,
 then deploy the platform services:
-> Note: For PUBLIC_IP, put down one of your Cluster Public IP that can access your Cluster's NodePorts.
+> Note: For PUBLIC_IP, put down one of your Cluster Public IP that can access your Cluster's NodePorts. For IBM Cloud, you can get your Public IP with `bx cs workers <cluster_name>`.
 
 ``` shell
 export VM_TYPE=none
@@ -86,6 +86,7 @@ export PUBLIC_IP=<Cluster Public IP>
 
 # Change the storage class to what's available on your Cloud Kubernetes Cluster.
 export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold";
+make deploy-plugin
 make quickstart-deploy
 ```
 
@@ -192,20 +193,9 @@ restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nod
 s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
 ```
 
-* For Kubeadm-DIND Cluster, we need to forward the port to the localhost machine since we don't want to exec into the docker image and install various dependencies.
-  - For Kubeadm-DIND Kubernetes 1.10
+* For Kubeadm-DIND Cluster, we need to run the below script to forward the port to the localhost machine since we don't want to exec into the docker image and install various dependencies.
   ```shell
-  kubectl port-forward svc/ffdl-ui $ui_port:80 &
-  kubectl port-forward svc/ffdl-restapi $restapi_port:80 &
-  kubectl port-forward svc/grafana $grafana_port:80 &
-  kubectl port-forward svc/s3 $s3_port:80 &
-  ```
-  - For Kubeadm-DIND Kubernetes 1.9 and below. You can obtain your pod names with `kubectl get pods`
-  ```shell
-  kubectl port-forward pod/<ffdl-ui pod name> $ui_port:8080 &
-  kubectl port-forward pod/<ffdl-restapi pod name> $restapi_port:8080 &
-  kubectl port-forward pod/<prometheus pod name> $grafana_port:3000 &
-  kubectl port-forward pod/storage-0 $s3_port:4572 &
+  ./bin/dind-port-forward.sh
   ```
 
 7. Run the following commands to configure Grafana for monitoring FfDL using the logging information from prometheus.
@@ -412,16 +402,27 @@ $CLI_CMD train etc/examples/tf-model/manifest.yml etc/examples/tf-model
 ```
 
 ## 7. Clean Up
-If you want to remove FfDL from your cluster, simply use the command below or run `helm delete <your FfDL release name>`
+If you want to remove FfDL from your cluster, simply use the following commands.
 ```shell
 helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
+```
+
+If you want to remove the storage driver and pvc from your cluster, run:
+```shell
+kubectl delete pvc static-volume-1
+helm delete $(helm list | grep ibmcloud-object-storage-plugin | awk '{print $1}' | head -n 1)
+```
+
+For Kubeadm-DIND, you need to kill your forwarded ports. Note that the below command will kill all the ports that are created with `kubectl`.
+```shell
+kill $(lsof -i | grep kubectl | awk '{printf $2 " " }')
 ```
 
 ## 8. Troubleshooting
 
 * FfDL has only been tested under Mac OS and Linux
 
-* The default Minikube driver under Mac OS is VirtualBox, which is known for having issues with networking.
+<!-- * The default Minikube driver under Mac OS is VirtualBox, which is known for having issues with networking.
   We generally recommend Mac OS users to install Minikube using the xhyve driver.
 
 * Also, when testing locally with Minikube, make sure to point the `docker` CLI to Minikube's Docker daemon:
@@ -430,7 +431,7 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
    eval $(minikube docker-env)
    ```
 * If you run into DNS name resolution issues using Minikube, make sure that the system uses only `10.0.0.10`
-  as the single nameserver. Using multiple nameservers can result in problems, in particular under Mac OS.
+  as the single nameserver. Using multiple nameservers can result in problems, in particular under Mac OS. -->
 
 * If `glide install` fails with an error complaining about non-existing paths (e.g., "Without src, cannot continue"),
   make sure to follow the standard Go directory layout (see [Prerequisites section]{#Prerequisites}).
@@ -438,6 +439,8 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 * To remove FfDL on your Cluster, simply run `make undeploy`
 
 * When using the FfDL CLI to train a model, make sure your directory path doesn't have slashes `/` at the end.
+
+* If your job is stuck in pending stage, you can try to redeploy the plugin with `helm install storage-plugin --set dind=true,cloud=false` for Kubeadm-DIND and `helm install storage-plugin` for general Kubernetes Cluster. Also, double check your training job manifest file to make sure you have the correct object storage credentials.
 
 ## 9. References
 
