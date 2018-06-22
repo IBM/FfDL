@@ -136,6 +136,7 @@ kubectl get pods --all-namespaces | grep tiller-deploy
 3. Install the Object Storage driver using helm install.
   * 3.a. For Kubeadm-DIND Cluster only
   ```shell
+  export FFDL_PATH=$(pwd)
   ./bin/s3_driver.sh
   helm install storage-plugin --set dind=true,cloud=false
   ```

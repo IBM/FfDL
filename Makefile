@@ -96,31 +96,35 @@ create-volumes:
 		./create_static_volumes.sh; \
 		./create_static_volumes_config.sh;
 
+deploy-plugin:
+	@existingPlugin=$$(helm list | grep ibmcloud-object-storage-plugin | awk '{print $$1}' | head -n 1);
+	@if [ "$(VM_TYPE)" = "dind" ]; then \
+		export FFDL_PATH=$$(pwd); \
+		./bin/s3_driver.sh; \
+		sleep 5; \
+		(if [ -z "$$existingPlugin" ]; then \
+			helm install --set dind=true,cloud=false storage-plugin; \
+		else \
+			helm upgrade --set dind=true,cloud=false $$existingPlugin storage-plugin; \
+		fi) & pid=$$!; \
+	else \
+		(if [ -z "$$existingPlugin" ]; then \
+			helm install storage-plugin; \
+		else \
+			helm upgrade $$existingPlugin storage-plugin; \
+		fi) & pid=$$!; \
+	fi;
+
 quickstart-deploy:
 	@# deploy the stack via helm
 	@echo Deploying services to Kubernetes. This may take a while.
 	@if ! helm list > /dev/null 2>&1; then \
 		echo 'Installing helm/tiller'; \
 		helm init > /dev/null 2>&1; \
-		sleep 3; \
+		sleep 5; \
 	fi;
 	@# deploy plugin
-	@if [ "$(VM_TYPE)" = "dind" ]; then \
-		./bin/s3_driver.sh; \
-		existing-plugin=$$(helm list | grep ibmcloud-object-storage-plugin | awk '{print $$1}' | head -n 1); \
-		(if [ -z "$$existing-plugin" ]; then \
-			helm install storage-plugin --set dind=true,cloud=false; \
-		else \
-			helm upgrade storage-plugin --set dind=true,cloud=false $$existing-plugin; \
-		fi) & pid=$$!; \
-	else \
-		existing-plugin=$$(helm list | grep ibmcloud-object-storage-plugin | awk '{print $$1}' | head -n 1); \
-		(if [ -z "$$existing-plugin" ]; then \
-			helm install storage-plugin; \
-		else \
-			helm upgrade storage-plugin $$existing-plugin; \
-		fi) & pid=$$!; \
-	fi;
+	@make deploy-plugin
 	@echo "Wait while kubectl get pvc shows static-volume-1 in state Pending"
 	@./bin/create_static_volumes.sh
 	@./bin/create_static_volumes_config.sh
@@ -133,7 +137,8 @@ quickstart-deploy:
 	do \
 		sleep 1; \
 	done
-	@echo calling big command
+	@echo "calling big command"
+	@sleep 5; \
 	@set -o verbose; \
 		existing=$$(helm list | grep ffdl | awk '{print $$1}' | head -n 1); \
 		(if [ -z "$$existing" ]; then \
@@ -173,20 +178,10 @@ quickstart-deploy:
 	do \
 		sleep 5; \
 	done
-	@echo initialize monitoring dashboards
 	@if [ "$(VM_TYPE)" = "dind" ]; then \
-		grafana_port=$$(kubectl get service grafana -o jsonpath='{.spec.ports[0].nodePort}'); \
-		ui_port=$$(kubectl get service ffdl-ui -o jsonpath='{.spec.ports[0].nodePort}'); \
-		restapi_port=$$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}'); \
-		s3_port=$$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}'); \
-		ui_pod=$$(kubectl get pods | grep ffdl-ui | awk '{print $1}'); \
-		restapi_pod=$(kubectl get pods | grep ffdl-restapi | awk '{print $1}'); \
-		grafana_pod=$(kubectl get pods | grep prometheus | awk '{print $1}'); \
-		kubectl port-forward pod/$$ui_pod $$ui_port:8080 & \
-		kubectl port-forward pod/$$restapi_pod $$restapi_port:8080 & \
-		kubectl port-forward pod/$$grafana_pod $$grafana_port:3000 & \
-		kubectl port-forward pod/storage-0 $$s3_port:4572 & \
+		./bin/dind-port-forward.sh; \
 	fi;
+	@echo initialize monitoring dashboards
 	@if [ "$$CI" != "true" ]; then bin/grafana.init.sh; fi
 	@echo
 	@echo System status:
