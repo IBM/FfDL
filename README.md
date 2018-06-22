@@ -26,8 +26,8 @@ To know more about the architectural details, please read the [design document](
 
 * `S3 CLI`: The [command-line interface](https://aws.amazon.com/cli/) to configure your Object Storage
 
-* An existing Kubernetes cluster (e.g., [Minikube](https://github.com/kubernetes/minikube) for local testing).
-  For Minikube, use the command `make minikube` to start Minikube and set up local network routes. Minikube **v0.25.1** is tested with Travis CI.
+* An existing Kubernetes cluster (e.g., [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) for local testing).
+  <!-- For Minikube, use the command `make minikube` to start Minikube and set up local network routes. Minikube **v0.25.1** is tested with Travis CI. -->
 
 * Follow the appropriate instructions for standing up your Kubernetes cluster using [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) or [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)
 
@@ -46,9 +46,8 @@ To know more about the architectural details, please read the [design document](
 ## Steps
 
 1. [Quick Start](#1-quick-start)
-  - 1.1 [Installation using Minikube](#11-installation-using-minikube)
+  - 1.1 [Installation using Kubeadm-DIND](#11-installation-using-kubeadm-dind)
   - 1.2 [Installation using Kubernetes Cluster](#12-installation-using-kubernetes-cluster)
-  - 1.3 [Installation using IBM Cloud Kubernetes Cluster](#13-installation-using-ibm-cloud-kubernetes-cluster)
 2. [Test](#2-test)
 3. [Monitoring](#3-monitoring)
 4. [Development](#4-development)
@@ -412,7 +411,7 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 
 * FfDL has only been tested under Mac OS and Linux
 
-* The default Minikube driver under Mac OS is VirtualBox, which is known for having issues with networking.
+<!-- * The default Minikube driver under Mac OS is VirtualBox, which is known for having issues with networking.
   We generally recommend Mac OS users to install Minikube using the xhyve driver.
 
 * Also, when testing locally with Minikube, make sure to point the `docker` CLI to Minikube's Docker daemon:
@@ -421,7 +420,7 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
    eval $(minikube docker-env)
    ```
 * If you run into DNS name resolution issues using Minikube, make sure that the system uses only `10.0.0.10`
-  as the single nameserver. Using multiple nameservers can result in problems, in particular under Mac OS.
+  as the single nameserver. Using multiple nameservers can result in problems, in particular under Mac OS. -->
 
 * If `glide install` fails with an error complaining about non-existing paths (e.g., "Without src, cannot continue"),
   make sure to follow the standard Go directory layout (see [Prerequisites section]{#Prerequisites}).
