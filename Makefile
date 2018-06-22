@@ -79,10 +79,6 @@ docker-push:
 			echo "docker push $$i"; \
 			docker push $$i; \
 		done; \
-		if [ "$(VM_TYPE)" = "none" ]; then \
-			echo "The following images are now available:" ; \
-			curl https://${DOCKER_REPO_USER}:${DOCKER_REPO_PASS}\@${DOCKER_REPO}/v2/_catalog ; \
-		fi; \
 	fi;
 
 # TODO: setup-registry
@@ -99,6 +95,131 @@ create-volumes:
 		./create_static_pv.sh; \
 		./create_static_volumes.sh; \
 		./create_static_volumes_config.sh;
+
+quickstart-deploy:
+	@# deploy the stack via helm
+	@echo Deploying services to Kubernetes. This may take a while.
+	@if ! helm list > /dev/null 2>&1; then \
+		echo 'Installing helm/tiller'; \
+		helm init > /dev/null 2>&1; \
+		sleep 3; \
+	fi;
+	@if [ "$(VM_TYPE)" = "dind" ]; then \
+		SHARED_VOLUME_STORAGE_CLASS=""
+		./bin/s3_driver.sh
+		helm install storage-plugin --set dind=true,cloud=false
+	else \
+	  SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold"
+		helm install storage-plugin
+	fi;
+	@pushd bin
+	@./create_static_volumes.sh
+	@./create_static_volumes_config.sh
+	@# Wait while kubectl get pvc shows static-volume-1 in state Pending
+	@popd
+	@echo collecting existing pods
+	@while kubectl get pods --all-namespaces | \
+		grep -v RESTARTS | \
+		grep -v Running | \
+		grep 'alertmanager\|etcd0\|lcm\|restapi\|trainer\|trainingdata\|ui\|mongo\|prometheus\|pushgateway\|storage' > /dev/null; \
+	do \
+		sleep 1; \
+	done
+	@echo calling big command
+	@set -o verbose; \
+		existing=$$(helm list | grep ffdl | awk '{print $$1}' | head -n 1); \
+		(if [ -z "$$existing" ]; then \
+			echo "Deploying the stack via Helm. This will take a while."; \
+			helm --debug install --set lcm.shared_volume_storage_class=$$SHARED_VOLUME_STORAGE_CLASS . ; \
+			sleep 10; \
+		else \
+			echo "Upgrading existing Helm deployment ($$existing). This will take a while."; \
+			helm --debug upgrade --set lcm.shared_volume_storage_class=$$SHARED_VOLUME_STORAGE_CLASS $$existing . ; \
+		fi) & pid=$$!; \
+		sleep 5; \
+		while kubectl get pods --all-namespaces | \
+			grep -v RESTARTS | \
+			grep -v Running | \
+			grep 'alertmanager\|etcd0\|lcm\|restapi\|trainer\|trainingdata\|ui\|mongo\|prometheus\|pushgateway\|storage'; \
+		do \
+			sleep 5; \
+		done; \
+		existing=$$(helm list | grep ffdl | awk '{print $$1}' | head -n 1); \
+		for i in $$(seq 1 10); do \
+			status=`helm status $$existing | grep STATUS:`; \
+			echo $$status; \
+			if echo "$$status" | grep "DEPLOYED" > /dev/null; then \
+				kill $$pid > /dev/null 2>&1; \
+				exit 0; \
+			fi; \
+			sleep 3; \
+		done; \
+		exit 0
+	@echo done with big command
+	@echo Initializing...
+	@# wait for pods to be ready
+	@while kubectl get pods --all-namespaces | \
+		grep -v RESTARTS | \
+		grep -v Running | \
+		grep 'alertmanager\|etcd0\|lcm\|restapi\|trainer\|trainingdata\|ui\|mongo\|prometheus\|pushgateway\|storage' > /dev/null; \
+	do \
+		sleep 5; \
+	done
+	@echo initialize monitoring dashboards
+	@if [ "$(VM_TYPE)" = "dind" ]; then \
+		grafana_port=$(kubectl get service grafana -o jsonpath='{.spec.ports[0].nodePort}')
+		ui_port=$(kubectl get service ffdl-ui -o jsonpath='{.spec.ports[0].nodePort}')
+		restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}')
+		s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
+		ui_pod=$(kubectl get pods | grep ffdl-ui | awk '{print $1}')
+		restapi_pod=$(kubectl get pods | grep ffdl-restapi | awk '{print $1}')
+		grafana_pod=$(kubectl get pods | grep prometheus | awk '{print $1}')
+		kubectl port-forward pod/$$ui_pod $$ui_port:8080 &
+		kubectl port-forward pod/$$restapi_pod $$restapi_port:8080 &
+		kubectl port-forward pod/$$grafana_pod $$grafana_port:3000 &
+		kubectl port-forward pod/storage-0 $$s3_port:4572 &
+	fi
+	@if [ "$$CI" != "true" ]; then bin/grafana.init.sh; fi
+	@echo
+	@echo System status:
+	@make status
+
+test-job-submit:      ## Submit test training job
+	@# make sure the buckets with training data exist
+	@echo Downloading Docker images and test training data. This may take a while.
+	@if [ "$(VM_TYPE)" = "minikube" ]; then \
+			eval $(minikube docker-env); docker images | grep tensorflow | grep latest > /dev/null || docker pull tensorflow/tensorflow > /dev/null; \
+		fi
+	@node_ip=$$(make --no-print-directory kubernetes-ip); \
+                s3_ip=$$(kubectl get po/storage-0 -o=jsonpath='{.status.hostIP}'); \
+		s3_port=$$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}'); \
+		s3_url=http://$$s3_ip:$$s3_port; \
+		s3_raw_url=$$s3_ip:$$s3_port; \
+		echo "Submitting example training job ($(TEST_SAMPLE))"; \
+		restapi_port=$$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}'); \
+		restapi_url=http://$$node_ip:$$restapi_port; \
+		echo S3 URL: $$s3_url  REST URL: $$restapi_url; \
+		export DLAAS_URL=http://$$node_ip:$$restapi_port; export DLAAS_USERNAME=$(TEST_USER); export DLAAS_PASSWORD=test; \
+		echo Executing in etc/examples/$(TEST_SAMPLE): DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$$DLAAS_USERNAME DLAAS_PASSWORD=test $(CLI_CMD) train manifest.yml . ; \
+		cp etc/examples/tf-model/manifest.yml etc/examples/tf-model/manifest_testrun.yml ; \
+		sed -i '' -e "s/s3.default.svc.cluster.local/$$s3_raw_url/g" etc/examples/tf-model/manifest_testrun.yml ; \
+		cat etc/examples/tf-model/manifest_testrun.yml ; \
+		(cd etc/examples/$(TEST_SAMPLE); pwd; $(CLI_CMD) train manifest_testrun.yml .); \
+		rm -f etc/examples/tf-model/manifest_testrun.yml ; \
+		echo Test job submitted. Track the status via '"'DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$(TEST_USER) DLAAS_PASSWORD=test $(CLI_CMD) list'"'. ; \
+		sleep 10; \
+        		(for i in $$(seq 1 50); do output=$$($(CLI_CMD) list 2>&1 | grep training-); \
+        				if echo $$output | grep 'FAILED'; then echo 'Job failed'; exit 1; fi; \
+        				if echo $$output | grep 'COMPLETED'; then echo 'Job completed'; exit 0; fi; \
+        				echo $$output; \
+        				sleep 20; \
+        		done; exit 1) || \
+        		($(CLI_CMD) list; \
+        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
+        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
+        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c load-data; \
+        exit 1);
+
 
 deploy:           ## Deploy the services to Kubernetes
 	@docker images
@@ -307,7 +428,7 @@ test-push-data-s3:      ## Test
 	@s3_ip=$$(kubectl get po/storage-0 -o=jsonpath='{.status.hostIP}'); \
         	s3_port=$$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}'); \
         	s3_url=http://$$s3_ip:$$s3_port; \
-		export AWS_ACCESS_KEY_ID=test; export AWS_SECRET_ACCESS_KEY=test; export AWS_DEFAULT_REGION=us-east-1; \
+					export AWS_ACCESS_KEY_ID=test; export AWS_SECRET_ACCESS_KEY=test; export AWS_DEFAULT_REGION=us-east-1; \
         	s3cmd="aws --endpoint-url=$$s3_url s3"; \
         	$$s3cmd mb s3://tf_training_data > /dev/null; \
         	$$s3cmd mb s3://tf_trained_model > /dev/null; \
@@ -504,6 +625,8 @@ kubernetes-ip:
 		elif [ "$(VM_TYPE)" = "ibmcloud" ]; then \
 			echo $$(bx cs workers $(CLUSTER_NAME) | grep Ready | awk '{ print $$2;exit }'); \
 		elif [ "$(VM_TYPE)" = "none" ]; then \
+			echo "$(PUBLIC_IP)"; \
+		else \
 			echo "$(PUBLIC_IP)"; \
 		fi
 

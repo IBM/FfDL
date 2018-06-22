@@ -62,45 +62,34 @@ To know more about the architectural details, please read the [design document](
 
 There are multiple installation paths for installing FfDL locally ("1-click-install") or into an existing Kubernetes cluster.
 
-> Note: If your Kubernetes Cluster version is 1.7 or below, please go to the [values.yaml](values.yaml) and change `k8s_1dot8_or_above` to **false**.
+### 1.1 Installation using Kubeadm-DIND
 
-### 1.1 Installation using Minikube
-
-If you have Minikube installed on your machine, use these commands to deploy the FfDL platform:
+If you have [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) installed on your machine, use these commands to deploy the FfDL platform:
 ``` shell
-export VM_TYPE=minikube
-make minikube
-make deploy
+export VM_TYPE=dind
+export PUBLIC_IP=localhost
+make quickstart-deploy
 ```
 
 ### 1.2 Installation using Kubernetes Cluster
 
-To install FfDL to a proper Kubernetes cluster, make sure `kubectl` points to the right namespace,
+To install FfDL to any proper Kubernetes cluster, make sure `kubectl` points to the right namespace,
 then deploy the platform services:
 > Note: For PUBLIC_IP, put down one of your Cluster Public IP that can access your Cluster's NodePorts.
 
 ``` shell
 export VM_TYPE=none
 export PUBLIC_IP=<Cluster Public IP>
-make deploy
-```
-
-### 1.3 Installation using IBM Cloud Kubernetes Cluster
-
-To install FfDL to a proper IBM Cloud Kubernetes cluster, make sure `kubectl` points to the right namespace
-and your machine is logged in with `bx login`, then deploy the platform services:
-``` shell
-export VM_TYPE=ibmcloud
-export CLUSTER_NAME=<Your Cluster Name> # Replace <Your Cluster Name> with your IBM Cloud Cluster Name
-make deploy
+make quickstart-deploy
 ```
 
 ## 2. Test
 
 To submit a simple example training job that is included in this repo (see `etc/examples` folder):
 
-```
-make test-submit
+``` shell
+make test-push-data-s3
+make test-job-submit
 ```
 
 ## 3. Monitoring
@@ -113,6 +102,9 @@ Please refer to the [developer guide](docs/developer-guide.md) for more details.
 
 ## 5. Detailed Installation Instructions
 
+0. If you don't have a Kubernetes Cluster, you can create a [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) Kubernetes Cluster on your local machine. We recommend you give at least 4 CPUs and 8GB of memory to your Docker.
+> For Mac users, visit the instructions on the [Docker website](https://docs.docker.com/docker-for-mac/#advanced) and learn how to give more memory to your Docker.
+
 1. First, clone this repository and install the helm tiller on your Kubernetes cluster.
 ``` shell
 helm init
@@ -122,11 +114,45 @@ kubectl get pods --all-namespaces | grep tiller-deploy
 # kube-system   tiller-deploy-fb8d7b69c-pcvc2              1/1       Running
 ```
 
-2. Now let's install all the necessary FfDL components using helm install.
-> Note: If your Kubernetes Cluster version is 1.7 or below, please go to the [values.yaml](values.yaml) and change `k8s_1dot8_or_above` to **false**.
+2. Define the necessary environment variables.
+  * 2.a. For Kubeadm-DIND Cluster only
+  ```shell
+  export FFDL_PATH=$(pwd)
+  export SHARED_VOLUME_STORAGE_CLASS=""
+  ```
+
+  * 2.b. For Cloud Kubernetes Cluster
+  ```shell
+  # Change the storage class to what's available on your cloud provider.
+  export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold"
+  ```
+
+3. Install the Object Storage driver using helm install.
+  * 3.a. For Kubeadm-DIND Cluster only
+  ```shell
+  ./bin/s3_driver.sh
+  helm install storage-plugin --set dind=true,cloud=false
+  ```
+
+  * 3.b. For Cloud Kubernetes Cluster
+  ```shell
+  helm install storage-plugin
+  ```
+
+4. Create a static volume to store any metadata from FfDL.
+
+```shell
+pushd bin
+./create_static_volumes.sh
+./create_static_volumes_config.sh
+# Wait while kubectl get pvc shows static-volume-1 in state Pending
+popd
+```
+
+5. Now let's install all the necessary FfDL components using helm install.
 
 ``` shell
-helm install .
+helm install . --set lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS
 ```
 > Note: If you want to upgrade an older version of FfDL, run
 > `helm upgrade $(helm list | grep ffdl | awk '{print $1}' | head -n 1) .`
@@ -151,31 +177,54 @@ helm status $(helm list | grep ffdl | awk '{print $1}' | head -n 1) | grep STATU
 # STATUS: DEPLOYED
 ```
 
-3. Run the following script to configure Grafana for monitoring FfDL using the logging information from prometheus.
-> Note: If you are using a IBM Cloud Cluster, make sure you are logged in with `bx login`.
-
-``` shell
-# If your Cluster is running on Minikube, replace "ibmcloud" to "minikube"
-# If your Cluster is not running on Minikube or IBM Cloud, replace "ibmcloud" to "none"
-export VM_TYPE=ibmcloud
-
-# Replace <Your Cluster Name> with your IBM Cloud Cluster Name if your cluster is on IBM Cloud.
-# Use export PUBLIC_IP if you are using a none VM_TYPE. A Cluster Public IP that can access your Cluster's NodePorts.
-export CLUSTER_NAME=<Your Cluster Name>
-export PUBLIC_IP=<Cluster Public IP>
-
-./bin/grafana.init.sh
-```
-
-4. Lastly, run the following commands to obtain your Grafana, FfDL Web UI, and FfDL restapi endpoints.
-``` shell
-# Note: $(make --no-print-directory kubernetes-ip) simply gets the Public IP for your cluster.
-node_ip=$(make --no-print-directory kubernetes-ip)
-
-# Obtain all the necessary NodePorts for Grafana, Web UI, and RestAPI.
+6. Obtain the necessary port for Grafana, FfDL Web UI, local object storage, and FfDL restapi.
+```shell
 grafana_port=$(kubectl get service grafana -o jsonpath='{.spec.ports[0].nodePort}')
 ui_port=$(kubectl get service ffdl-ui -o jsonpath='{.spec.ports[0].nodePort}')
 restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}')
+s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
+```
+
+* For Kubeadm-DIND Cluster, we need to forward the port to the localhost machine since we don't want to exec into the docker image and install various dependencies.
+  - For Kubeadm-DIND Kubernetes 1.10
+  ```shell
+  kubectl port-forward svc/ffdl-ui $ui_port:80 &
+  kubectl port-forward svc/ffdl-restapi $restapi_port:80 &
+  kubectl port-forward svc/grafana $grafana_port:80 &
+  kubectl port-forward svc/s3 $s3_port:80 &
+  ```
+  - For Kubeadm-DIND Kubernetes 1.9 and below. You can obtain your pod names with `kubectl get pods`
+  ```shell
+  kubectl port-forward pod/<ffdl-ui pod name> $ui_port:8080 &
+  kubectl port-forward pod/<ffdl-restapi pod name> $restapi_port:8080 &
+  kubectl port-forward pod/<prometheus pod name> $grafana_port:3000 &
+  kubectl port-forward pod/storage-0 $s3_port:4572 &
+  ```
+
+7. Run the following commands to configure Grafana for monitoring FfDL using the logging information from prometheus.
+  * 7.a. For Kubeadm-DIND Cluster only
+  ```shell
+  export VM_TYPE=none
+  export PUBLIC_IP=localhost
+
+  ./bin/grafana.init.sh
+  ```
+
+
+  * 7.b. For Cloud Kubernetes Cluster.
+  > Note: If you are using IBM Cloud Cluster, you can obtain your k8s public ip using `bx cs workers <cluster-name>`.
+
+  ``` shell
+  export VM_TYPE=none
+  export PUBLIC_IP=<Cluster Public IP>
+
+  ./bin/grafana.init.sh
+  ```
+
+8. Lastly, run the following commands to obtain your Grafana, FfDL Web UI, and FfDL restapi endpoints.
+``` shell
+# Note: $(make --no-print-directory kubernetes-ip) simply gets the Public IP for your cluster.
+node_ip=$(make --no-print-directory kubernetes-ip)
 
 # Echo statements to print out Grafana and Web UI URLs.
 echo "Monitoring dashboard: http://$node_ip:$grafana_port/ (login: admin/admin)"
@@ -188,8 +237,6 @@ Congratulation, FfDL is now running on your Cluster. Now you can go to [Step 6](
 
 In this example, we will run some simple jobs to train a convolutional network model using TensorFlow and Caffe. We will download a set of
 MNIST handwritten digit images, store them with Object Storage, and use the FfDL CLI to train a handwritten digit classification model.
-
-> Note: For Minikube, make sure you have the latest TensorFlow Docker image by running `docker pull tensorflow/tensorflow`
 
 ### 6.1. Using FfDL Local S3 Based Object Storage
 
@@ -230,8 +277,19 @@ binary).
 ```shell
 restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}')
 export DLAAS_URL=http://$node_ip:$restapi_port; export DLAAS_USERNAME=test-user; export DLAAS_PASSWORD=test;
+```
 
-# Obtain the correct CLI for your machine and run the training job with our default TensorFlow model
+Replace the default object storage path with your s3_url. You can skip this step if your already modified the object storage path with your s3_url.
+```shell
+if [ "$(uname)" = "Darwin" ]; then
+  sed -i '' s#"http://s3.default.svc.cluster.local"#"$s3_url"# etc/examples/tf-model/manifest.yml
+else
+  sed -i s#"http://s3.default.svc.cluster.local"#"$s3_url"# etc/examples/tf-model/manifest.yml
+fi
+```
+
+Define the FfDL command line interface and run the training job with our default TensorFlow model
+```shell
 CLI_CMD=$(pwd)/cli/bin/ffdl-$(if [ "$(uname)" = "Darwin" ]; then echo 'osx'; else echo 'linux'; fi)
 $CLI_CMD train etc/examples/tf-model/manifest.yml etc/examples/tf-model
 ```
@@ -281,8 +339,6 @@ you can simply run `$CLI_CMD logs <MODEL_ID>`
 ### 6.2. Using Cloud Object Storage
 
 In this section we will demonstrate how to run a TensorFlow job with training data stored in Cloud Object Storage.
-
-> Note: This also can be done with other Cloud providers' Object Storage, but we will demonstrate how to use IBM Cloud Object Storage in this instructions.
 
 1. Provision an S3 based Object Storage from your Cloud provider. Take note of your Authentication Endpoints, Access Key ID and Secret.
 
