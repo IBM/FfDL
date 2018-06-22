@@ -440,7 +440,7 @@ kill $(lsof -i | grep kubectl | awk '{printf $2 " " }')
 
 * When using the FfDL CLI to train a model, make sure your directory path doesn't have slashes `/` at the end.
 
-* If your job is in pending stage, you can try to redeploy the plugin with `helm install storage-plugin --set dind=true,cloud=false` for Kubeadm-DIND and `helm install storage-plugin` for general Kubernetes Cluster.
+* If your job is stuck in pending stage, you can try to redeploy the plugin with `helm install storage-plugin --set dind=true,cloud=false` for Kubeadm-DIND and `helm install storage-plugin` for general Kubernetes Cluster. Also, double check your training job manifest file to make sure you have the correct object storage credentials.
 
 ## 9. References
 
