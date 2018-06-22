@@ -104,20 +104,28 @@ quickstart-deploy:
 		helm init > /dev/null 2>&1; \
 		sleep 3; \
 	fi;
+	@# deploy plugin
 	@if [ "$(VM_TYPE)" = "dind" ]; then \
-		SHARED_VOLUME_STORAGE_CLASS=""
-		./bin/s3_driver.sh
-		helm install storage-plugin --set dind=true,cloud=false
+		./bin/s3_driver.sh; \
+		existing-plugin=$$(helm list | grep ibmcloud-object-storage-plugin | awk '{print $$1}' | head -n 1); \
+		(if [ -z "$$existing-plugin" ]; then \
+			helm install storage-plugin --set dind=true,cloud=false; \
+		else \
+			helm upgrade storage-plugin --set dind=true,cloud=false $$existing-plugin; \
+		fi) & pid=$$!; \
 	else \
-	  SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold"
-		helm install storage-plugin
+		existing-plugin=$$(helm list | grep ibmcloud-object-storage-plugin | awk '{print $$1}' | head -n 1); \
+		(if [ -z "$$existing-plugin" ]; then \
+			helm install storage-plugin; \
+		else \
+			helm upgrade storage-plugin $$existing-plugin; \
+		fi) & pid=$$!; \
 	fi;
-	@pushd bin
-	@./create_static_volumes.sh
-	@./create_static_volumes_config.sh
-	@# Wait while kubectl get pvc shows static-volume-1 in state Pending
-	@popd
-	@echo collecting existing pods
+	@echo "Wait while kubectl get pvc shows static-volume-1 in state Pending"
+	@./bin/create_static_volumes.sh
+	@./bin/create_static_volumes_config.sh
+	@sleep 3
+	@echo "collecting existing pods"
 	@while kubectl get pods --all-namespaces | \
 		grep -v RESTARTS | \
 		grep -v Running | \
@@ -130,11 +138,11 @@ quickstart-deploy:
 		existing=$$(helm list | grep ffdl | awk '{print $$1}' | head -n 1); \
 		(if [ -z "$$existing" ]; then \
 			echo "Deploying the stack via Helm. This will take a while."; \
-			helm --debug install --set lcm.shared_volume_storage_class=$$SHARED_VOLUME_STORAGE_CLASS . ; \
+			helm install --set lcm.shared_volume_storage_class=$$SHARED_VOLUME_STORAGE_CLASS . ; \
 			sleep 10; \
 		else \
 			echo "Upgrading existing Helm deployment ($$existing). This will take a while."; \
-			helm --debug upgrade --set lcm.shared_volume_storage_class=$$SHARED_VOLUME_STORAGE_CLASS $$existing . ; \
+			helm upgrade --set lcm.shared_volume_storage_class=$$SHARED_VOLUME_STORAGE_CLASS $$existing . ; \
 		fi) & pid=$$!; \
 		sleep 5; \
 		while kubectl get pods --all-namespaces | \
@@ -167,18 +175,18 @@ quickstart-deploy:
 	done
 	@echo initialize monitoring dashboards
 	@if [ "$(VM_TYPE)" = "dind" ]; then \
-		grafana_port=$(kubectl get service grafana -o jsonpath='{.spec.ports[0].nodePort}')
-		ui_port=$(kubectl get service ffdl-ui -o jsonpath='{.spec.ports[0].nodePort}')
-		restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}')
-		s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
-		ui_pod=$(kubectl get pods | grep ffdl-ui | awk '{print $1}')
-		restapi_pod=$(kubectl get pods | grep ffdl-restapi | awk '{print $1}')
-		grafana_pod=$(kubectl get pods | grep prometheus | awk '{print $1}')
-		kubectl port-forward pod/$$ui_pod $$ui_port:8080 &
-		kubectl port-forward pod/$$restapi_pod $$restapi_port:8080 &
-		kubectl port-forward pod/$$grafana_pod $$grafana_port:3000 &
-		kubectl port-forward pod/storage-0 $$s3_port:4572 &
-	fi
+		grafana_port=$$(kubectl get service grafana -o jsonpath='{.spec.ports[0].nodePort}'); \
+		ui_port=$$(kubectl get service ffdl-ui -o jsonpath='{.spec.ports[0].nodePort}'); \
+		restapi_port=$$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}'); \
+		s3_port=$$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}'); \
+		ui_pod=$$(kubectl get pods | grep ffdl-ui | awk '{print $1}'); \
+		restapi_pod=$(kubectl get pods | grep ffdl-restapi | awk '{print $1}'); \
+		grafana_pod=$(kubectl get pods | grep prometheus | awk '{print $1}'); \
+		kubectl port-forward pod/$$ui_pod $$ui_port:8080 & \
+		kubectl port-forward pod/$$restapi_pod $$restapi_port:8080 & \
+		kubectl port-forward pod/$$grafana_pod $$grafana_port:3000 & \
+		kubectl port-forward pod/storage-0 $$s3_port:4572 & \
+	fi;
 	@if [ "$$CI" != "true" ]; then bin/grafana.init.sh; fi
 	@echo
 	@echo System status:
@@ -191,7 +199,7 @@ test-job-submit:      ## Submit test training job
 			eval $(minikube docker-env); docker images | grep tensorflow | grep latest > /dev/null || docker pull tensorflow/tensorflow > /dev/null; \
 		fi
 	@node_ip=$$(make --no-print-directory kubernetes-ip); \
-                s3_ip=$$(kubectl get po/storage-0 -o=jsonpath='{.status.hostIP}'); \
+                s3_ip=$$(make --no-print-directory kubernetes-ip); \
 		s3_port=$$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}'); \
 		s3_url=http://$$s3_ip:$$s3_port; \
 		s3_raw_url=$$s3_ip:$$s3_port; \
@@ -425,7 +433,7 @@ docker-build-logcollectors:
 test-push-data-s3:      ## Test
 	@# Pushes test data to S3 buckets.
 	@echo Pushing test data.
-	@s3_ip=$$(kubectl get po/storage-0 -o=jsonpath='{.status.hostIP}'); \
+	@s3_ip=$$(make --no-print-directory kubernetes-ip); \
         	s3_port=$$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}'); \
         	s3_url=http://$$s3_ip:$$s3_port; \
 					export AWS_ACCESS_KEY_ID=test; export AWS_SECRET_ACCESS_KEY=test; export AWS_DEFAULT_REGION=us-east-1; \
@@ -445,6 +453,7 @@ test-push-data-s3:      ## Test
                       		$$s3cmd cp $$tmpfile s3://mnist_lmdb_data/$$phase/$$file > /dev/null; \
                		done; \
         	done;
+	@echo "Done uploading data to S3"
 
 test-push-data-hostmount:      ## Test
 	@# Pushes test data to S3 buckets.

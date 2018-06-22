@@ -1,4 +1,4 @@
-package: github.com/IBM/FfDL/
+package: github.com/IBM/FfDL
 import:
 - package: github.com/sirupsen/logrus
   version: ~1.0.2
