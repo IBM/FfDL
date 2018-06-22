@@ -25,11 +25,11 @@ Define the folloing environment variables:
 ```shell
 export SHARED_VOLUME_STORAGE_CLASS=<StorageClass>
 export PUBLIC_IP=<IP_TO_CLUSTER>
-export DOCKER_REPO_USER=<REPOSITORY_USER>
+export DOCKER_REPO_USER=<REPOSITORY_USER> # Container Registry Username
+export DOCKER_REPO_PASS=<PASSWORD_TO_YOUR_REPOSITORY> # Container Registry Password
+export DOCKER_NAMESPACE=<NAMESPACE_ON_IBM_CLOUD> # Container Registry Namespace
 export DOCKER_PULL_POLICY=Always
-export DOCKER_REPO_PASS=<PASSWORD_TO_YOUR_REPOSITORY>
-export DOCKER_NAMESPACE=<NAMESPACE_ON_IBM_CLOUD>
-export DOCKER_REPO=<registry endpoint> # registry.ng.bluemix.net
+export DOCKER_REPO=<registry endpoint> # (e.g.) registry.ng.bluemix.net
 export VM_TYPE=none
 export HAS_STATIC_VOLUMES=True
 ```
@@ -40,6 +40,7 @@ make build
 make gen-certs
 make docker-build
 ```
+
 If you want to push the images you just built, run:
 ```shell
 make docker push
@@ -51,6 +52,9 @@ environment (using `helm`):
 make deploy-plugin
 make deploy
 ```
+
+## Troubleshooting
+If your Object Storage Driver is not successfully installed on your Kubernetes, you can following the step by step instructions at [ibmcloud-object-storage-plugin](https://github.com/IBM/ibmcloud-object-storage-plugin).
 
 ## Enable device plugin for GPU workloads with development build
 
