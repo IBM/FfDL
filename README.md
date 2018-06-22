@@ -67,6 +67,7 @@ There are multiple installation paths for installing FfDL locally ("1-click-inst
 If you have [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) installed on your machine, use these commands to deploy the FfDL platform:
 ``` shell
 export VM_TYPE=dind
+export PUBLIC_IP=localhost
 make quickstart-deploy
 ```
 
@@ -194,8 +195,8 @@ s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
   ```
   - For Kubeadm-DIND Kubernetes 1.9 and below. You can obtain your pod names with `kubectl get pods`
   ```shell
-  kubectl port-forward pod/<ffdl-ui pod name>$ui_port:8080 &
-  kubectl port-forward pod/<ffdl-restapi pod name>$restapi_port:8080 &
+  kubectl port-forward pod/<ffdl-ui pod name> $ui_port:8080 &
+  kubectl port-forward pod/<ffdl-restapi pod name> $restapi_port:8080 &
   kubectl port-forward pod/<prometheus pod name> $grafana_port:3000 &
   kubectl port-forward pod/storage-0 $s3_port:4572 &
   ```
