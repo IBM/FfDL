@@ -181,6 +181,7 @@ test-job-submit:      ## Submit test training job
                 s3_ip=$$(kubectl get po/storage-0 -o=jsonpath='{.status.hostIP}'); \
 		s3_port=$$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}'); \
 		s3_url=http://$$s3_ip:$$s3_port; \
+		s3_raw_url=$$s3_ip:$$s3_port; \
 		echo "Submitting example training job ($(TEST_SAMPLE))"; \
 		restapi_port=$$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}'); \
 		restapi_url=http://$$node_ip:$$restapi_port; \
@@ -188,7 +189,7 @@ test-job-submit:      ## Submit test training job
 		export DLAAS_URL=http://$$node_ip:$$restapi_port; export DLAAS_USERNAME=$(TEST_USER); export DLAAS_PASSWORD=test; \
 		echo Executing in etc/examples/$(TEST_SAMPLE): DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$$DLAAS_USERNAME DLAAS_PASSWORD=test $(CLI_CMD) train manifest.yml . ; \
 		cp etc/examples/tf-model/manifest.yml etc/examples/tf-model/manifest_testrun.yml ; \
-		sed -i '' -e "s/s3.default.svc.cluster.local/$$s3_url/g" etc/examples/tf-model/manifest_testrun.yml ; \
+		sed -i '' -e "s/s3.default.svc.cluster.local/$$s3_raw_url/g" etc/examples/tf-model/manifest_testrun.yml ; \
 		cat etc/examples/tf-model/manifest_testrun.yml ; \
 		(cd etc/examples/$(TEST_SAMPLE); pwd; $(CLI_CMD) train manifest_testrun.yml .); \
 		rm -f etc/examples/tf-model/manifest_testrun.yml ; \
