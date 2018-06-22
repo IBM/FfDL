@@ -409,7 +409,7 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 
 For Kubeadm-DIND, you need to kill your forwarded ports.
 ```shell
-kill $(lsof -i | grep kubectl-v | awk '{printf $2 " " }')
+kill $(lsof -i | grep kubectl | awk '{printf $2 " " }')
 ```
 
 ## 8. Troubleshooting
