@@ -401,8 +401,10 @@ $CLI_CMD train etc/examples/tf-model/manifest.yml etc/examples/tf-model
 ```
 
 ## 7. Clean Up
-If you want to remove FfDL from your cluster, simply use the command below or run `helm delete <your FfDL release name>`
+If you want to remove FfDL and  storage driver from your cluster, simply use the following commands.
 ```shell
+kubectl delete pvc static-volume-1
+helm delete $(helm list | grep ibmcloud-object-storage-plugin | awk '{print $1}' | head -n 1)
 helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 ```
 
