@@ -70,6 +70,7 @@ If you have [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-clust
 export VM_TYPE=dind
 export PUBLIC_IP=localhost
 export SHARED_VOLUME_STORAGE_CLASS="";
+make deploy-plugin
 make quickstart-deploy
 ```
 
@@ -85,6 +86,7 @@ export PUBLIC_IP=<Cluster Public IP>
 
 # Change the storage class to what's available on your Cloud Kubernetes Cluster.
 export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold";
+make deploy-plugin
 make quickstart-deploy
 ```
 
@@ -400,11 +402,15 @@ $CLI_CMD train etc/examples/tf-model/manifest.yml etc/examples/tf-model
 ```
 
 ## 7. Clean Up
-If you want to remove FfDL and  storage driver from your cluster, simply use the following commands.
+If you want to remove FfDL from your cluster, simply use the following commands.
+```shell
+helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
+```
+
+If you want to remove the storage driver and pvc from your cluster, run:
 ```shell
 kubectl delete pvc static-volume-1
 helm delete $(helm list | grep ibmcloud-object-storage-plugin | awk '{print $1}' | head -n 1)
-helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 ```
 
 For Kubeadm-DIND, you need to kill your forwarded ports. Note that the below command will kill all the ports that are created with `kubectl`.
@@ -433,6 +439,8 @@ kill $(lsof -i | grep kubectl | awk '{printf $2 " " }')
 * To remove FfDL on your Cluster, simply run `make undeploy`
 
 * When using the FfDL CLI to train a model, make sure your directory path doesn't have slashes `/` at the end.
+
+* If your job is in pending stage, you can try to redeploy the plugin with `helm install storage-plugin --set dind=true,cloud=false` for Kubeadm-DIND and `helm install storage-plugin` for general Kubernetes Cluster.
 
 ## 9. References
 

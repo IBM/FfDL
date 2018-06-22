@@ -17,18 +17,38 @@ Install:
 `$GOPATH/src/github.com/IBM/FfDL` before proceeding with the next steps.
 
 Then, fetch the dependencies via:
-```
+```shell
 glide install
 ```
-Compile the code, generate certificates, and build the Docker images via:
+
+Define the folloing environment variables:
+```shell
+export SHARED_VOLUME_STORAGE_CLASS=<StorageClass>
+export PUBLIC_IP=<IP_TO_CLUSTER>
+export DOCKER_REPO_USER=<REPOSITORY_USER>
+export DOCKER_PULL_POLICY=Always
+export DOCKER_REPO_PASS=<PASSWORD_TO_YOUR_REPOSITORY>
+export DOCKER_NAMESPACE=<NAMESPACE_ON_IBM_CLOUD>
+export DOCKER_REPO=<registry endpoint> # registry.ng.bluemix.net
+export VM_TYPE=none
+export HAS_STATIC_VOLUMES=True
 ```
+
+Compile the code, generate certificates, and build the Docker images via:
+```shell
 make build
+make gen-certs
 make docker-build
+```
+If you want to push the images you just built, run:
+```shell
+make docker push
 ```
 
 Make sure `kubectl` points to the right target context/namespace, then deploy the services to your Kubernetes
 environment (using `helm`):
-```
+```shell
+make deploy-plugin
 make deploy
 ```
 
