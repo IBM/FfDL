@@ -407,7 +407,7 @@ helm delete $(helm list | grep ibmcloud-object-storage-plugin | awk '{print $1}'
 helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 ```
 
-For Kubeadm-DIND, you need to kill your forwarded ports.
+For Kubeadm-DIND, you need to kill your forwarded ports. Note that the below command will kill all the ports that are created with `kubectl`.
 ```shell
 kill $(lsof -i | grep kubectl | awk '{printf $2 " " }')
 ```
