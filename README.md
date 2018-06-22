@@ -192,20 +192,9 @@ restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nod
 s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
 ```
 
-* For Kubeadm-DIND Cluster, we need to forward the port to the localhost machine since we don't want to exec into the docker image and install various dependencies.
-  - For Kubeadm-DIND Kubernetes 1.10
+* For Kubeadm-DIND Cluster, we need to run the below script to forward the port to the localhost machine since we don't want to exec into the docker image and install various dependencies.
   ```shell
-  kubectl port-forward svc/ffdl-ui $ui_port:80 &
-  kubectl port-forward svc/ffdl-restapi $restapi_port:80 &
-  kubectl port-forward svc/grafana $grafana_port:80 &
-  kubectl port-forward svc/s3 $s3_port:80 &
-  ```
-  - For Kubeadm-DIND Kubernetes 1.9 and below. You can obtain your pod names with `kubectl get pods`
-  ```shell
-  kubectl port-forward pod/<ffdl-ui pod name> $ui_port:8080 &
-  kubectl port-forward pod/<ffdl-restapi pod name> $restapi_port:8080 &
-  kubectl port-forward pod/<prometheus pod name> $grafana_port:3000 &
-  kubectl port-forward pod/storage-0 $s3_port:4572 &
+  ./bin/dind-port-forward.sh
   ```
 
 7. Run the following commands to configure Grafana for monitoring FfDL using the logging information from prometheus.
