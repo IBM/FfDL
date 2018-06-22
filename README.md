@@ -407,6 +407,11 @@ helm delete $(helm list | grep ibmcloud-object-storage-plugin | awk '{print $1}'
 helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 ```
 
+For Kubeadm-DIND, you need to kill your forwarded ports.
+```shell
+kill $(lsof -i | grep kubectl-v | awk '{printf $2 " " }')
+```
+
 ## 8. Troubleshooting
 
 * FfDL has only been tested under Mac OS and Linux
