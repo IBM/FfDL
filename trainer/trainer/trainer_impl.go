@@ -1832,6 +1832,9 @@ func (s *trainerService) createJobConfig(tr *TrainingRecord) (*service.JobDeploy
 	// Fetching data from user's Object Store with following info
 	envvars["DATA_STORE_TYPE"] = trainingData.Type
 	envvars["DATA_STORE_AUTHURL"] = trainingData.Connection["auth_url"]
+	if trainingData.Connection["path"] != "" {
+		envvars["DATA_STORE_PATH"] = trainingData.Connection["path"]
+	}
 	if trainingData.Connection["project_id"] != "" {
 		envvars["DATA_STORE_PROJECTID"] = trainingData.Connection["project_id"]
 	}
@@ -1874,6 +1877,9 @@ func (s *trainerService) createJobConfig(tr *TrainingRecord) (*service.JobDeploy
 
 	// "Storing trained model in DLaaS Object Store with following info:"
 	envvars["RESULT_STORE_TYPE"] = trainingResults.Type
+	if trainingData.Connection["path"] != "" {
+		envvars["RESULT_STORE_PATH"] = trainingData.Connection["path"]
+	}
 	envvars["RESULT_STORE_USERNAME"] = trainingResults.Connection["user_name"]
 	envvars["RESULT_STORE_APIKEY"] = trainingResults.Connection["password"]
 	envvars["RESULT_STORE_AUTHURL"] = trainingResults.Connection["auth_url"]

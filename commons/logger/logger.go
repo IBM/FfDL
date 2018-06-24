@@ -240,7 +240,7 @@ func Config() {
 			case config.ProductionEnv:
 				log.SetFormatter(&log.JSONFormatter{})
 			default: // any other env will use local settings (assuming outside SL)
-				log.SetFormatter(&log.TextFormatter{})
+				log.SetFormatter(&log.JSONFormatter{})
 			}
 		}
 

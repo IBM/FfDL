@@ -428,7 +428,8 @@ func constructLearnerContainer(req *service.JobDeploymentRequest, envVars []v1co
 	if mountResultsStoreInLearner {
 		loadModelComand := `
 			mkdir -p "$MODEL_DIR" ;
-			unzip -nq "$RESULT_DIR/_submitted_code/model.zip" -d "$MODEL_DIR"`
+			unzip -nq "$RESULT_DIR/_submitted_code/model.zip" -d "$MODEL_DIR"
+			# unzip -nq "$RESULT_DIR/learner-$LEARNER_ID/_submitted_code/model.zip" -d "$MODEL_DIR"`
 		learnerCommand := `
 			for i in ${!ALERTMANAGER*} ${!DLAAS*} ${!ETCD*} ${!GRAFANA*} ${!HOSTNAME*} ${!KUBERNETES*} ${!MONGO*} ${!PUSHGATEWAY*}; do unset $i; done;
 			export LEARNER_ID=$((${DOWNWARD_API_POD_NAME##*-} + 1)) ;

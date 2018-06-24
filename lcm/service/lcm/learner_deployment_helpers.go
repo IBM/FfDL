@@ -138,7 +138,7 @@ func NewTraining(ctx context.Context, k8sClient kubernetes.Interface, req *servi
 	learnerVolumeSpecs = extendLearnerVolumes(learnerVolumeSpecs, logr)
 	learnerDefn := learnerDefinition{
 		secrets:                         secretsForDeployingLearner(req, mountTrainingDataStoreInLearner, mountResultsStoreInLearner),
-		volumes:                         learnerVolumes.CreateVolumeForLearner(),
+		volumes:                         learnerVolumeSpecs,
 		volumeMounts:                    learnerVolumes.CreateVolumeMountsForLearner(),
 		envVars:                         envvarsForLearner,
 		numberOfLearners:                numLearners,
