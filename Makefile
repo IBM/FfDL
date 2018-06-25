@@ -144,7 +144,7 @@ quickstart-deploy:
 		sleep 1; \
 	done
 	@echo "calling big command"
-	@sleep 5; \
+	@sleep 5; 
 	@set -o verbose; \
 		existing=$$(helm list | grep ffdl | awk '{print $$1}' | head -n 1); \
 		(if [ -z "$$existing" ]; then \
