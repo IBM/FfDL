@@ -75,7 +75,7 @@ docker-push:
 		exit 1; \
 	else \
 		if [ ${DOCKER_REPO} = "docker.io" ]; then \
-			docker login --username=${DOCKER_REPO_USER} --password=${DOCKER_REPO_PASS} \
+			docker login --username=${DOCKER_REPO_USER} --password=${DOCKER_REPO_PASS}; \
 			for i in $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep ${DOCKER_NAMESPACE} | grep :${IMAGE_TAG} | grep -v '<none>'); do \
 				echo "docker push $$i"; \
 				docker push $$i; \
