@@ -21,37 +21,37 @@ Then, fetch the dependencies via:
 glide install
 ```
 
-Define the folloing environment variables:
+Define the following environment variables:
 ```shell
-export SHARED_VOLUME_STORAGE_CLASS=<StorageClass>
-export PUBLIC_IP=<IP_TO_CLUSTER>
+export SHARED_VOLUME_STORAGE_CLASS=<StorageClass> # "" for DIND, "ibmc-file-gold" for IBM Cloud
+export PUBLIC_IP=<IP_TO_CLUSTER> # One exposed IP of cluster
+export DOCKER_REPO=<registry endpoint> # Registry if used, e.g. registry.ng.bluemix.net
 export DOCKER_REPO_USER=<REPOSITORY_USER> # Container Registry Username
 export DOCKER_REPO_PASS=<PASSWORD_TO_YOUR_REPOSITORY> # Container Registry Password
 export DOCKER_NAMESPACE=<NAMESPACE_ON_IBM_CLOUD> # Container Registry Namespace
-export DOCKER_PULL_POLICY=Always
-export DOCKER_REPO=<registry endpoint> # (e.g.) registry.ng.bluemix.net
+export DOCKER_PULL_POLICY=Always # Keep IfNotPresent if not pushing to registry, e.g. for Minikube
 export VM_TYPE=none
 export HAS_STATIC_VOLUMES=True
 ```
 
 Compile the code, generate certificates, and build the Docker images via:
 ```shell
-make build
-make gen-certs
-make docker-build-base
-make docker-build
+make build             # Compile FfDL
+make gen-certs         # Generate certificated
+make docker-build-base # Build base Docker images
+make docker-build      # Build Docker images
 ```
 
 If you want to push the images you just built, run:
 ```shell
-make docker push
+make docker-push # Push built Docker images to registry, not used for Minikube
 ```
 
 Make sure `kubectl` points to the right target context/namespace, then deploy the services to your Kubernetes
 environment (using `helm`):
 ```shell
-make deploy-plugin
-make deploy
+make deploy-plugin # Deploy S3 storage plugin
+make deploy # Deploy FfDL
 ```
 
 ## Troubleshooting
