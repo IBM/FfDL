@@ -25,7 +25,7 @@ Define the following environment variables:
 ```shell
 export SHARED_VOLUME_STORAGE_CLASS=<StorageClass> # "" for DIND, "ibmc-file-gold" for IBM Cloud
 export PUBLIC_IP=<IP_TO_CLUSTER> # One exposed IP of cluster
-export DOCKER_REPO=<registry endpoint> # Registry if used, e.g. registry.ng.bluemix.net
+export DOCKER_REPO=<registry endpoint> # Registry if used, e.g. for DockerHub is "docker.io"
 export DOCKER_REPO_USER=<REPOSITORY_USER> # Container Registry Username
 export DOCKER_REPO_PASS=<PASSWORD_TO_YOUR_REPOSITORY> # Container Registry Password
 export DOCKER_NAMESPACE=<NAMESPACE_ON_IBM_CLOUD> # Container Registry Namespace

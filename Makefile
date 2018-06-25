@@ -75,7 +75,7 @@ docker-push:
 		exit 1; \
 	else \
 		if [ ${DOCKER_REPO} = "docker.io" ]; then \
-			docker login --username=${DOCKER_REPO_USER} --password=${DOCKER_REPO_PASS} \
+			docker login --username=${DOCKER_REPO_USER} --password=${DOCKER_REPO_PASS}; \
 			for i in $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep ${DOCKER_NAMESPACE} | grep :${IMAGE_TAG} | grep -v '<none>'); do \
 				echo "docker push $$i"; \
 				docker push $$i; \
@@ -111,6 +111,11 @@ deploy-plugin:
 		echo 'Installing helm/tiller'; \
 		helm init > /dev/null 2>&1; \
 		sleep 5; \
+		@echo "Waiting tiller to be ready"
+		@while ! (kubectl get pods --all-namespaces | grep tiller-deploy | grep '1/1' > /dev/null); \
+		do \
+			sleep 1; \
+		done
 	fi;
 	@existingPlugin=$$(helm list | grep ibmcloud-object-storage-plugin | awk '{print $$1}' | head -n 1);
 	@if [ "$(VM_TYPE)" = "dind" ]; then \
@@ -144,7 +149,7 @@ quickstart-deploy:
 		sleep 1; \
 	done
 	@echo "calling big command"
-	@sleep 5; \
+	@sleep 5;
 	@set -o verbose; \
 		existing=$$(helm list | grep ffdl | awk '{print $$1}' | head -n 1); \
 		(if [ -z "$$existing" ]; then \
