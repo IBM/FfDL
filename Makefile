@@ -75,10 +75,17 @@ docker-push:
 		exit 1; \
 	else \
 		docker login --username=${DOCKER_REPO_USER} --password=${DOCKER_REPO_PASS} https://${DOCKER_REPO}; \
-		for i in $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep ${DOCKER_REPO}/${DOCKER_NAMESPACE} | grep :${IMAGE_TAG} | grep -v '<none>'); do \
-			echo "docker push $$i"; \
-			docker push $$i; \
-		done; \
+		if [ ${DOCKER_REPO} = "docker.io" ]; then \
+			for i in $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep ${DOCKER_NAMESPACE} | grep :${IMAGE_TAG} | grep -v '<none>'); do \
+				echo "docker push $$i"; \
+				docker push $$i; \
+			done; \
+		else \
+			for i in $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep ${DOCKER_REPO}/${DOCKER_NAMESPACE} | grep :${IMAGE_TAG} | grep -v '<none>'); do \
+				echo "docker push $$i"; \
+				docker push $$i; \
+			done; \
+		fi; \
 	fi;
 
 # TODO: setup-registry
