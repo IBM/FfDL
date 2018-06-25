@@ -31,7 +31,7 @@ To know more about the architectural details, please read the [design document](
 
 * Follow the appropriate instructions for standing up your Kubernetes cluster using [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) or [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)
 
-* The minimum recommended capacity for FfDL is 4GB Memory and 3 CPUs.
+* The minimum capacity requirement for FfDL is 4GB Memory and 3 CPUs.
 
 ## Usage Scenarios
 
