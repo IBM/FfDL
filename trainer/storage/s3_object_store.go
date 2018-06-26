@@ -40,6 +40,8 @@ import (
 
 const (
 	// DataStoreTypeS3 is the type string for the S3-based object store.
+	DataStoreTypeMountVolume = "mount_volume"
+	DataStoreTypeMountCOSS3 = "mount_cos"
 	DataStoreTypeS3 = "s3_datastore"
 	defaultRegion   = "us-standard"
 )
@@ -69,29 +71,29 @@ func NewS3ObjectStore(conf map[string]string) (DataStore, error) {
 }
 
 func (os *s3ObjectStore) Connect() error {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 
 	cfg := aws.NewConfig().
 		WithEndpoint(os.conf[AuthURLKey]).
 		WithRegion(os.getRegion()).
 		WithS3ForcePathStyle(os.usePathStyleAddressing()).
 		WithCredentials(credentials.NewStaticCredentials(
-		os.conf[UsernameKey],
-		os.conf[PasswordKey], "")).
+			os.conf[UsernameKey],
+			os.conf[PasswordKey], "")).
 		WithMaxRetries(10)
 
 	sess, err := session.NewSession(cfg)
 	if err != nil {
-		log.WithError(err).Error("Error creating new S3 session. Please check the config or connectivity.")
+		logr.WithError(err).Error("Error creating new S3 session. Please check the config or connectivity.")
 		return err
 	}
 	os.session = sess
 
 	// make deployment outside SL work for local env
 	replaceS3ObjectStoreURL(os.session)
-
+	os.conf[AuthURLKey] = *os.session.Config.Endpoint
 	os.client = s3.New(os.session)
-	return os.ping()
+	return nil
 }
 
 // Determine whether the S3 client should use path-style addressing or not
@@ -107,19 +109,19 @@ func (os *s3ObjectStore) usePathStyleAddressing() bool {
 }
 
 func (os *s3ObjectStore) UploadArchive(container string, object string, payload []byte) error {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 	if os.client == nil {
 		return ErrNotConnected
 	}
 	exists, err := os.ContainerExists(container)
 	if err != nil {
-		log.WithError(err).Errorf("Error checking if container '%s' exists", container)
+		logr.WithError(err).Errorf("Error checking if container '%s' exists", container)
 		return err
 	}
 	if !exists { // create bucket
 		err = os.createBucket(container)
 		if err != nil {
-			log.WithError(err).Errorf("Error creating bucket '%t'", exists)
+			logr.WithError(err).Errorf("Error creating bucket '%t'", exists)
 			return err
 		}
 	}
@@ -132,14 +134,14 @@ func (os *s3ObjectStore) UploadArchive(container string, object string, payload 
 	}
 	_, err = uploader.Upload(upParams)
 	if err != nil {
-		log.Errorf("Uploading archive %s/%s failed: %s", container, object, err.Error())
+		logr.Errorf("Uploading archive %s/%s failed: %s", container, object, err.Error())
 		return err
 	}
 	return nil
 }
 
 func (os *s3ObjectStore) DownloadArchive(container string, object string) ([]byte, error) {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 	if os.client == nil {
 		return nil, ErrNotConnected
 	}
@@ -153,15 +155,14 @@ func (os *s3ObjectStore) DownloadArchive(container string, object string) ([]byt
 	buff := aws.NewWriteAtBuffer(payload)
 	_, err := downloader.Download(buff, input)
 	if err != nil {
-		log.Errorf("Downloading archive %s/%s failed: %s", container, object, err.Error())
+		logr.Errorf("Downloading archive %s/%s failed: %s", container, object, err.Error())
 		return nil, err
 	}
 	return buff.Bytes(), nil
 }
 
-
 func (os *s3ObjectStore) DeleteArchive(container string, object string) error {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 	if os.client == nil {
 		return ErrNotConnected
 	}
@@ -171,7 +172,7 @@ func (os *s3ObjectStore) DeleteArchive(container string, object string) error {
 	}
 	_, err := os.client.DeleteObject(input)
 	if err != nil {
-		log.Errorf("Deleting archive %s/%s failed: %s", container, object, err.Error())
+		logr.Errorf("Deleting archive %s/%s failed: %s", container, object, err.Error())
 		return err
 	}
 
@@ -180,12 +181,12 @@ func (os *s3ObjectStore) DeleteArchive(container string, object string) error {
 		Bucket: aws.String(container),
 	})
 	if err != nil {
-		log.Errorf("Listing objects in %s failed: %s", container, err.Error())
+		logr.Errorf("Listing objects in %s failed: %s", container, err.Error())
 		return err
 	}
 	if len(resp.Contents) == 0 {
 		if err := os.deleteBucket(container); err != nil {
-			log.Errorf("Deleting bucket in %s failed: %s", container, err.Error())
+			logr.Errorf("Deleting bucket in %s failed: %s", container, err.Error())
 			return err
 		}
 	}
@@ -193,7 +194,7 @@ func (os *s3ObjectStore) DeleteArchive(container string, object string) error {
 }
 
 func (os *s3ObjectStore) GetTrainedModelSize(path string, numLearners int32) (int64, error) {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 	if os.client == nil {
 		return 0, ErrNotConnected
 	}
@@ -231,12 +232,12 @@ func (os *s3ObjectStore) GetTrainedModelSize(path string, numLearners int32) (in
 		})
 
 		if err != nil {
-			log.Errorf("Listing objects in bucket %s failed: %s", container, err.Error())
+			logr.Errorf("Listing objects in bucket %s failed: %s", container, err.Error())
 			return 0, err
 		}
 
 		for _, obj := range resp.Contents {
-			log.Debugf("trained model object: %s, %d", *obj.Key, *obj.Size)
+			logr.Debugf("trained model object: %s, %d", *obj.Key, *obj.Size)
 			trainedModelSize += *obj.Size
 		}
 	}
@@ -305,7 +306,7 @@ func (os *s3ObjectStore) copyDirToZipStream(container string, path string, w *zi
 }
 
 func (os *s3ObjectStore) DownloadTrainedModelAsZipStream(path string, numLearners int32, writer io.Writer) error {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 	if os.client == nil {
 		return ErrNotConnected
 	}
@@ -326,9 +327,9 @@ func (os *s3ObjectStore) DownloadTrainedModelAsZipStream(path string, numLearner
 	}
 	if objectPrefix != "" {
 		// Best effort to get the training ID
-		log = log.WithField(logger.LogkeyTrainingID, objectPrefix)
+		logr = logr.WithField(logger.LogkeyTrainingID, objectPrefix)
 	}
-	log.Debugf("Number of learners is: %d", numLearners)
+	logr.Debugf("Number of learners is: %d", numLearners)
 
 	// Create a buffer to write our zip to
 	w := zip.NewWriter(writer)
@@ -340,18 +341,18 @@ func (os *s3ObjectStore) DownloadTrainedModelAsZipStream(path string, numLearner
 		Delimiter: aws.String("/"),
 		Prefix:    aws.String(pathToRootFolder),
 	})
-	// log.Debugf("objects: %s", resp.Contents)
+	// logr.Debugf("objects: %s", resp.Contents)
 	if err != nil {
-		log.Errorf("Listing objects in bucket %s failed: %s", container, err.Error())
+		logr.Errorf("Listing objects in bucket %s failed: %s", container, err.Error())
 		return err
 	}
 
 	for _, obj := range resp.Contents {
-		log.Debugf("Downloading trained model object: %s, %d", *obj.Key, *obj.Size)
+		logr.Debugf("Downloading trained model object: %s, %d", *obj.Key, *obj.Size)
 
 		f, err := w.Create(*obj.Key)
 		if err != nil {
-			log.Errorf("Creating zip entry %s failed: %s", *obj.Key, err.Error())
+			logr.Errorf("Creating zip entry %s failed: %s", *obj.Key, err.Error())
 			return err
 		}
 
@@ -362,13 +363,13 @@ func (os *s3ObjectStore) DownloadTrainedModelAsZipStream(path string, numLearner
 
 		result, err := os.client.GetObject(input)
 		if err != nil {
-			log.Errorf("Cannot get object from datastore: %s", err.Error())
+			logr.Errorf("Cannot get object from datastore: %s", err.Error())
 			return err
 		}
 
 		_, err = io.Copy(f, result.Body) // FIXME this is not efficient
 		if err != nil {
-			log.Errorf("Cannot write to zip stream: %s", err.Error())
+			logr.Errorf("Cannot write to zip stream: %s", err.Error())
 			return err
 		}
 	}
@@ -378,24 +379,34 @@ func (os *s3ObjectStore) DownloadTrainedModelAsZipStream(path string, numLearner
 	for iter := 0; iter < int(numLearners); iter++ {
 		pathToLearner := objectPrefix + "/learner-" + strconv.Itoa(iter+1) + "/"
 
-		err := os.copyDirToZipStream(container, pathToLearner, w, true, log)
+		err := os.copyDirToZipStream(container, pathToLearner, w, true, logr)
 
 		if err != nil {
-			log.WithError(err).Error("Copy of learner contents failed!")
+			logr.WithError(err).Error("Copy of learner contents failed!")
 			return err
 		}
 	}
+
+	pathToLogs := objectPrefix + "/logs/"
+
+	err = os.copyDirToZipStream(container, pathToLogs, w, true, logr)
+
+	if err != nil {
+		log.WithError(err).Error("Copy of logs contents failed!")
+		return err
+	}
+
 	if err := w.Close(); err != nil {
-		log.Errorf("Cannot close zip stream: %s", err.Error())
+		logr.Errorf("Cannot close zip stream: %s", err.Error())
 		return err
 	}
 	return nil
 }
 
 func (os *s3ObjectStore) DownloadTrainedModelLogFile(path string, numLearners int32, learnerIndex int32, objectPath string, writer io.Writer) error {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 
-	log.Debugf("s3ObjectStore DownloadTrainedModelLogFile: bucket: %s, key: %s", path, objectPath)
+	logr.Debugf("s3ObjectStore DownloadTrainedModelLogFile: bucket: %s, key: %s", path, objectPath)
 	if os.client == nil {
 		return ErrNotConnected
 	}
@@ -411,18 +422,18 @@ func (os *s3ObjectStore) DownloadTrainedModelLogFile(path string, numLearners in
 	}
 	if objectPrefix != "" {
 		// Best effort to get the training ID
-		log = log.WithField(logger.LogkeyTrainingID, objectPrefix)
+		logr = logr.WithField(logger.LogkeyTrainingID, objectPrefix)
 	}
-	log.Debugf("Number of learners is: %d", numLearners)
+	logr.Debugf("Number of learners is: %d", numLearners)
 
 	var nbytesToProcess int64
 	var buff *aws.WriteAtBuffer
 	learnerPath := "/learner-" + strconv.Itoa(int(learnerIndex))
-	for i:= 0; i < 2; i++ {
+	for i := 0; i < 2; i++ {
 
 		fullObjectPath := objectPrefix + learnerPath + "/" + objectPath
 
-		log.Debugf("DownloadTrainedModelLogFile: container: %s, path: %s", container, fullObjectPath)
+		logr.Debugf("DownloadTrainedModelLogFile: container: %s, path: %s", container, fullObjectPath)
 
 		downloader := s3manager.NewDownloader(os.session)
 		input := &s3.GetObjectInput{
@@ -435,11 +446,11 @@ func (os *s3ObjectStore) DownloadTrainedModelLogFile(path string, numLearners in
 		nbytesToProcess, err = downloader.Download(buff, input)
 		if err != nil {
 			if i == 0 {
-				log.Debug("First attempt to download failed, trying with no learner path")
+				logr.Debug("First attempt to download failed, trying with no learner path")
 				learnerPath = ""
 				continue
 			} else {
-				log.WithError(err).Errorf("Downloading log file %s failed", fullObjectPath)
+				logr.WithError(err).Errorf("Downloading log file %s failed", fullObjectPath)
 				return err
 			}
 		} else {
@@ -448,16 +459,16 @@ func (os *s3ObjectStore) DownloadTrainedModelLogFile(path string, numLearners in
 	}
 	posStart := int64(0)
 
-	for ; posStart < nbytesToProcess; {
+	for posStart < nbytesToProcess {
 		// var nWritten int
 		nWritten, err := writer.Write(buff.Bytes()[posStart:])
 		posStart += int64(nWritten)
 		if posStart < nbytesToProcess {
 			// I can't so far confirm this is ever happening
-			log.Debugf("Write chunked %d total, %d written", nbytesToProcess, posStart)
+			logr.Debugf("Write chunked %d total, %d written", nbytesToProcess, posStart)
 		}
 		if err != nil {
-			log.WithError(err).Errorf("Cannot write to zip stream")
+			logr.WithError(err).Errorf("Cannot write to zip stream")
 			return err
 		}
 	}
@@ -468,6 +479,11 @@ func (os *s3ObjectStore) ContainerExists(name string) (bool, error) {
 	if os.client == nil {
 		return false, ErrNotConnected
 	}
+
+	if strings.Contains(name, "/") {
+		return false, fmt.Errorf("bucket name contains an illegal character")
+	}
+
 	params := &s3.HeadBucketInput{
 		Bucket: aws.String(name),
 	}
@@ -489,25 +505,8 @@ func (os *s3ObjectStore) Disconnect() {
 	os.session = nil
 }
 
-// ping implements functionality to emulate a ping to the object store by
-// listing all the available buckets. This way we can ensure the provided
-// connection information is correct.
-func (os *s3ObjectStore) ping() error {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
-	if os.client == nil {
-		return ErrNotConnected
-	}
-	_, err := os.client.ListBuckets(&s3.ListBucketsInput{
-	})
-	if err != nil {
-		log.WithError(err).Errorf("Cannot ping S3 objectstore")
-		return err
-	}
-	return nil
-}
-
 func (os *s3ObjectStore) createBucket(name string) error {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 	params := &s3.CreateBucketInput{
 		Bucket: aws.String(name),
 		CreateBucketConfiguration: &s3.CreateBucketConfiguration{
@@ -516,20 +515,20 @@ func (os *s3ObjectStore) createBucket(name string) error {
 	}
 	_, err := os.client.CreateBucket(params)
 	if err != nil {
-		log.Errorf("Creating bucket failed: %s", err.Error())
+		logr.Errorf("Creating bucket failed: %s", err.Error())
 		return err
 	}
 	return nil
 }
 
 func (os *s3ObjectStore) deleteBucket(name string) error {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 	params := &s3.DeleteBucketInput{
 		Bucket: aws.String(name),
 	}
 	_, err := os.client.DeleteBucket(params)
 	if err != nil {
-		log.Errorf("Deleting bucket failed: %s", err.Error())
+		logr.Errorf("Deleting bucket failed: %s", err.Error())
 	}
 	return nil
 }
@@ -546,7 +545,7 @@ func (os *s3ObjectStore) getRegion() string {
 // "rewrite" the object store URL to either use the internal SL proxy or the
 // external URLs.
 func replaceS3ObjectStoreURL(sess *session.Session) {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 	env := viper.GetString(config.EnvKey)
 
 	switch env {
@@ -559,25 +558,25 @@ func replaceS3ObjectStoreURL(sess *session.Session) {
 	default: // any other env will use local settings (assuming outside SL)
 		if strings.Contains(*sess.Config.Endpoint, intSLObjectStoreURLFragment) {
 			newURL := strings.Replace(*sess.Config.Endpoint, intSLObjectStoreURLFragment, extSLObjectStoreURLFragment, 1)
-			log.Debugf("Replaced ObjectStore URL from %s to %s", *sess.Config.Endpoint, newURL)
+			logr.Debugf("Replaced ObjectStore URL from %s to %s", *sess.Config.Endpoint, newURL)
 			sess.Config.Endpoint = &newURL
 		} else if strings.Contains(*sess.Config.Endpoint, intDevBMObjectStoreURL) ||
 			strings.Contains(*sess.Config.Endpoint, intStagingBMObjectStoreURL) ||
 			strings.Contains(*sess.Config.Endpoint, intProdBMObjectStoreURL) {
-			log.Debugf("Replaced ObjectStore URL from %s to %s", *sess.Config.Endpoint, extBMObjectStoreURL)
+			logr.Debugf("Replaced ObjectStore URL from %s to %s", *sess.Config.Endpoint, extBMObjectStoreURL)
 			*sess.Config.Endpoint = extBMObjectStoreURL
 		}
 	}
 }
 
 func replaceS3ConnURL(sess *session.Session, bluemixOSURL string) {
-	log := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "storage"))
 	if strings.Contains(*sess.Config.Endpoint, extSLObjectStoreURLFragment) { // external SL URL part
 		newURL := strings.Replace(*sess.Config.Endpoint, extSLObjectStoreURLFragment, intSLObjectStoreURLFragment, 1)
-		log.Debugf("Replaced ObjectStore URL from %s to %s", *sess.Config.Endpoint, newURL)
+		logr.Debugf("Replaced ObjectStore URL from %s to %s", *sess.Config.Endpoint, newURL)
 		sess.Config.Endpoint = &newURL
 	} else if strings.Contains(*sess.Config.Endpoint, extBMObjectStoreURL) { // external BM
-		log.Debugf("Replaced ObjectStore URL from %s to %s", *sess.Config.Endpoint, bluemixOSURL)
+		logr.Debugf("Replaced ObjectStore URL from %s to %s", *sess.Config.Endpoint, bluemixOSURL)
 		sess.Config.Endpoint = &bluemixOSURL
 	}
 }

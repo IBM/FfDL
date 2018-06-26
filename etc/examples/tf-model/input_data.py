@@ -3,10 +3,10 @@
 
 """Functions for downloading and reading MNIST data."""
 import gzip
-import os
 from six.moves import xrange
 from six.moves.urllib.request import urlretrieve
 import numpy
+import os
 
 def _read32(bytestream):
     dt = numpy.dtype(numpy.uint32).newbyteorder('>')

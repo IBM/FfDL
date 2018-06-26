@@ -1,0 +1,38 @@
+{{ if .Values.cloud }}
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: "ibmcloud-object-storage-deployer"
+  namespace: kube-system
+  labels:
+    app: "ibmcloud-object-storage-deployer"
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: "ibmcloud-object-storage-deployer"
+    spec:
+      tolerations:
+      - operator: "Exists"
+      hostNetwork: true
+      containers:
+        - name: "ibmcloud-object-storage-deployer-container"
+          image: "{{ .Values.image.pluginrepository }}:{{ .Values.image.pluginBuild }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+             - mountPath: /host
+               name: root-fs
+             - mountPath: /run/systemd
+               name: systemd
+      volumes:
+        - name: root-fs
+          hostPath:
+             path: /
+        - name: systemd
+          hostPath:
+             path: /run/systemd
+      imagePullSecrets:
+      - name: regcred
+{{ end }}

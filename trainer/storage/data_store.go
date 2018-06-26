@@ -56,7 +56,7 @@ const (
 )
 
 // ErrNotConnected is thrown when the ObjectStore is not connected (i.e., authenticated)
-var ErrNotConnected = errors.New("Not connected to object store")
+var ErrNotConnected = errors.New("not connected to object store")
 
 // DataStore is a minimal interface for interacting with data stores such as IBM ObjectStore or other backend
 // for uploading and downloading DL models, logs, etc.

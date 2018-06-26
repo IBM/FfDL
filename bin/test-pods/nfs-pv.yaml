@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    # FIXME: Do not hardcode NFS host
+    server: <server_name>
+    path: "/nfs/var/nfs/general"

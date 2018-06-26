@@ -31,7 +31,12 @@ function recordStatusInEtcd {
 
 	ZNODE_PATH=$1
 	STATUS_STRING=${2:-""}
-	MODE=${3:-""}
+
+	# Append timestamp to node path, as we are storing the history of nodes
+	# NOTE: The command below only provides the desired nanosecond precision on some systems
+	#       (including Ubuntu), but on other systems (e.g., Alpine) it only has seconds precision.
+	nano_time=$(date "+%s%N")
+	ZNODE_PATH=$ZNODE_PATH/$nano_time
 
 	STATUS_VALUE=$STATUS_STRING
 	# STATUS_VALUE could be a JSON string like {"status":"FAILED",...}

@@ -1,0 +1,4 @@
+apiVersion: v1
+description: A Helm chart for ibmcloud-object-storage plugin
+name: ibmcloud-object-storage-plugin
+version: 0.1

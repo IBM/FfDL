@@ -29,7 +29,7 @@ spec:
 {{ end }}
       containers:
       - name: ffdl-trainingdata-container
-        image: docker.io/{{.Values.docker.namespace}}/{{.Values.docker.image_prefix}}metrics:{{.Values.trainingdata.version}}
+        image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}/{{.Values.docker.image_prefix}}metrics:{{.Values.trainingdata.version}}
 {{ if .Values.docker.pullPolicy }}
         imagePullPolicy: {{.Values.docker.pullPolicy}}
 {{ end }}
@@ -78,6 +78,8 @@ spec:
           limits:
             cpu: {{.Values.trainingdata.cpus}}
             memory: {{.Values.trainingdata.memory}}
+      imagePullSecrets:
+      - name: regcred
 #        livenessProbe:
 #          exec:
 #            command:

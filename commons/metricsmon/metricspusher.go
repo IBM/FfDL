@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017-2018 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package metricsmon
 
 import (
@@ -5,14 +21,13 @@ import (
 
 	"github.com/IBM/FfDL/commons/config"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/go-kit/kit/metrics/statsd"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
+	log "github.com/sirupsen/logrus"
 	"github.com/sony/gobreaker"
 )
 
-//StartMetricsPusher ...
 func StartMetricsPusher(label string, interval time.Duration, url string) chan struct{} {
 	log.Info("Starting code to push out metrics")
 	quit := make(chan struct{})
@@ -59,11 +74,10 @@ func pushMetrics(job string, url string) error {
 	return nil
 }
 
-//StartStatsdMetricsPusher ... pushes metrics out to statsd server every 30s
+// Pushes metrics out to statsd server every 30s
 func StartStatsdMetricsPusher(statsd *statsd.Statsd, pushInterval time.Duration) {
 	log.Info("Starting code to push out metrics via statsd")
 	report := time.NewTicker(pushInterval)
-	//TODO
-	//defer report.Stop()
-	go statsd.SendLoop(report.C, "udp", "pushgateway:9125")
+	// TODO defer report.Stop()
+	go statsd.SendLoop(report.C, "udp", "statsdexporter:9125")
 }

@@ -23,7 +23,7 @@ import (
 
 //InitLogger ... initializes new logger with trainingID and userID
 func InitLogger(trainingID string, userID string) *log.Entry {
-	data := logger.NewDlaaSLogData(logger.LogkeyJobMonitor)
+	data := logger.NewDlaaSLogData(logger.LogkeyLcmService)
 	data[logger.LogkeyTrainingID] = trainingID
 	data[logger.LogkeyUserID] = userID
 	return &log.Entry{Logger: log.StandardLogger(), Data: data}

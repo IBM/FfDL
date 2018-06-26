@@ -53,3 +53,5 @@ spec:
             port: 8080
           initialDelaySeconds: 30
           timeoutSeconds: 10
+      imagePullSecrets:
+      - name: regcred

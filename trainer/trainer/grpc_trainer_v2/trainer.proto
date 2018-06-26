@@ -59,11 +59,10 @@ service Trainer {
     // Get evaluation metrics records, based on query
     rpc GetTrainingEMetrics (Query) returns (stream EMetrics) {}
 
-    // ============ INTERNAL ============
-
-    // To be removed
-    rpc GetTrainedModelLogsFromObjStore (TrainedModelLogRequest) returns (stream ByteStreamResponse) {
+    rpc GetVersions(GetVersionsRequest) returns (Frameworks){
     }
+
+    // ============ INTERNAL ============
 
     // For internal use only!
     rpc GetTrainingStatusID (GetRequest) returns (GetStatusIDResponse) {
@@ -73,10 +72,6 @@ service Trainer {
     // Updates an existing training status
     // TODO we should not have this but until we fix the status update handling properly, we have no other choice.
     rpc UpdateTrainingJob (UpdateRequest) returns (UpdateResponse) {
-    }
-
-    // To be removed
-    rpc GetTrainedModelMetrics (TrainedModelMetricsRequest) returns (stream ByteStreamResponse) {
     }
 
     // Not implemented, to be removed (for GA)
@@ -153,6 +148,9 @@ message EMMeta {
     // Time that the metric occured: representing the number of millisecond since midnight January 1, 1970.
     // (ref, for instance $timestamp).  Value will be extracted from timestamps
     string time = 3;
+
+    // Optional subid
+    string subid = 5;
 }
 
 // Typed value for EMExtractionSpec.  The data type here can't be an enum, due to internal issues with YAML
@@ -257,7 +255,7 @@ message UpdateRequest {
     Status status = 3;
     string status_message = 4;
     string error_code = 5;
-    float timestamp = 6;
+    string timestamp = 6;
 }
 
 message UpdateResponse {
@@ -396,17 +394,38 @@ message Datastore {
     map<string, string> connection = 4;
 }
 
+//Used to specify resource requirements of a training job
 message ResourceRequirements {
+    //Number of CPU cores
     float cpus = 1;
+
+    //Number of GPUs
     float gpus = 2;
+
+    //RAM
     float memory = 3;
     SizeUnit memory_unit = 4;
+    
     float storage = 5;
     SizeUnit storage_unit = 6;
+    
+    //Number of learners
     int32 learners = 7;
+
+
     string schedpolicy = 8;
-    string topology = 9;
+    
+
+	string topology = 9;
+   
+
     string architecture = 10;
+    
+    //Optional. If not specified, job will be scheduled ONLY on nvidia-TeslaK80
+    //Constraint strictly enforced. If e.g., a nvidia-TeslaP100 is requested,
+    //job will NOT start until a nvidia-TeslaP100 is available
+    //Can only be nvidia-TeslaK80, nvidia-TeslaP100 or nvidia-TeslaV100
+    string gpu_type = 11;
 }
 
 enum SizeUnit {
@@ -426,6 +445,7 @@ enum Status {
     PROCESSING = 40;
     STORING = 50;
     COMPLETED = 60;
+    QUEUED = 70;
 }
 
 message ModelDefinitionRequest {
@@ -481,4 +501,23 @@ message ByteStreamResponse {
 
 message ZippedDataChunk {
     bytes data = 1;
+}
+
+message GetVersionsRequest {
+}
+
+// Contains a list of all frameworks currently supported along with the versions of that framework and whether a
+// specific framework version can be used by anyone or only for internal usage.
+message Frameworks {
+    map<string, FrameworkDetailList> frameworks = 1;
+}
+
+message FrameworkDetailList{
+    repeated FrameworkDetails versions = 1;
+}
+
+message FrameworkDetails {
+    string version = 1;
+    // If true, the image can be used by any user. If false, the image is only available for internal usage.
+    bool external = 2;
 }

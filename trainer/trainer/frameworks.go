@@ -17,11 +17,16 @@
 package trainer
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
+	"io/ioutil"
 	"strings"
+
 	"github.com/IBM/FfDL/commons/config"
+	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
 )
+
+var learnerConfigPath = "/etc/learner-config-json/learner-config.json"
 
 func validateFrameworks(fw *grpc_trainer_v2.Framework) (bool, string) {
 	fwName := normalizedFrameworkName(fw)
@@ -35,11 +40,6 @@ func validateFrameworks(fw *grpc_trainer_v2.Framework) (bool, string) {
 		return false, "framework version is required"
 	}
 
-	// Uncomment the below condition to enable users to apply any custom learner.
-	// if fwName == "custom" {
-	// 	return true, ""
-	// }
-
 	loc := config.GetCurrentLearnerConfigLocation(fwName, fwVersion)
 	if loc == "" {
 		return false, fmt.Sprintf("%s version %s not supported", fwName, fwVersion)
@@ -49,4 +49,52 @@ func validateFrameworks(fw *grpc_trainer_v2.Framework) (bool, string) {
 
 func normalizedFrameworkName(fw *grpc_trainer_v2.Framework) string {
 	return strings.ToLower(fw.Name)
+}
+
+func getExternalVersions() (grpc_trainer_v2.Frameworks, error) {
+	frameworks, err := getFrameworks()
+	if err != nil {
+		return grpc_trainer_v2.Frameworks{}, err
+	}
+	return frameworks, nil
+}
+
+func getFrameworks() (grpc_trainer_v2.Frameworks, error) {
+	var frameworks grpc_trainer_v2.Frameworks
+	fileData, err := readFile(learnerConfigPath)
+	if err != nil {
+		return grpc_trainer_v2.Frameworks{}, err
+	}
+	err = json.Unmarshal(fileData, &frameworks)
+	if err != nil {
+		return grpc_trainer_v2.Frameworks{}, err
+	}
+
+	removeInternalFrameworks(frameworks)
+
+	return frameworks, nil
+}
+
+func readFile(location string) ([]byte, error) {
+	fileData, err := ioutil.ReadFile(location)
+	if err != nil {
+		return []byte(""), err
+	}
+	return fileData, nil
+}
+
+func removeInternalFrameworks(frameworks grpc_trainer_v2.Frameworks) {
+	for frameworkName, frameworkVersion := range frameworks.Frameworks {
+		var externalFrameworks []*grpc_trainer_v2.FrameworkDetails
+		for _, framework := range frameworkVersion.Versions {
+			if framework.External {
+				externalFrameworks = append(externalFrameworks, framework)
+			}
+		}
+		if len(externalFrameworks) <= 0 {
+			delete(frameworks.Frameworks, frameworkName)
+		} else {
+			frameworkVersion.Versions = externalFrameworks
+		}
+	}
 }

@@ -14,23 +14,22 @@
 # limitations under the License.
 #
 
-REPO ?= docker.io/ffdl
+DOCKER_REPO ?= docker.io
+DOCKER_NAMESPACE ?= ffdl
+GRPC_GIT=git@github.ibm.com:deep-learning-platform/grpc-parameter-server.git
 WHOAMI ?= $(shell whoami)
 IMAGE_TAG ?= user-$(WHOAMI)
 
-IMAGE_NAME?=${REPO}/log_collector:${IMAGE_TAG}
+IMAGE_NAME?=${DOCKER_REPO}/${DOCKER_NAMESPACE}/log_collector:${IMAGE_TAG}
 
-all: build push
+all: build
 
 DOCKER_OPTIONS ?=
 
 build:
 	cp -r ../training_data_service_client .
-	docker build -q ${DOCKER_OPTIONS} -t ${REPO}/log_collector:${IMAGE_TAG} -f Dockerfile .
+	docker build -q ${DOCKER_OPTIONS} -t ${DOCKER_REPO}/${DOCKER_NAMESPACE}/log_collector:${IMAGE_TAG} -f Dockerfile .
 	rm -r training_data_service_client
-
-push:
-	docker push ${REPO}/log_collector:${IMAGE_TAG}
 
 imagename:
 	echo $(IMAGE_NAME)

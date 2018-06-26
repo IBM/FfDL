@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='training_data.proto',
   package='grpc.training.data.v1',
   syntax='proto3',
-  serialized_pb=_b('\n\x13training_data.proto\x12\x15grpc.training.data.v1\"N\n\x08MetaInfo\x12\x13\n\x0btraining_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\x12\x0c\n\x04time\x18\x03 \x01(\x03\x12\x0e\n\x06rindex\x18\x04 \x01(\x03\"F\n\x07LogLine\x12-\n\x04meta\x18\x01 \x01(\x0b\x32\x1f.grpc.training.data.v1.MetaInfo\x12\x0c\n\x04line\x18\x02 \x01(\t\"\x83\x01\n\x03\x41ny\x12\x31\n\x04type\x18\x01 \x01(\x0e\x32#.grpc.training.data.v1.Any.DataType\x12\r\n\x05value\x18\x02 \x01(\t\":\n\x08\x44\x61taType\x12\n\n\x06STRING\x10\x00\x12\x0e\n\nJSONSTRING\x10\x01\x12\x07\n\x03INT\x10\x02\x12\t\n\x05\x46LOAT\x10\x03\"\xdd\x02\n\x08\x45Metrics\x12-\n\x04meta\x18\x01 \x01(\x0b\x32\x1f.grpc.training.data.v1.MetaInfo\x12;\n\x06\x65times\x18\x02 \x03(\x0b\x32+.grpc.training.data.v1.EMetrics.EtimesEntry\x12\x12\n\ngrouplabel\x18\x03 \x01(\t\x12;\n\x06values\x18\x04 \x03(\x0b\x32+.grpc.training.data.v1.EMetrics.ValuesEntry\x1aI\n\x0b\x45timesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12)\n\x05value\x18\x02 \x01(\x0b\x32\x1a.grpc.training.data.v1.Any:\x02\x38\x01\x1aI\n\x0bValuesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12)\n\x05value\x18\x02 \x01(\x0b\x32\x1a.grpc.training.data.v1.Any:\x02\x38\x01\"\xd9\x01\n\x05Query\x12;\n\nsearchType\x18\x01 \x01(\x0e\x32\'.grpc.training.data.v1.Query.SearchType\x12-\n\x04meta\x18\x03 \x01(\x0b\x32\x1f.grpc.training.data.v1.MetaInfo\x12\r\n\x05since\x18\x04 \x01(\t\x12\x10\n\x08pagesize\x18\x05 \x01(\x05\x12\x0b\n\x03pos\x18\x06 \x01(\x03\"6\n\nSearchType\x12\x08\n\x04TERM\x10\x00\x12\n\n\x06NESTED\x10\x01\x12\t\n\x05MATCH\x10\x02\x12\x07\n\x03\x41LL\x10\x03\"3\n\x0b\x44\x65leteQuery\x12\x13\n\x0btraining_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\"\x1e\n\x0b\x41\x64\x64Response\x12\x0f\n\x07success\x18\x01 \x01(\x08\"!\n\x0e\x44\x65leteResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\x1c\n\rHelloResponse\x12\x0b\n\x03msg\x18\x01 \x01(\t\"\x07\n\x05\x45mpty2\xac\x05\n\x0cTrainingData\x12K\n\x07GetLogs\x12\x1c.grpc.training.data.v1.Query\x1a\x1e.grpc.training.data.v1.LogLine\"\x00\x30\x01\x12P\n\x0bGetEMetrics\x12\x1c.grpc.training.data.v1.Query\x1a\x1f.grpc.training.data.v1.EMetrics\"\x00\x30\x01\x12T\n\x0b\x41\x64\x64\x45Metrics\x12\x1f.grpc.training.data.v1.EMetrics\x1a\".grpc.training.data.v1.AddResponse\"\x00\x12R\n\nAddLogLine\x12\x1e.grpc.training.data.v1.LogLine\x1a\".grpc.training.data.v1.AddResponse\"\x00\x12W\n\x0e\x44\x65leteEMetrics\x12\x1c.grpc.training.data.v1.Query\x1a%.grpc.training.data.v1.DeleteResponse\"\x00\x12W\n\x0e\x44\x65leteLogLines\x12\x1c.grpc.training.data.v1.Query\x1a%.grpc.training.data.v1.DeleteResponse\"\x00\x12R\n\tDeleteJob\x12\x1c.grpc.training.data.v1.Query\x1a%.grpc.training.data.v1.DeleteResponse\"\x00\x12M\n\x05Hello\x12\x1c.grpc.training.data.v1.Empty\x1a$.grpc.training.data.v1.HelloResponse\"\x00\x62\x06proto3')
+  serialized_pb=_b('\n\x13training_data.proto\x12\x15grpc.training.data.v1\"]\n\x08MetaInfo\x12\x13\n\x0btraining_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\x12\x0c\n\x04time\x18\x03 \x01(\x03\x12\x0e\n\x06rindex\x18\x04 \x01(\x03\x12\r\n\x05subid\x18\x05 \x01(\t\"F\n\x07LogLine\x12-\n\x04meta\x18\x01 \x01(\x0b\x32\x1f.grpc.training.data.v1.MetaInfo\x12\x0c\n\x04line\x18\x02 \x01(\t\"N\n\x0cLogLineBatch\x12\r\n\x05\x66orce\x18\x01 \x01(\x08\x12/\n\x07logLine\x18\x02 \x03(\x0b\x32\x1e.grpc.training.data.v1.LogLine\"\x83\x01\n\x03\x41ny\x12\x31\n\x04type\x18\x01 \x01(\x0e\x32#.grpc.training.data.v1.Any.DataType\x12\r\n\x05value\x18\x02 \x01(\t\":\n\x08\x44\x61taType\x12\n\n\x06STRING\x10\x00\x12\x0e\n\nJSONSTRING\x10\x01\x12\x07\n\x03INT\x10\x02\x12\t\n\x05\x46LOAT\x10\x03\"\xdd\x02\n\x08\x45Metrics\x12-\n\x04meta\x18\x01 \x01(\x0b\x32\x1f.grpc.training.data.v1.MetaInfo\x12;\n\x06\x65times\x18\x02 \x03(\x0b\x32+.grpc.training.data.v1.EMetrics.EtimesEntry\x12\x12\n\ngrouplabel\x18\x03 \x01(\t\x12;\n\x06values\x18\x04 \x03(\x0b\x32+.grpc.training.data.v1.EMetrics.ValuesEntry\x1aI\n\x0b\x45timesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12)\n\x05value\x18\x02 \x01(\x0b\x32\x1a.grpc.training.data.v1.Any:\x02\x38\x01\x1aI\n\x0bValuesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12)\n\x05value\x18\x02 \x01(\x0b\x32\x1a.grpc.training.data.v1.Any:\x02\x38\x01\"Q\n\rEMetricsBatch\x12\r\n\x05\x66orce\x18\x01 \x01(\x08\x12\x31\n\x08\x65metrics\x18\x02 \x03(\x0b\x32\x1f.grpc.training.data.v1.EMetrics\"\xd9\x01\n\x05Query\x12;\n\nsearchType\x18\x01 \x01(\x0e\x32\'.grpc.training.data.v1.Query.SearchType\x12-\n\x04meta\x18\x03 \x01(\x0b\x32\x1f.grpc.training.data.v1.MetaInfo\x12\r\n\x05since\x18\x04 \x01(\t\x12\x10\n\x08pagesize\x18\x05 \x01(\x05\x12\x0b\n\x03pos\x18\x06 \x01(\x03\"6\n\nSearchType\x12\x08\n\x04TERM\x10\x00\x12\n\n\x06NESTED\x10\x01\x12\t\n\x05MATCH\x10\x02\x12\x07\n\x03\x41LL\x10\x03\"3\n\x0b\x44\x65leteQuery\x12\x13\n\x0btraining_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\"\x1e\n\x0b\x41\x64\x64Response\x12\x0f\n\x07success\x18\x01 \x01(\x08\"!\n\x0e\x44\x65leteResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\x1c\n\rHelloResponse\x12\x0b\n\x03msg\x18\x01 \x01(\t\"\x07\n\x05\x45mpty2\xea\x06\n\x0cTrainingData\x12K\n\x07GetLogs\x12\x1c.grpc.training.data.v1.Query\x1a\x1e.grpc.training.data.v1.LogLine\"\x00\x30\x01\x12P\n\x0bGetEMetrics\x12\x1c.grpc.training.data.v1.Query\x1a\x1f.grpc.training.data.v1.EMetrics\"\x00\x30\x01\x12T\n\x0b\x41\x64\x64\x45Metrics\x12\x1f.grpc.training.data.v1.EMetrics\x1a\".grpc.training.data.v1.AddResponse\"\x00\x12R\n\nAddLogLine\x12\x1e.grpc.training.data.v1.LogLine\x1a\".grpc.training.data.v1.AddResponse\"\x00\x12^\n\x10\x41\x64\x64\x45MetricsBatch\x12$.grpc.training.data.v1.EMetricsBatch\x1a\".grpc.training.data.v1.AddResponse\"\x00\x12\\\n\x0f\x41\x64\x64LogLineBatch\x12#.grpc.training.data.v1.LogLineBatch\x1a\".grpc.training.data.v1.AddResponse\"\x00\x12W\n\x0e\x44\x65leteEMetrics\x12\x1c.grpc.training.data.v1.Query\x1a%.grpc.training.data.v1.DeleteResponse\"\x00\x12W\n\x0e\x44\x65leteLogLines\x12\x1c.grpc.training.data.v1.Query\x1a%.grpc.training.data.v1.DeleteResponse\"\x00\x12R\n\tDeleteJob\x12\x1c.grpc.training.data.v1.Query\x1a%.grpc.training.data.v1.DeleteResponse\"\x00\x12M\n\x05Hello\x12\x1c.grpc.training.data.v1.Empty\x1a$.grpc.training.data.v1.HelloResponse\"\x00\x62\x06proto3')
 )
 
 
@@ -49,8 +49,8 @@ _ANY_DATATYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=272,
-  serialized_end=330,
+  serialized_start=367,
+  serialized_end=425,
 )
 _sym_db.RegisterEnumDescriptor(_ANY_DATATYPE)
 
@@ -79,8 +79,8 @@ _QUERY_SEARCHTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=848,
-  serialized_end=902,
+  serialized_start=1026,
+  serialized_end=1080,
 )
 _sym_db.RegisterEnumDescriptor(_QUERY_SEARCHTYPE)
 
@@ -120,6 +120,13 @@ _METAINFO = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='subid', full_name='grpc.training.data.v1.MetaInfo.subid', index=4,
+      number=5, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -133,7 +140,7 @@ _METAINFO = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=46,
-  serialized_end=124,
+  serialized_end=139,
 )
 
 
@@ -170,8 +177,46 @@ _LOGLINE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=126,
-  serialized_end=196,
+  serialized_start=141,
+  serialized_end=211,
+)
+
+
+_LOGLINEBATCH = _descriptor.Descriptor(
+  name='LogLineBatch',
+  full_name='grpc.training.data.v1.LogLineBatch',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='force', full_name='grpc.training.data.v1.LogLineBatch.force', index=0,
+      number=1, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='logLine', full_name='grpc.training.data.v1.LogLineBatch.logLine', index=1,
+      number=2, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=213,
+  serialized_end=291,
 )
 
 
@@ -209,8 +254,8 @@ _ANY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=199,
-  serialized_end=330,
+  serialized_start=294,
+  serialized_end=425,
 )
 
 
@@ -247,8 +292,8 @@ _EMETRICS_ETIMESENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=534,
-  serialized_end=607,
+  serialized_start=629,
+  serialized_end=702,
 )
 
 _EMETRICS_VALUESENTRY = _descriptor.Descriptor(
@@ -284,8 +329,8 @@ _EMETRICS_VALUESENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=609,
-  serialized_end=682,
+  serialized_start=704,
+  serialized_end=777,
 )
 
 _EMETRICS = _descriptor.Descriptor(
@@ -335,8 +380,46 @@ _EMETRICS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=333,
-  serialized_end=682,
+  serialized_start=428,
+  serialized_end=777,
+)
+
+
+_EMETRICSBATCH = _descriptor.Descriptor(
+  name='EMetricsBatch',
+  full_name='grpc.training.data.v1.EMetricsBatch',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='force', full_name='grpc.training.data.v1.EMetricsBatch.force', index=0,
+      number=1, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='emetrics', full_name='grpc.training.data.v1.EMetricsBatch.emetrics', index=1,
+      number=2, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=779,
+  serialized_end=860,
 )
 
 
@@ -395,8 +478,8 @@ _QUERY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=685,
-  serialized_end=902,
+  serialized_start=863,
+  serialized_end=1080,
 )
 
 
@@ -433,8 +516,8 @@ _DELETEQUERY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=904,
-  serialized_end=955,
+  serialized_start=1082,
+  serialized_end=1133,
 )
 
 
@@ -464,8 +547,8 @@ _ADDRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=957,
-  serialized_end=987,
+  serialized_start=1135,
+  serialized_end=1165,
 )
 
 
@@ -495,8 +578,8 @@ _DELETERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=989,
-  serialized_end=1022,
+  serialized_start=1167,
+  serialized_end=1200,
 )
 
 
@@ -526,8 +609,8 @@ _HELLORESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1024,
-  serialized_end=1052,
+  serialized_start=1202,
+  serialized_end=1230,
 )
 
 
@@ -550,11 +633,12 @@ _EMPTY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1054,
-  serialized_end=1061,
+  serialized_start=1232,
+  serialized_end=1239,
 )
 
 _LOGLINE.fields_by_name['meta'].message_type = _METAINFO
+_LOGLINEBATCH.fields_by_name['logLine'].message_type = _LOGLINE
 _ANY.fields_by_name['type'].enum_type = _ANY_DATATYPE
 _ANY_DATATYPE.containing_type = _ANY
 _EMETRICS_ETIMESENTRY.fields_by_name['value'].message_type = _ANY
@@ -564,13 +648,16 @@ _EMETRICS_VALUESENTRY.containing_type = _EMETRICS
 _EMETRICS.fields_by_name['meta'].message_type = _METAINFO
 _EMETRICS.fields_by_name['etimes'].message_type = _EMETRICS_ETIMESENTRY
 _EMETRICS.fields_by_name['values'].message_type = _EMETRICS_VALUESENTRY
+_EMETRICSBATCH.fields_by_name['emetrics'].message_type = _EMETRICS
 _QUERY.fields_by_name['searchType'].enum_type = _QUERY_SEARCHTYPE
 _QUERY.fields_by_name['meta'].message_type = _METAINFO
 _QUERY_SEARCHTYPE.containing_type = _QUERY
 DESCRIPTOR.message_types_by_name['MetaInfo'] = _METAINFO
 DESCRIPTOR.message_types_by_name['LogLine'] = _LOGLINE
+DESCRIPTOR.message_types_by_name['LogLineBatch'] = _LOGLINEBATCH
 DESCRIPTOR.message_types_by_name['Any'] = _ANY
 DESCRIPTOR.message_types_by_name['EMetrics'] = _EMETRICS
+DESCRIPTOR.message_types_by_name['EMetricsBatch'] = _EMETRICSBATCH
 DESCRIPTOR.message_types_by_name['Query'] = _QUERY
 DESCRIPTOR.message_types_by_name['DeleteQuery'] = _DELETEQUERY
 DESCRIPTOR.message_types_by_name['AddResponse'] = _ADDRESPONSE
@@ -592,6 +679,13 @@ LogLine = _reflection.GeneratedProtocolMessageType('LogLine', (_message.Message,
   # @@protoc_insertion_point(class_scope:grpc.training.data.v1.LogLine)
   ))
 _sym_db.RegisterMessage(LogLine)
+
+LogLineBatch = _reflection.GeneratedProtocolMessageType('LogLineBatch', (_message.Message,), dict(
+  DESCRIPTOR = _LOGLINEBATCH,
+  __module__ = 'training_data_pb2'
+  # @@protoc_insertion_point(class_scope:grpc.training.data.v1.LogLineBatch)
+  ))
+_sym_db.RegisterMessage(LogLineBatch)
 
 Any = _reflection.GeneratedProtocolMessageType('Any', (_message.Message,), dict(
   DESCRIPTOR = _ANY,
@@ -622,6 +716,13 @@ EMetrics = _reflection.GeneratedProtocolMessageType('EMetrics', (_message.Messag
 _sym_db.RegisterMessage(EMetrics)
 _sym_db.RegisterMessage(EMetrics.EtimesEntry)
 _sym_db.RegisterMessage(EMetrics.ValuesEntry)
+
+EMetricsBatch = _reflection.GeneratedProtocolMessageType('EMetricsBatch', (_message.Message,), dict(
+  DESCRIPTOR = _EMETRICSBATCH,
+  __module__ = 'training_data_pb2'
+  # @@protoc_insertion_point(class_scope:grpc.training.data.v1.EMetricsBatch)
+  ))
+_sym_db.RegisterMessage(EMetricsBatch)
 
 Query = _reflection.GeneratedProtocolMessageType('Query', (_message.Message,), dict(
   DESCRIPTOR = _QUERY,
@@ -677,8 +778,8 @@ _TRAININGDATA = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   options=None,
-  serialized_start=1064,
-  serialized_end=1748,
+  serialized_start=1242,
+  serialized_end=2116,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetLogs',
@@ -717,9 +818,27 @@ _TRAININGDATA = _descriptor.ServiceDescriptor(
     options=None,
   ),
   _descriptor.MethodDescriptor(
+    name='AddEMetricsBatch',
+    full_name='grpc.training.data.v1.TrainingData.AddEMetricsBatch',
+    index=4,
+    containing_service=None,
+    input_type=_EMETRICSBATCH,
+    output_type=_ADDRESPONSE,
+    options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='AddLogLineBatch',
+    full_name='grpc.training.data.v1.TrainingData.AddLogLineBatch',
+    index=5,
+    containing_service=None,
+    input_type=_LOGLINEBATCH,
+    output_type=_ADDRESPONSE,
+    options=None,
+  ),
+  _descriptor.MethodDescriptor(
     name='DeleteEMetrics',
     full_name='grpc.training.data.v1.TrainingData.DeleteEMetrics',
-    index=4,
+    index=6,
     containing_service=None,
     input_type=_QUERY,
     output_type=_DELETERESPONSE,
@@ -728,7 +847,7 @@ _TRAININGDATA = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='DeleteLogLines',
     full_name='grpc.training.data.v1.TrainingData.DeleteLogLines',
-    index=5,
+    index=7,
     containing_service=None,
     input_type=_QUERY,
     output_type=_DELETERESPONSE,
@@ -737,7 +856,7 @@ _TRAININGDATA = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='DeleteJob',
     full_name='grpc.training.data.v1.TrainingData.DeleteJob',
-    index=6,
+    index=8,
     containing_service=None,
     input_type=_QUERY,
     output_type=_DELETERESPONSE,
@@ -746,7 +865,7 @@ _TRAININGDATA = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='Hello',
     full_name='grpc.training.data.v1.TrainingData.Hello',
-    index=7,
+    index=9,
     containing_service=None,
     input_type=_EMPTY,
     output_type=_HELLORESPONSE,

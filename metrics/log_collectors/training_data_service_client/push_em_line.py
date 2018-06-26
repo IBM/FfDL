@@ -20,17 +20,27 @@
 import sys
 import json
 import os
+import logging
+from typing import Tuple, Any
+
 from log_collectors.training_data_service_client import training_data_pb2 as tdp
 from log_collectors.training_data_service_client import print_json as print_json
 
+from log_collectors.training_data_service_client import extract_datetime as edt
+from log_collectors.training_data_service_client import training_data_buffered as tdb
 
-def push(td_client, logline: str, logfile_year, rindex):
+
+def push(td_client: tdb.TrainingDataClientBuffered, log_file: str, log_line: str, logfile_year: str, rindex: int, rindex2: int,
+         subdir: str, extra: Any=None) -> Tuple[int, int]:
     """Push the processed metrics data to the metrics service"""
 
+    del log_file  # Ignored parameter for now
     del logfile_year  # Ignored parameter for now
+    del extra  # Ignored parameter for now
     try:
-        emr = json.loads(logline+"\n")
+        emr = json.loads(log_line+"\n")
 
+        logging.debug("Processing etimes...")
         etimes_dict = emr["etimes"]
         etimes: dict = dict()
         for key, value_any in etimes_dict.items():
@@ -41,6 +51,7 @@ def push(td_client, logline: str, logfile_year, rindex):
             else:
                 etimes[key] = tdp.Any(value=str(val))
 
+        logging.debug("Processing values...")
         values_dict = emr["values"]
         scalars: dict = dict()
         for key in values_dict:
@@ -54,15 +65,28 @@ def push(td_client, logline: str, logfile_year, rindex):
 
         emr_meta = emr["meta"]
 
+        logging.debug("Getting training_id...")
         training_id = emr_meta["training_id"]
-        if training_id == None and "TRAINING_ID" in os.environ:
+        if training_id is None and "TRAINING_ID" in os.environ:
             training_id = os.environ["TRAINING_ID"],
 
+        if "time" in emr_meta and emr_meta["time"] is not None:
+            time=emr_meta["time"]
+        else:
+            time=edt.get_meta_timestamp()
+
+        if "subid" in emr_meta and emr_meta["subid"] is not None:
+            subid=emr_meta["subid"]
+        else:
+            subid=subdir
+
+        logging.debug("Assembling record...")
         emetrics = tdp.EMetrics(
             meta=tdp.MetaInfo(
                 training_id=training_id,
-                time=int(emr_meta["time"]),
+                time=time,
                 rindex=int(emr_meta["rindex"]),
+                subid=subid
             ),
             grouplabel=emr["grouplabel"],
             etimes=etimes,
@@ -70,16 +94,13 @@ def push(td_client, logline: str, logfile_year, rindex):
         )
 
         if td_client is not None:
+            if False:
+                print_json.logging_output(emetrics)
             td_client.AddEMetrics(emetrics)
-
-        # for now, print to stdout (support old endpoint).
-        # TODO: Don't print to stdout for metrics
-        json_form = print_json.to_string(emetrics)
-        print(json_form)
 
     except Exception as inst:
         print("Unexpected error when attempting to process evaluation metric record:", sys.exc_info()[0])
         print(inst)
         sys.stdout.flush()
 
-    return rindex+1
+    return rindex+1, rindex2
