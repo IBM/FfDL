@@ -74,14 +74,14 @@ docker-push:
 		echo "Please define DOCKER_REPO_USER and DOCKER_REPO_PASS."; \
 		exit 1; \
 	else \
-		if [ ${DOCKER_REPO} = "docker.io" ]; then \
-			docker login --username=${DOCKER_REPO_USER} --password=${DOCKER_REPO_PASS}; \
+		if [ "${DOCKER_REPO}" = "docker.io" ]; then \
+			docker login --username="${DOCKER_REPO_USER}" --password="${DOCKER_REPO_PASS}"; \
 			for i in $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep ${DOCKER_NAMESPACE} | grep :${IMAGE_TAG} | grep -v '<none>'); do \
 				echo "docker push $$i"; \
 				docker push $$i; \
 			done; \
 		else \
-			docker login --username=${DOCKER_REPO_USER} --password=${DOCKER_REPO_PASS} https://${DOCKER_REPO}; \
+			docker login --username="${DOCKER_REPO_USER}" --password="${DOCKER_REPO_PASS}" https://${DOCKER_REPO}; \
 			for i in $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep ${DOCKER_REPO}/${DOCKER_NAMESPACE} | grep :${IMAGE_TAG} | grep -v '<none>'); do \
 				echo "docker push $$i"; \
 				docker push $$i; \
@@ -92,7 +92,7 @@ docker-push:
 # TODO: setup-registry
 
 create-registry:
-	@kubectl create secret docker-registry regcred --docker-server=${DOCKER_REPO} --docker-username=${DOCKER_REPO_USER} --docker-password=${DOCKER_REPO_PASS} --docker-email=unknown@docker.io ; \
+	@kubectl create secret docker-registry regcred --docker-server=${DOCKER_REPO} --docker-username="${DOCKER_REPO_USER}" --docker-password="${DOCKER_REPO_PASS}" --docker-email=unknown@docker.io ; \
 		cd ${DOCKER_REPO_DIR} ; \
 		docker-compose up -d
 
