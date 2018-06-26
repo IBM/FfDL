@@ -2,6 +2,8 @@ package middleware
 
 // Copied from here https://github.com/urfave/negroni/blob/master/response_writer.go
 // Did not want to import the whole package for tis simple wrapper.
+// Note: MIT license
+
 import (
 	"bufio"
 	"fmt"

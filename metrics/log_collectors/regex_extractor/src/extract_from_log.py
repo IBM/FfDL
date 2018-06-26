@@ -20,21 +20,21 @@
 import yaml
 import os
 import re
-import time
 import datetime
 import argparse
 import sys
+import logging
 
-from typing import List, Dict
-
-from log_collectors.training_data_service_client import print_json as print_json
+from typing import List, Dict, Any, Tuple
 
 from log_collectors.training_data_service_client import training_data_pb2 as tdp
-from log_collectors.training_data_service_client import connect as connect
+from log_collectors.training_data_service_client import training_data_buffered as tdb
 
-from log_collectors.training_data_service_client import extract_datetime as extract_datetime
+from log_collectors.training_data_service_client import extract_datetime as edt
 
 from log_collectors.training_data_service_client import push_log_line as push_log_line
+from log_collectors.training_data_service_client import match_log_file
+from log_collectors.training_data_service_client import scan_log_dirs
 
 
 def read_symbol_libs(dir_path: str) -> Dict[str, str]:
@@ -137,17 +137,163 @@ def type_string_to_grpc_type(value_type: str) -> str:
 
     return grpc_value_type
 
-def extract(em_file_path: str, manifest: str, follow: bool, should_connect: bool=True):
+
+class ExtraPushData4RegExExtractor:
+    def __init__(self, line_lookahead: int, groups: dict):
+        self.line_lookahead = line_lookahead
+        self.groups = groups
+
+        self.line_length_stack: List[int] = []
+        self.text_window = ""
+        self.start_time: datetime = None
+        self.did_get_good_time: bool = False
+
+
+def extract_and_push_emetrics(td_client: tdb.TrainingDataClientBuffered, log_file: str,
+                              log_line: str, logfile_year: str,
+                              line_index: int, record_index: int,
+                              subdir: str, extra_any: Any=None) -> Tuple[int, int]:
+
+    state: ExtraPushData4RegExExtractor = extra_any
+    # # Do our best to get a good start time.
+    # if not state.did_get_good_time:
+    #     # keep trying to get a good start time from the log line, until it's pointless
+    #     start_time, did_get_good_time = \
+    #         edt.extract_datetime(log_line, logfile_year, state.start_time)
+
+    if td_client.em_file_path is None:
+        em_file_path = os.path.join(os.path.dirname(log_file), match_log_file.EMETRICS_FILE_BASE_NAME)
+        td_client.set_em_file_path(em_file_path)
+        logging.debug("em_file_path: %s, subdir: %s", td_client.em_file_path, subdir)
+
+    # logging.debug("push_log_line.push %d (subdir: %s) %s", line_index, subdir, log_line)
+    line_index, _ = push_log_line.push(td_client, log_file, log_line, logfile_year,
+                                       line_index, 0, subdir, state)
+
+    state.line_length_stack.append(len(log_line))
+    state.text_window += log_line
+    if len(state.line_length_stack) > state.line_lookahead:
+        length_first_line = state.line_length_stack[0]
+        state.line_length_stack = state.line_length_stack[1:]
+        state.text_window = state.text_window[length_first_line:]
+
+    logging.debug("len groups: %d", len(state.groups))
+    for group_key in state.groups:
+        group = state.groups[group_key]
+        name = group_key
+        regex_expanded = group["regex_expanded"]
+        matches = regex_expanded.match(state.text_window)
+        if matches is not None:
+            values_dict = matches.groupdict()
+
+            # meta_dict_desc = group["meta"]
+            etimes_descriptions: dict = group["etimes"]
+            if etimes_descriptions is None:
+                logging.warning("Did not find etimes! Found: ")
+                for axis_key in group:
+                    print("key: "+axis_key)
+                    sys.stdout.flush()
+                break
+
+            etimes: dict = dict()
+            for etime_key in etimes_descriptions:
+                item = etimes_descriptions[etime_key]
+                valOrRef: str = item["value"]
+                if valOrRef.startswith("$"):
+                    value_inner = valOrRef[1:]
+                    value_actual = values_dict[value_inner]
+                else:
+                    value_actual = valOrRef
+                grpc_value_type = type_string_to_grpc_type(item["type"])
+                etimes[etime_key] = tdp.Any(type=grpc_value_type, value=value_actual)
+
+            if "scalars" in group:
+                scalars_descriptions: dict = group["scalars"]
+            elif "values" in group:
+                scalars_descriptions: dict = group["values"]
+            else:
+                scalars_descriptions = None
+
+            if scalars_descriptions is None:
+                logging.warning("Did not find scalars! Found: ")
+                for axis_key in group:
+                    print("key: "+axis_key)
+                    sys.stdout.flush()
+                break
+
+            scalars: dict = dict()
+            for scalar_key in scalars_descriptions:
+                item = scalars_descriptions[scalar_key]
+                valOrRef: str = item["value"]
+                if valOrRef.startswith("$"):
+                    value_inner = valOrRef[1:]
+                    value_actual = values_dict[value_inner]
+                else:
+                    value_actual = valOrRef
+                value_type = item["type"]
+                grpc_value_type = type_string_to_grpc_type(value_type)
+                scalars[scalar_key] = tdp.Any(type=grpc_value_type, value=value_actual)
+
+            # date_string: str = line
+            subid_value = subdir
+            if "meta" in group:
+                meta_list: dict = group["meta"]
+                # if "time" in meta_list:
+                #     valOrRef: str = meta_list["time"]
+                #     if valOrRef.startswith("$"):
+                #         value_ref = valOrRef[1:]
+                #         # date_string = values_dict[value_ref]
+                #     else:
+                #         # date_string = valOrRef
+                #         pass
+                if "subid" in meta_list:
+                    valOrRef: str = meta_list["subid"]
+                    if valOrRef.startswith("$"):
+                        logging.debug("resetting subdir(subid): %s, metalist: %r",
+                                      subid_value, meta_list)
+                        value_ref = valOrRef[1:]
+                        subid_value = values_dict[value_ref]
+                    elif not valOrRef == "":
+                        logging.debug("resetting subdir(subid): %s, metalist: %r",
+                                      subid_value, meta_list)
+                        subid_value = valOrRef
+
+            logging.debug("about to push evaluation metrics with subdir(subid): %s", subid_value)
+
+            # At this point, don't keep trying to get a start time if we haven't already
+            state.did_get_good_time = True
+            emetrics = tdp.EMetrics(
+                meta=tdp.MetaInfo(
+                    training_id=os.environ["TRAINING_ID"],
+                    time=edt.get_meta_timestamp(),
+                    rindex=record_index,
+                    subid=subid_value
+                ),
+                grouplabel=name,
+                etimes=etimes,
+                values=scalars
+            )
+            record_index += 1
+            # state.total_lines_pushed += 1
+
+            if td_client is not None:
+                td_client.AddEMetrics(emetrics)
+
+            # for now, print to stdout (support old endpoint).
+            # print(json_form)
+
+            state.text_window = ""
+            state.line_length_stack = []
+            break
+
+    return line_index, record_index
+
+
+def extract(log_dir: str, manifest: str, should_connect: bool=True):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     symbol_dict: Dict[str, str] = read_symbol_libs(dir_path)
 
     evaluation_metrics_spec = read_extract_description(manifest, symbol_dict)
-
-    logfile = evaluation_metrics_spec["in"]
-
-    job_directory = os.environ["JOB_STATE_DIR"]
-    regex = r"\$JOB_STATE_DIR"
-    logfile = re.sub(regex, job_directory, logfile, 0)
 
     # Not sure why I seem to loose the under-bar somewhere along the line.
     if "line_lookahead" in evaluation_metrics_spec:
@@ -159,168 +305,22 @@ def extract(em_file_path: str, manifest: str, follow: bool, should_connect: bool
 
     groups: dict = evaluation_metrics_spec["groups"]
 
-    line_length_stack: List[int] = []
-    text_window = ""
-    record_index = 0
-    read_pos = 0
-    line_index = 1
+    logging.debug("log dir: %s" % log_dir)
 
-    learner_job_is_running = True
-    logfile_year = None
-    start_time: datetime = None
-    did_get_good_time: bool = False
+    extraData = ExtraPushData4RegExExtractor(line_lookahead, groups)
 
-    if should_connect:
-        tdClient = connect.get_connection()
-    else:
-        tdClient = None
-
-    while learner_job_is_running:
-        if os.path.exists(logfile):
-            if logfile_year is None:
-                logfile_year = extract_datetime.get_log_created_year(logfile)
-
-            with open(logfile, 'r') as log_stream:
-                log_stream.seek(read_pos)
-
-                try:
-                    for line in iter(log_stream):
-                        # Do our best to get a good start time.
-                        if not did_get_good_time:
-                            # keep trying to get a good start time from the log line, until it's pointless
-                            start_time, did_get_good_time = \
-                                extract_datetime.extract_datetime(line, logfile_year, start_time)
-
-                        line_index = push_log_line.push(tdClient, line, logfile_year, line_index)
-
-                        line_length_stack.append(len(line))
-                        text_window += line
-                        if len(line_length_stack) > line_lookahead:
-                            length_first_line = line_length_stack[0]
-                            line_length_stack = line_length_stack[1:]
-                            text_window = text_window[length_first_line:]
-
-                        for group_key in groups:
-                            group = groups[group_key]
-                            name = group_key
-                            regex_expanded = group["regex_expanded"]
-                            matches = regex_expanded.match(text_window)
-                            if matches is not None:
-                                values_dict = matches.groupdict()
-
-                                # meta_dict_desc = group["meta"]
-                                etimes_descriptions: dict = group["etimes"]
-                                if etimes_descriptions is None:
-                                    print("Did not find etimes! Found: ")
-                                    for axis_key in group:
-                                        print("key: "+axis_key)
-                                        sys.stdout.flush()
-                                    break
-
-                                etimes: dict = dict()
-                                for etime_key in etimes_descriptions:
-                                    item = etimes_descriptions[etime_key]
-                                    valOrRef: str = item["value"]
-                                    if valOrRef.startswith("$"):
-                                        value_inner = valOrRef[1:]
-                                        value_actual = values_dict[value_inner]
-                                    else:
-                                        value_actual = valOrRef
-                                    grpc_value_type = type_string_to_grpc_type(item["type"])
-                                    etimes[etime_key] = tdp.Any(type=grpc_value_type, value=value_actual)
-
-                                if "scalars" in group:
-                                    scalars_descriptions: dict = group["scalars"]
-                                elif "values" in group:
-                                    scalars_descriptions: dict = group["values"]
-                                else:
-                                    scalars_descriptions = None
-
-                                if scalars_descriptions is None:
-                                    print("Did not find scalars! Found: ")
-                                    for axis_key in group:
-                                        print("key: "+axis_key)
-                                        sys.stdout.flush()
-                                    break
-
-                                scalars: dict = dict()
-                                for scalar_key in scalars_descriptions:
-                                    item = scalars_descriptions[scalar_key]
-                                    valOrRef: str = item["value"]
-                                    if valOrRef.startswith("$"):
-                                        value_inner = valOrRef[1:]
-                                        value_actual = values_dict[value_inner]
-                                    else:
-                                        value_actual = valOrRef
-                                    value_type = item["type"]
-                                    grpc_value_type = type_string_to_grpc_type(value_type)
-                                    scalars[scalar_key] = tdp.Any(type=grpc_value_type, value=value_actual)
-
-                                date_string: str = line
-                                if "meta" in group:
-                                    meta_list: dict = group["meta"]
-                                    if "time" in meta_list:
-                                        valOrRef: str = meta_list["time"]
-                                        if valOrRef.startswith("$"):
-                                            value_ref = valOrRef[1:]
-                                            date_string = values_dict[value_ref]
-                                        else:
-                                            date_string = valOrRef
-
-                                # At this point, don't keep trying to get a start time if we haven't already
-                                did_get_good_time = True
-                                # TODO: pass in the type specified by the regex
-                                line_time, _ = extract_datetime.extract_datetime(date_string, logfile_year, None)
-                                microseconds = (line_time - start_time).microseconds
-                                timestamp = int(microseconds)
-                                record_index += 1
-                                emetrics = tdp.EMetrics(
-                                    meta=tdp.MetaInfo(
-                                        training_id=os.environ["TRAINING_ID"],
-                                        time=timestamp,
-                                        rindex=record_index
-                                    ),
-                                    grouplabel=name,
-                                    etimes=etimes,
-                                    values=scalars
-                                )
-
-                                json_form = print_json.to_string(emetrics)
-
-                                with open(em_file_path, 'a') as em_stream:
-                                    em_stream.write(json_form)
-                                    em_stream.write("\n")
-
-                                if tdClient is not None:
-                                    tdClient.AddEMetrics(emetrics)
-
-                                # for now, print to stdout (support old endpoint).
-                                # TODO: Don't print to stdout for metrics
-                                print(json_form)
-
-                                text_window = ""
-                                line_length_stack = []
-                                break
-
-                except Exception as inst:
-                    print("Unexpected error when attempting to process evaluation metric record:",
-                          sys.exc_info()[0])
-                    print(inst)
-                    sys.stdout.flush()
-
-                read_pos = log_stream.tell()
-
-            learner_job_is_running = follow
-
-        # wait a second before reading the file again
-        # (unless you want to constantly check the logs for new content?)
-        time.sleep(1)
+    scan_log_dirs.LogScanner(should_connect=should_connect).scan(
+        log_dir=log_dir,
+        extra=extraData,
+        is_log=match_log_file.is_log_file,
+        push_function=extract_and_push_emetrics)
 
 
 def main():
-    job_directory = os.environ["JOB_STATE_DIR"]
-    log_directory = job_directory + "/logs"
-    em_file = log_directory + "/evaluation-metrics.txt"
+    logging.basicConfig(format='%(filename)s %(funcName)s %(lineno)d: %(message)s', level=logging.INFO)
+    log_directory = os.environ["LOG_DIR"]
+    # log_file = log_directory + "/latest-log"
+    # em_file = log_directory + "/evaluation-metrics.txt"
 
     manifest = os.environ["EM_DESCRIPTION"]
 
@@ -329,12 +329,14 @@ def main():
     parser.add_argument('--manifest', type=str, default=manifest,
                         help='DLaaS log directory')
 
-    parser.add_argument('--em_file', type=str, default=em_file,
-                        help='Evaluation metrics file')
+    parser.add_argument('--log_dir', type=str, default=log_directory,
+                        help='Log directory')
 
     FLAGS, _ = parser.parse_known_args()
 
-    extract(FLAGS.em_file, FLAGS.manifest, True, True)
+    extract(FLAGS.log_dir, FLAGS.manifest, True)
+
+    logging.info("Normal exit")
 
 
 if __name__ == '__main__':

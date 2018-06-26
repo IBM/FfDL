@@ -1,6 +1,7 @@
 namespace: default
 env: dev
 k8s_1dot8_or_above: true
+has_static_volumes: true
 services:
   expose_node_port: true
 docker:
@@ -9,39 +10,44 @@ docker:
   image_prefix: ffdl-
   pullPolicy: IfNotPresent
 trainer:
-  version: latest
+  version: v0.1
   port: 0
   replicas: 1
   cpus: 100m
   memory: 64Mi
 restapi:
-  version: latest
+  version: v0.1
   port: 0
   replicas: 1
-  cpus: 100m
+  cpus: 50m
   memory: 64Mi
 lcm:
-  version: latest
+  version: v0.1
   port: 0
   replicas: 1
   cpus: 100m
   memory: 64Mi
+  load_training_data_mem_in_mb: 300
+  milli_cpu: 60
+  mem_in_mb: 300
+  # This will used for "volume.beta.kubernetes.io/storage-class" for the shared volume
+  shared_volume_storage_class: ""
 trainingdata:
-  version: latest
+  version: v0.1
   port: 0
   replicas: 1
-  cpus: 100m
+  cpus: 50m
   memory: 64Mi
 learner:
   tag: master-97
   docker_namespace: ffdl
   kubeSecret: lcm-secrets
 databroker:
-  tag: latest
+  tag: v0.1
 webui:
-  version: latest
+  version: v0.1
   port: 0
-  cpus: 100m
+  cpus: 50m
   memory: 64Mi
 mongo:
   address: localhost:27017

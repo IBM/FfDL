@@ -41,6 +41,16 @@ class TrainingDataStub(object):
         request_serializer=training__data__pb2.LogLine.SerializeToString,
         response_deserializer=training__data__pb2.AddResponse.FromString,
         )
+    self.AddEMetricsBatch = channel.unary_unary(
+        '/grpc.training.data.v1.TrainingData/AddEMetricsBatch',
+        request_serializer=training__data__pb2.EMetricsBatch.SerializeToString,
+        response_deserializer=training__data__pb2.AddResponse.FromString,
+        )
+    self.AddLogLineBatch = channel.unary_unary(
+        '/grpc.training.data.v1.TrainingData/AddLogLineBatch',
+        request_serializer=training__data__pb2.LogLineBatch.SerializeToString,
+        response_deserializer=training__data__pb2.AddResponse.FromString,
+        )
     self.DeleteEMetrics = channel.unary_unary(
         '/grpc.training.data.v1.TrainingData/DeleteEMetrics',
         request_serializer=training__data__pb2.Query.SerializeToString,
@@ -105,6 +115,20 @@ class TrainingDataServicer(object):
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
+  def AddEMetricsBatch(self, request, context):
+    """Add evaluation metrics record
+    """
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def AddLogLineBatch(self, request, context):
+    """Add log line record
+    """
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
   def DeleteEMetrics(self, request, context):
     """Delete all evaluation metrics belonging to a training job or user id
     """
@@ -154,6 +178,16 @@ def add_TrainingDataServicer_to_server(servicer, server):
       'AddLogLine': grpc.unary_unary_rpc_method_handler(
           servicer.AddLogLine,
           request_deserializer=training__data__pb2.LogLine.FromString,
+          response_serializer=training__data__pb2.AddResponse.SerializeToString,
+      ),
+      'AddEMetricsBatch': grpc.unary_unary_rpc_method_handler(
+          servicer.AddEMetricsBatch,
+          request_deserializer=training__data__pb2.EMetricsBatch.FromString,
+          response_serializer=training__data__pb2.AddResponse.SerializeToString,
+      ),
+      'AddLogLineBatch': grpc.unary_unary_rpc_method_handler(
+          servicer.AddLogLineBatch,
+          request_deserializer=training__data__pb2.LogLineBatch.FromString,
           response_serializer=training__data__pb2.AddResponse.SerializeToString,
       ),
       'DeleteEMetrics': grpc.unary_unary_rpc_method_handler(

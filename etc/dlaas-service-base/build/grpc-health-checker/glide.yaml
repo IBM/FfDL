@@ -1,4 +1,4 @@
-package: github.ibm.com/deep-learning-platform/grpc-health-checker
+package: github.com/IBM/FfDL/grpc-health-checker
 import:
 - package: github.com/spf13/cobra
 - package: golang.org/x/net

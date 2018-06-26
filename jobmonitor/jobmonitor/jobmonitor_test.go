@@ -47,12 +47,11 @@ func TestTransitions(t *testing.T) {
 	assert.EqualValues(t, true, jm.isTransitionAllowed("DOWNLOADING", "FAILED"))
 	assert.EqualValues(t, true, jm.isTransitionAllowed("DOWNLOADING", "HALTED"))
 	assert.EqualValues(t, true, jm.isTransitionAllowed("PROCESSING", "FAILED"))
-	assert.EqualValues(t, true, jm.isTransitionAllowed("PROCESSING", "FAILED"))
+	assert.EqualValues(t, true, jm.isTransitionAllowed("PROCESSING", "PROCESSING"))
 	assert.EqualValues(t, true, jm.isTransitionAllowed("STORING", "FAILED"))
 	assert.EqualValues(t, true, jm.isTransitionAllowed("STORING", "HALTED"))
 
 	assert.EqualValues(t, false, jm.isTransitionAllowed("STORING", "DOWNLOADING"))
-	assert.EqualValues(t, false, jm.isTransitionAllowed("PROCESSING", "NOT_STARED"))
 	assert.EqualValues(t, false, jm.isTransitionAllowed("COMPLETED", "PROCESSING"))
 	assert.EqualValues(t, false, jm.isTransitionAllowed("FAILED", "COMPLETED"))
 

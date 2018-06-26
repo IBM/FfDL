@@ -1,0 +1,48 @@
+#-----------------------------------------------------------------------
+#
+# This information contains sample code provided in source code form.
+# You may copy, modify, and distribute these sample programs in any
+# form without payment to IBM for the purposes of developing, using,
+# marketing or distributing application programs conforming to the
+# application programming interface for the operating platform for
+# which the sample code is written. Notwithstanding anything to the
+# contrary, IBM PROVIDES THE SAMPLE SOURCE CODE ON AN 'AS IS' BASIS
+# AND IBM DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING,
+# BUT NOT LIMITED TO, ANY IMPLIED WARRANTIES OR CONDITIONS OF
+# MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A PARTICULAR
+# PURPOSE, TITLE, AND ANY WARRANTY OR CONDITION OF NON-INFRINGEMENT.
+# IBM SHALL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY OR ECONOMIC CONSEQUENTIAL DAMAGES ARISING OUT
+# OF THE USE OR OPERATION OF THE SAMPLE SOURCE CODE. IBM SHALL NOT
+# BE LIABLE FOR LOSS OF, OR DAMAGE TO, DATA, OR FOR LOST PROFITS,
+# BUSINESS REVENUE, GOODWILL, OR ANTICIPATED SAVINGS. IBM HAS NO
+# OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS
+# OR MODIFICATIONS TO THE SAMPLE SOURCE CODE.
+#
+#-------------------------------------------------------------------
+
+name: keras-mnist-model
+description: Convolutional network model using Keras on TensorFlow
+version: "1.0"
+gpus: 0
+cpus: 1
+memory: 1Gb
+
+# Object stores that allow the system to retrieve training data.
+data_stores:
+  - id: sl-internal-os
+    type: mount_cos
+    training_data:
+      container: dlaas-ci-keras-training-data
+    training_results:
+      container: dlaas-ci-trained-results-keras-training-data
+    connection:
+      auth_url: https://s3-api.dal-us-geo.objectstorage.service.networklayer.com
+      user_name: test
+      password: test
+
+framework:
+  name: tensorflow
+  version: "1.5.0-py3"
+  command: >
+    pip install keras && python3 keras-test/mnist_cnn.py --mnistData ${DATA_DIR}/mnist.npz

@@ -21,19 +21,7 @@ package service;
 service LifecycleManager {
   rpc DeployTrainingJob (JobDeploymentRequest) returns (JobDeploymentResponse) {}
   rpc KillTrainingJob (JobKillRequest) returns (JobKillResponse) {}
-  rpc GetTrainingLogStream (TrainerContainerInfosRequest) returns (stream TrainerLogStreamResponse) {}
   rpc HaltTrainingJob (JobHaltRequest) returns (JobHaltResponse) {}
-
-	// creates an endpoint with a specific id for an event type
-  rpc CreateEventEndpoint (CreateEventEndpointRequest) returns (CreateEventEndpointResponse) {}
-	// deletes a specific endpoint (defined by event type and endpoint id)
-  rpc DeleteEventEndpoint (DeleteEventEndpointRequest) returns (DeleteEventEndpointResponse) {}
-	// gets all endpoints registered for an event type
-	rpc GetEventTypeEndpoints (GetEventTypeEndpointsRequest) returns (GetEventTypeEndpointsResponse) {}
-	// gets a specific endpoint
-	rpc GetEventEndpoint (GetEventEndpointRequest) returns (GetEventEndpointResponse) {}
-
-  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse) {}
 }
 
 
@@ -48,6 +36,7 @@ message ResourceRequirements {
   string architecture = 8;
   double storage = 9;
   MemoryUnit storage_unit = 10;
+  string gpu_type = 11;
 
   // TODO add more fields as required
 
@@ -112,74 +101,4 @@ message JobHaltRequest {
 
 message JobHaltResponse {
   // placeholder for further messages
-}
-
-message TrainerContainerInfosRequest {
-  string training_id = 1;
-  string user_id = 2;
-  bool follow = 3;
-  bool metrics = 4;
-  bool summary = 5;
-}
-
-message TrainerLogStreamResponse {
-  bytes data = 1;
-}
-
-message CreateEventEndpointRequest {
-  string training_id = 1;
-  string user_id = 2;
-  string event_type = 3; // "metrics", "status", or "all"
-  string endpoint_url = 4; // endpoint must accept POST request with json content type
-  string endpoint_type = 5; // not currently used
-  string endpoint_id = 6; // user-assigned id associated with the endpoint, descriptive.
-}
-
-message CreateEventEndpointResponse {
-  // placeholder
-}
-
-message GetEventTypeEndpointsRequest {
-  string training_id = 1;
-  string user_id = 2;
-  string event_type = 3;
-}
-
-message GetEventTypeEndpointsResponse {
-  repeated Endpoint endpoints = 1;
-}
-
-message DeleteEventEndpointRequest {
-  string training_id = 1;
-  string user_id = 2;
-  string event_type = 3;
-  string endpoint_id = 4;
-}
-
-message DeleteEventEndpointResponse {
-  // placeholder
-}
-
-message GetEventEndpointRequest {
-  string training_id = 1;
-  string user_id = 2;
-  string event_type = 3;
-  string endpoint_id = 4;
-}
-
-message GetEventEndpointResponse {
-  string url = 1;
-  string endpoint_type = 2; // not currently used
-}
-
-message GetMetricsRequest {
-  string training_id = 1;
-}
-message GetMetricsResponse{
-  string metrics = 1;
-}
-
-message Endpoint {
-  string id = 1;
-  string url = 2;
 }

@@ -18,6 +18,7 @@ package config
 
 import (
 	"fmt"
+	"runtime"
 	"io/ioutil"
 	"os"
 	"path"
@@ -29,7 +30,9 @@ import (
 	"google.golang.org/grpc/grpclog"
 
 	log "github.com/sirupsen/logrus"
+
 	"github.com/spf13/viper"
+	v1core "k8s.io/api/core/v1"
 )
 
 const (
@@ -130,7 +133,7 @@ const (
 	// This is temporary until we support specifying storage requirements in the manifest.
 	VolumeSize = "external_volume_size"
 
-	// TODO this a duplication witht the storage package - needs to align
+	// TODO this a duplication with the storage package - needs to align
 	UsernameKey = "user_name"
 	PasswordKey = "password"
 	AuthURLKey  = "auth_url"
@@ -146,6 +149,14 @@ const (
 
 	DlaasResourceLimit          = "resource.limit"
 	DlaasResourceLimitQuerySize = "resource.limit.query.size"
+
+	ImagePullPolicy = "image_pull_policy"
+
+	SharedVolumeStorageClassKey = "shared_volume_storage_class"
+
+	loadTrainingDataMemInMBKey = "load_training_data_mem_in_mb"
+	logCollectorMilliCPUKey    = "milli_cpu"
+	logCollectorMemInMBKey     = "mem_in_mb"
 )
 
 var viperInitOnce sync.Once
@@ -159,8 +170,13 @@ func InitViper() {
 
 	viperInitOnce.Do(func() {
 
-		viper.SetEnvPrefix(envPrefix) // will be uppercased automatically
+		viper.SetEnvPrefix(envPrefix) // will be capitalized automatically
 		viper.SetConfigType("yaml")
+
+		viper.SetDefault(ImagePullPolicy, v1core.PullIfNotPresent)
+
+		// Most likely be "standard" in Minikube and "ibmc-s3fs-standard" in DIND, (other value is "default" or "")
+		viper.SetDefault(SharedVolumeStorageClassKey, "")
 
 		// enable ENV vars and defaults
 		viper.AutomaticEnv()
@@ -175,7 +191,7 @@ func InitViper() {
 		viper.SetDefault(LearnerTagKey, "prod")
 		viper.SetDefault(DataBrokerTagKey, "prod")
 		viper.SetDefault(LearnerRegistryKey, "docker.io/ffdl")
-		viper.SetDefault(LearnerImagePullSecretKey, "bluemix-cr-ng")
+		viper.SetDefault(LearnerImagePullSecretKey, "regcred")
 
 		// TLS defaults for microservices
 		viper.SetDefault(TLSKey, true)
@@ -198,6 +214,14 @@ func InitViper() {
 		viper.SetDefault(learnerKubeKeyFileKey, path.Join(learnerKubeSecretsRoot, "client.key"))
 		viper.SetDefault(learnerKubeCertFileKey, path.Join(learnerKubeSecretsRoot, "client.crt"))
 		viper.SetDefault(learnerKubeTokenFileKey, path.Join(learnerKubeSecretsRoot, "token"))
+
+		viper.SetDefault(loadTrainingDataMemInMBKey, 300)
+		viper.SetDefault(logCollectorMilliCPUKey, 60)
+		viper.SetDefault(logCollectorMemInMBKey, 300)
+		log.Debugf("Milli CPU is: %d", GetLogCollectorMilliCPU())
+		log.Debugf("Training Data Mem in MB is: %d", GetTrainingDataMemInMB())
+
+		viper.SetDefault(VolumeSize, "10GiB")
 
 		// config file is optional. we usually configure via ENV_VARS
 		configFile := fmt.Sprintf("config-%s", viper.Get(EnvKey))
@@ -225,6 +249,31 @@ func InitViper() {
 	grpclog.SetLogger(log.StandardLogger())
 }
 
+// GetInt returns the int value for the config key.
+func GetInt(key string) int {
+	return viper.GetInt(key)
+}
+
+// GetInt64 returns the int64 value for the config key.
+func GetInt64(key string) int64 {
+	return viper.GetInt64(key)
+}
+
+// GetFloat64 returns the float64 value for the config key.
+func GetFloat64(key string) float64 {
+	return viper.GetFloat64(key)
+}
+
+// GetString returns the string value for the config key.
+func GetString(key string) string {
+	return viper.GetString(key)
+}
+
+// SetDefault sets the default value for the config key.
+func SetDefault(key string, value interface{}) {
+	viper.SetDefault(key, value)
+}
+
 // Return the contents of a file. Return an empty string if the file doesn't exist or can't be read.
 func GetFileContents(filename string) string {
 	contents := ""
@@ -237,7 +286,7 @@ func GetFileContents(filename string) string {
 	return contents
 }
 
-// IsTLSEnabled is true if the microservices should all use TLS for communiction, otherwise
+// IsTLSEnabled is true if the microservices should all use TLS for communication, otherwise
 // it is false.
 func IsTLSEnabled() bool {
 	return viper.GetBool(TLSKey)
@@ -428,7 +477,7 @@ func configKey2EnvVar(key string) string {
 
 // setLogLevel sets the logging level based on the environment
 func setLogLevel() {
-	viper.SetDefault(LogLevelKey, "warn")
+	viper.SetDefault(LogLevelKey, "debug")  // FIXME Should be warn
 
 	env := viper.GetString(EnvKey)
 	if env == "dev" || env == "test" {
@@ -545,6 +594,22 @@ func GetCurrentLearnerConfigLocation(name string, version string) string {
 	}
 }
 
+func LogStackTrace() {
+	pc := make([]uintptr, 30)
+	stackDepth := runtime.Callers(0, pc)
+	for i := 0; i < stackDepth; i++ {
+		f := runtime.FuncForPC(pc[i])
+		file, line := f.FileLine(pc[i])
+		// Truncate package name
+		funcName := f.Name()
+		if slash := strings.LastIndex(funcName, "."); slash >= 0 {
+			funcName = funcName[slash+1:]
+		}
+		locString := fmt.Sprintf("%s:%d %s -", file, line, funcName)
+		log.Debugf("   ---> %s", locString)
+	}
+}
+
 //return the location back if the file was present otherwise an empty string
 func getFileAtLocation(location string) string {
 	exists := func(filename string) bool {
@@ -559,11 +624,26 @@ func getFileAtLocation(location string) string {
 		log.Debugf("file was found at location %s", location)
 		return location
 	}
-	log.Debugf("file certificate was missing at location %s", location)
+	//log.Debugf("file certificate was missing at location %s", location)
+	//LogStackTrace()
+
 	return "" //empty location means that cert is not required
 }
 
 //GetPushgatewayURL ...
 func GetPushgatewayURL() string {
 	return fmt.Sprintf("http://pushgateway:%s", "9091")
+}
+
+func GetTrainingDataMemInMB() int {
+	log.Infof("GetTrainingDataMemInMB() returns %d", viper.GetInt(loadTrainingDataMemInMBKey))
+	return viper.GetInt(loadTrainingDataMemInMBKey)
+}
+
+func GetLogCollectorMilliCPU() int {
+	return viper.GetInt(logCollectorMilliCPUKey)
+}
+
+func GetLogCollectorMemInMB() int {
+	return viper.GetInt(logCollectorMemInMBKey)
 }

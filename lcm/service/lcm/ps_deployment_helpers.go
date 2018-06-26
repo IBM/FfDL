@@ -31,12 +31,11 @@ import (
 
 	"github.com/IBM/FfDL/commons/logger"
 
-	v1resource "k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	//"k8s.io/client-go/pkg/api/unversioned"
+	v1beta1 "k8s.io/api/apps/v1beta1"
 	v1core "k8s.io/api/core/v1"
-	v1beta1 "k8s.io/api/extensions/v1beta1"
+	v1resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func populatePSEnvVariablesAndLabels(req *service.JobDeploymentRequest, logr *logger.LocLoggingEntry) []v1core.EnvVar {
@@ -123,10 +122,6 @@ func definePSDeployment(req *service.JobDeploymentRequest, envVars []v1core.EnvV
 	psName := constructPSName(req.Name)
 
 	deploySpec := &v1beta1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Deployment",
-			APIVersion: "extensions/v1beta1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: psName,
 		},
@@ -245,7 +240,7 @@ func definePSService(psName string, trainingID string) *v1core.Service {
 }
 
 func deployParameterServer(ctx context.Context, s *lcmService, req *service.JobDeploymentRequest) error {
-	logr := logger.LocLogger(s.logWithJobDeploymentRequest(req))
+	logr := logger.LocLogger(InitLogger(req.TrainingId, req.UserId))
 	psName := constructPSName(req.Name)
 
 	envVars := populatePSEnvVariablesAndLabels(req, logr)
@@ -253,7 +248,7 @@ func deployParameterServer(ctx context.Context, s *lcmService, req *service.JobD
 	deploySpec := definePSDeployment(req, envVars, logr)
 
 	err := util.Retry(10, 10*time.Second, "CreateParameterServerDeployment", logr, func() error {
-		psDeploy, err := s.k8sClient.Extensions().Deployments(config.GetLearnerNamespace()).Create(deploySpec)
+		psDeploy, err := s.k8sClient.AppsV1beta1().Deployments(config.GetLearnerNamespace()).Create(deploySpec)
 		if err != nil {
 			logr.WithError(err).Errorf("(LCM deployParameterServer) Retrying after failure to create parameter server deployment: %s\n", deploySpec)
 			return err

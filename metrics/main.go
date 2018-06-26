@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package main
 
 import (
@@ -26,6 +27,7 @@ import (
 
 func main() {
 	config.InitViper()
+	service.InitViper()
 	logger.Config()
 
 	logr := logger.LocLogger(logger.LogServiceBasic(service.LogkeyTrainingDataService))

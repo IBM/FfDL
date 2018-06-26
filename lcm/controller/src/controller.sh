@@ -31,6 +31,9 @@ env | sort
 # - INIT: initial state
 # - DOWNLOADING: downloading model and training data
 # - PROCESSING: do training
+# - LC_WAIT_ON_SUCCESS: job done, wait for log-collector to finish; expect to transition to STORING_ON_SUCCESS state
+# - LC_WAIT_ON_FAILURE: job failed, wait for log-collector to finish; expect to transition to STORING_ON_FAILURE
+# - LC_WAIT_ON_HALTED: job halted, wait for log-collector to finish; expect to transition to STORING_ON_HALTED
 # - STORING_ON_SUCCESS: uploading results; no errors so far; expect to transition to COMPLETED state after
 # - STORING_ON_FAILURE: uploading results; had errors already; expect to transition to FAILED state after
 # - STORING_ON_HALTED: uploading results; triggerd by halt command; expect to transition to HALTED state after
@@ -43,6 +46,9 @@ declare -A stateContainers
 stateContainers[INIT]=""
 stateContainers[DOWNLOADING]="load-model load-data"
 stateContainers[PROCESSING]="learner"
+stateContainers[LC_WAIT_ON_SUCCESS]=""
+stateContainers[LC_WAIT_ON_FAILURE]=""
+stateContainers[LC_WAIT_ON_HALTED]=""
 stateContainers[STORING_ON_SUCCESS]="store-results store-logs"
 stateContainers[STORING_ON_FAILURE]="store-results store-logs"
 stateContainers[STORING_ON_HALTED]="store-results store-logs"
@@ -53,13 +59,18 @@ stateContainers[FINAL]=""
 # The presence of this file indicates a halt has been requested.
 halt_file="$JOB_STATE_DIR/halt"
 
+lc_exit_file="$JOB_STATE_DIR/lc.exit"
+
+# Note that associative arrays are for bash 4 only
+declare -A lc_transitions
+lc_transitions[LC_WAIT_ON_SUCCESS]=STORING_ON_SUCCESS
+lc_transitions[LC_WAIT_ON_FAILURE]=STORING_ON_FAILURE
+lc_transitions[LC_WAIT_ON_HALT]=STORING_ON_HALT
+
 user_log_file="$JOB_STATE_DIR/logs/training-log.txt"
 
-summary_metrics_file="$JOB_STATE_DIR/logs/summary-metrics.txt"
-last_summary_metrics_mod_time="0"
-SUMMARY_METRICS_ZNODE_PATH=${JOB_LEARNER_SUMMARY_STATS_PATH}
-
 TIME_TO_SLEEP_AFTER_USER_LOG=2
+TIME_TO_SLEEP_FOR_LOG_COLLECTOR=240
 
 # Initialize the current state if it's not already set.
 function init() {
@@ -109,19 +120,31 @@ function setState() {
     startContainersForCurrentState
 }
 
-# Record job status with value in etcd as $1. If $2 is "create" then create the znode.
-function recordStatus() {
+# Record job status with value in etcd as $1
+function sendStatusUpdate() {
     value=$1
-    mode=$2
-    recordStatusInEtcd "$JOB_LEARNER_ZNODE_STATUS_PATH" "$value" "$mode"
+    recordStatusInEtcd "$JOB_LEARNER_ZNODE_STATUS_PATH" "$value"
 }
 
-function recordStatusDetails() {
+function recordStatus() {
 	status=$1
-	error_code=$2
-	message=$3
-	timestamp=$(date +%s)
-	recordStatus '{"timestamp":'$timestamp',"status":"'$status'","error_code":"'$error_code'","status_message":"'$message'"}'
+	error_code=${2:-""}
+	message=${3:-""}
+	timestamp=${4:-""}
+	if [[ "$timestamp" = "" ]]; then
+		# get timestamp as milliseconds since Unix epoch
+		timestamp=$(date +%s%N | cut -b1-13)
+	fi
+	sendStatusUpdate '{"timestamp":"'$timestamp'","status":"'$status'","error_code":"'$error_code'","status_message":"'$message'"}'
+}
+
+function updateStatusTimestamp() {
+	status=$1
+	timestamp_file=$2
+	if [ -f "$timestamp_file" ]; then
+		timestamp=$(cat "$timestamp_file")
+		recordStatus $status "" "" "$timestamp"
+	fi
 }
 
 # Signal container named $1 to start.
@@ -185,7 +208,7 @@ while true; do
     case "$current_state" in
         (INIT)
             # INIT -> DOWNLOADING always
-            recordStatus DOWNLOADING create
+            recordStatus DOWNLOADING
             setState DOWNLOADING
             ;;
         (DOWNLOADING)
@@ -203,13 +226,13 @@ while true; do
                 echo "Failed: load_model_exit_code: $load_model_exit_code" >> $user_log_file
                 sleep ${TIME_TO_SLEEP_AFTER_USER_LOG}
                 # Record error details. Code S301 indicates "failed to load model" (see jobmonitor for a list of error codes)
-                recordStatusDetails FAILED S301 $load_model_exit_code
+                recordStatus FAILED S301 $load_model_exit_code
                 setState FAILED
             elif [[ ! -z "$load_data_exit_code" && "$load_data_exit_code" != "0" ]]; then
                 # Load data failed.
                 echo "Failed: load_data_exit_code: $load_data_exit_code" >> $user_log_file
                 sleep ${TIME_TO_SLEEP_AFTER_USER_LOG}
-                recordStatusDetails FAILED S302 $load_data_exit_code
+                recordStatus FAILED S302 $load_data_exit_code
                 setState FAILED
             elif [[ -f "$halt_file" ]]; then
                 # User wants to halt the job. Skip processing and storing.
@@ -232,20 +255,36 @@ while true; do
             [[ -z "$learner_exit_code" ]] || echo "learner exit: $learner_exit_code"
 
             if [[ "$learner_exit_code" == "0" ]]; then
+                # update timestamp for PROCESSING (ensure that we store the last timestamp for distributed jobs)
+                updateStatusTimestamp PROCESSING $JOB_STATE_DIR/learner.start_time
+                # record new status
                 recordStatus STORING
-                setState STORING_ON_SUCCESS
+                start_lc_wait=`date +%s`
+                setState LC_WAIT_ON_SUCCESS
             elif [[ ! -z "$learner_exit_code" ]]; then
                 echo "Failed: learner_exit_code: $learner_exit_code" >> $user_log_file
-                sleep ${TIME_TO_SLEEP_AFTER_USER_LOG}
                 recordStatus STORING
-                setState STORING_ON_FAILURE
+                start_lc_wait=`date +%s`
+                setState LC_WAIT_ON_FAILURE
             elif [[ -f "$halt_file" ]]; then
-                echo "Failed: learner_exit_code: $learner_exit_code" >> $user_log_file
-                sleep ${TIME_TO_SLEEP_AFTER_USER_LOG}
-                setState STORING_ON_HALTED
+                echo "halt: learner_exit_code: $learner_exit_code" >> $user_log_file
+                start_lc_wait=`date +%s`
+                setState LC_WAIT_ON_HALT
             fi
             ;;
-        (STORING_ON_SUCCESS)
+        (LC_WAIT_ON_SUCCESS | LC_WAIT_ON_FAILURE | LC_WAIT_ON_HALT)
+            end_lc_wait=`date +%s`
+            duration_wait=$((end_lc_wait-start_lc_wait))
+            if [[ -f "$lc_exit_file" ]]; then
+                echo "$current_state: log-collector signaled it's done"
+                setState ${lc_transitions[$current_state]}
+            elif [ ${duration_wait} -gt ${TIME_TO_SLEEP_FOR_LOG_COLLECTOR} ]; then
+                echo "$current_state: time out waiting for log collector"
+                echo -1 > $lc_exit_file
+                setState ${lc_transitions[$current_state]}
+            fi
+            ;;
+       (STORING_ON_SUCCESS)
             # STORING_ON_SUCCESS -> COMPLETED if storing succeeds
             # STORING_ON_SUCCESS -> FAILED if storing fails
             getExitCode store-results; store_results_exit_code=$exit_code
@@ -260,7 +299,7 @@ while true; do
             elif [[ ! -z "$store_results_exit_code" && ! -z "$store_logs_exit_code" ]]; then
                 # Finished storing both logs and results, but at least one of them had an error.
                 echo "Failed: store_results_exit_code: $store_results_exit_code, $store_logs_exit_code: $store_logs_exit_code" >> $user_log_file
-                recordStatusDetails FAILED S303 $store_results_exit_code
+                recordStatus FAILED S303 $store_results_exit_code
                 setState FAILED
             fi
             ;;
@@ -276,7 +315,7 @@ while true; do
                 echo "Failed: store_results_exit_code: $store_results_exit_code, $store_logs_exit_code: $store_logs_exit_code" >> $user_log_file
                 sleep ${TIME_TO_SLEEP_AFTER_USER_LOG}
                 # Set status to FAILED and report client error code (see jobmonitor.go for error codes)
-                recordStatusDetails FAILED C201 $learner_exit_code
+                recordStatus FAILED C201 $learner_exit_code
                 setState FAILED
             fi
             ;;
@@ -295,7 +334,7 @@ while true; do
             elif [[ ! -z "$store_results_exit_code" && ! -z "$store_logs_exit_code" ]]; then
                 # Finished storing both logs and results, but at least one of them had an error.
                 echo "Failed: store_results_exit_code: $store_results_exit_code, $store_logs_exit_code: $store_logs_exit_code" >> $user_log_file
-                recordStatusDetails FAILED S305 $store_results_exit_code
+                recordStatus FAILED S305 $store_results_exit_code
                 setState FAILED
             fi
             ;;
@@ -316,16 +355,6 @@ while true; do
         (*)
             echo ERROR: In unexpected state: $current_state
     esac
-
-    if [ -f "$summary_metrics_file" ]; then
-        mode_time=$(stat -c %Y "$summary_metrics_file")
-        if [ $last_summary_metrics_mod_time != $mode_time ]; then
-            summary_metrics=$(cat "$summary_metrics_file")
-            echo "writing summary metrics to $SUMMARY_METRICS_ZNODE_PATH: $summary_metrics"
-            with_backoff runEtcdCommand put ${SUMMARY_METRICS_ZNODE_PATH} "$summary_metrics"
-            last_summary_metrics_mod_time=$mode_time
-        fi
-    fi
 
     sleep 2
 done

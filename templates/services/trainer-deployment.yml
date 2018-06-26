@@ -49,7 +49,7 @@ spec:
         - name: DLAAS_LOGLEVEL
           value: {{.Values.log.level}}
         - name: DLAAS_PUSH_METRICS_ENABLED
-          value: "true"
+          value: "false"
 {{ if eq .Values.env "dev" }}
         - name: DLAAS_MONGO_ADDRESS
           value: mongo.$(DLAAS_POD_NAMESPACE).svc.cluster.local
@@ -112,3 +112,5 @@ spec:
               - "grpc-health-checker --port 8443 --tls"
           initialDelaySeconds: 15
           timeoutSeconds: 2
+      imagePullSecrets:
+      - name: regcred

@@ -45,6 +45,14 @@ service TrainingData {
     rpc AddLogLine (LogLine) returns (AddResponse) {
     }
 
+    // Add evaluation metrics record
+    rpc AddEMetricsBatch (EMetricsBatch) returns (AddResponse) {
+    }
+
+    // Add log line record
+    rpc AddLogLineBatch (LogLineBatch) returns (AddResponse) {
+    }
+
     // Delete all evaluation metrics belonging to a training job or user id
     rpc DeleteEMetrics (Query) returns (DeleteResponse) {
     }
@@ -74,6 +82,9 @@ message MetaInfo {
 
     // Sequential index
     int64 rindex = 4;
+
+    // Optional subid
+    string subid = 5;
 }
 
 message LogLine {
@@ -81,6 +92,12 @@ message LogLine {
 
     string line = 2;
 }
+
+message LogLineBatch {
+    bool force = 1;
+    repeated LogLine logLine = 2;
+}
+
 
 message Any {
     enum DataType {
@@ -107,6 +124,12 @@ message EMetrics {
     /// {"cross_entropy": 0.4430539906024933,	"accuracy": 0.8999999761581421}
     map<string, Any> values = 4;
 }
+
+message EMetricsBatch {
+    bool force = 1;
+    repeated EMetrics emetrics = 2;
+}
+
 
 // Playing with semi-generalized query request.
 message Query {

@@ -1,0 +1,54 @@
+package: github.ibm.com/deep-learning-platform/dlaas-trainer-service
+import:
+- package: github.com/sirupsen/logrus
+  version: ~1.0.2
+- package: github.com/aws/aws-sdk-go
+  version: ~1.10.9
+  subpackages:
+  - aws
+  - aws/awserr
+  - aws/credentials
+  - aws/session
+  - service/s3
+  - service/s3/s3manager
+- package: github.com/golang/protobuf
+  subpackages:
+  - proto
+- package: github.com/ncw/swift
+- package: github.com/nu7hatch/gouuid
+- package: github.com/spf13/viper
+- package: github.com/ventu-io/go-shortid
+  version: ~1.0
+- package: github.ibm.com/deep-learning-platform/dlaas-commons
+  repo: git@github.ibm.com:deep-learning-platform/dlaas-commons.git
+- package: github.ibm.com/deep-learning-platform/dlaas-training-metrics-service
+  repo: git@github.ibm.com:deep-learning-platform/dlaas-training-metrics-service.git
+  subpackages:
+  - service/grpc_training_data_v1
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: google.golang.org/grpc
+  version: ~1.4.2
+  subpackages:
+  - codes
+- package: gopkg.in/mgo.v2
+  subpackages:
+  - bson
+- package: github.com/go-kit/kit
+  version: v0.5.0
+  subpackages:
+  - metrics
+- package: github.com/prometheus/client_golang
+  version: v0.8.0
+  subpackages:
+  - prometheus
+- package: github.com/grpc-ecosystem/go-grpc-prometheus
+  version: v1.1
+testImport:
+- package: github.com/stretchr/testify
+  subpackages:
+  - assert
+- package: github.com/golang/mock
+  subpackages:
+  - gomock

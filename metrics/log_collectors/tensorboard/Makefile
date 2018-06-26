@@ -14,11 +14,12 @@
 # limitations under the License.
 #
 
-REPO ?= docker.io/ffdl
+DOCKER_REPO ?= docker.io
+DOCKER_NAMESPACE ?= ffdl
 WHOAMI ?= $(shell whoami)
 IMAGE_TAG ?= user-$(WHOAMI)
 
-IMAGE_NAME?=${REPO}/tensorboard_extract_1.3-py3:${IMAGE_TAG}
+IMAGE_NAME?=${DOCKER_REPO}/${DOCKER_NAMESPACE}/tensorboard_extract:${IMAGE_TAG}
 
 DOCKER_OPTIONS ?=
 
@@ -26,11 +27,11 @@ all: build push
 
 build:
 	cp -r ../training_data_service_client .
-	docker build -q ${DOCKER_OPTIONS} -t ${REPO}/tensorboard_extract_1.3-py3:${IMAGE_TAG} -f Dockerfile_em_1.3-py3 .
+	docker build -q ${DOCKER_OPTIONS} -t ${DOCKER_REPO}/${DOCKER_NAMESPACE}/tensorboard_extract:${IMAGE_TAG} -f Dockerfile .
 	rm -r training_data_service_client
 
 push:
-	docker push ${REPO}/tensorboard_extract_1.3-py3:${IMAGE_TAG}
+	docker push ${DOCKER_REPO}/${DOCKER_NAMESPACE}/tensorboard_extract:${IMAGE_TAG}
 
 imagename:
 	echo ${IMAGE_NAME}

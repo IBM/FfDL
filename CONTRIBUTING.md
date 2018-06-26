@@ -28,6 +28,7 @@ via code, tests, or documentation:
 * Michael Kalantar
 * Tommy Li
 * Vinod Muthusamy
+* Falk Pollok
 * Florian Rosenberg
 * Animesh Singh
 * Atin Sood

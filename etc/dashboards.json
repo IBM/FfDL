@@ -149,7 +149,7 @@
           "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Total trainings kiiled",
+          "title": "Total trainings killed",
           "tooltip": {
             "shared": true,
             "sort": 0,
@@ -247,7 +247,7 @@
           "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
-          "title": "swift failures",
+          "title": "Swift failures",
           "tooltip": {
             "shared": true,
             "sort": 0,
@@ -324,7 +324,7 @@
           "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
-          "title": "s3 failures",
+          "title": "S3 failures",
           "tooltip": {
             "shared": true,
             "sort": 0,

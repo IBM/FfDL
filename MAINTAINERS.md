@@ -7,6 +7,7 @@ The maintainers are listed in alphabetical order.
 - Scott Boag ([sboagibm](https://github.com/sboagibm))
 - Waldemar Hummer ([whummer](https://github.com/whummer))
 - Tommy Li ([Tomcli](https://github.com/Tomcli))
+- Falk Pollok ([fplk](https://github.com/fplk))
 - Animesh Singh ([animeshsingh](https://github.com/animeshsingh))
 
 ## Methodology

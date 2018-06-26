@@ -31,10 +31,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
-	"github.com/IBM/FfDL/commons/service"
-	"github.com/IBM/FfDL/commons/service/client"
 	"github.com/IBM/FfDL/restapi/api_v1/restmodels"
-	"github.com/IBM/FfDL/restapi/api_v1/server/operations/events"
 	"github.com/IBM/FfDL/restapi/api_v1/server/operations/models"
 	trainerClient "github.com/IBM/FfDL/trainer/client"
 
@@ -425,18 +422,16 @@ func getLogsOrMetrics(params models.GetLogsParams, isMetrics bool) middleware.Re
 	if params.ModelID == "wstest" {
 		logr.Debug("is wstest")
 		timeout = 2 * time.Minute
-
 	} else if isFollow {
-		// Make this a *very* long time out.  In the longer run, if we
-		// push to a message queue, we can hopefully just subscribe to a web
-		// socket.
+		// Make this a *very* long time out.
+		// TODO In the longer run, if we push to a message queue, we can hopefully just subscribe to a web socket.
 		timeout = 80 * time.Hour
 	} else {
 		timeout = 3 * time.Minute
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
-	// don't cancel here as we are passing the cancel function to others.
+	// Don't cancel here as we are passing the cancel function to others.
 
 	// HACK FOR WS TEST
 	if params.ModelID == "wstest" {
@@ -453,11 +448,14 @@ func getLogsOrMetrics(params models.GetLogsParams, isMetrics bool) middleware.Re
 	var stream grpc_trainer_v2.Trainer_GetTrainedModelLogsClient
 
 	if isMetrics {
-		stream, err = trainer.Client().GetTrainedModelMetrics(ctx, &grpc_trainer_v2.TrainedModelMetricsRequest{
-			TrainingId: params.ModelID,
-			UserId:     getUserID(params.HTTPRequest),
-			Follow:     isFollow,
-		})
+//		stream, err = trainer.Client().GetTrainedModelMetrics(ctx, &grpc_trainer_v2.TrainedModelMetricsRequest{
+//			TrainingId: params.ModelID,
+//			UserId:     getUserID(params.HTTPRequest),
+//			Follow:     isFollow,
+//		})
+		logr.WithError(err).Errorf("GetTrainedModelMetrics has been removed")
+		defer cancel()
+		return error500(logr, "")
 	} else {
 		stream, err = trainer.Client().GetTrainedModelLogs(ctx, &grpc_trainer_v2.TrainedModelLogRequest{
 			TrainingId: params.ModelID,
@@ -483,15 +481,13 @@ func getLogsOrMetrics(params models.GetLogsParams, isMetrics bool) middleware.Re
 		defer trainer.Close()
 		defer cancel()
 
-		//logr.Debugln("w.WriteHeader(200)")
 		w.WriteHeader(200)
 		// w.Header().Set("Transfer-Encoding", "chunked")
 		var onelinebytes []byte
 		for {
 			var logFrame *grpc_trainer_v2.ByteStreamResponse
-			// logr.Debugln("CALLING stream.Recv()")
 			logFrame, err := stream.Recv()
-			// time.Sleep(time.Second * 2)
+
 			if logFrame == nil {
 				if err != io.EOF && err != nil {
 					logr.WithError(err).Errorf("stream.Recv() returned error")
@@ -499,7 +495,7 @@ func getLogsOrMetrics(params models.GetLogsParams, isMetrics bool) middleware.Re
 				break
 			}
 			if isMetrics {
-				var bytesBuf []byte = logFrame.GetData()
+				var bytesBuf = logFrame.GetData()
 				if bytesBuf != nil {
 
 					byteReader := bytes.NewReader(bytesBuf)
@@ -518,13 +514,12 @@ func getLogsOrMetrics(params models.GetLogsParams, isMetrics bool) middleware.Re
 								}
 
 								_, err := w.Write(lineBytes)
-								//logr.Debugf("w.Write(bytes) says %d bytes written", n)
+
 								if err != nil && err != io.EOF {
 									logr.Errorf("getTrainingLogs(2) Write returned error: %s", err.Error())
 								}
-								// logr.Debugln("if f, ok := w.(http.Flusher); ok {")
+
 								if f, ok := w.(http.Flusher); ok {
-									logr.Debugln("f.Flush()")
 									f.Flush()
 								}
 							} else {
@@ -543,20 +538,16 @@ func getLogsOrMetrics(params models.GetLogsParams, isMetrics bool) middleware.Re
 			} else {
 				var bytes []byte = logFrame.GetData()
 				if bytes != nil {
-					//logr.Debugln("w.Write(bytes) len = %d", len(bytes))
 					_, err := w.Write(bytes)
-					//logr.Debugf("w.Write(bytes) says %d bytes written", n)
 					if err != nil && err != io.EOF {
 						logr.Errorf("getTrainingLogs(2) Write returned error: %s", err.Error())
 					}
-					//logr.Debugln("if f, ok := w.(http.Flusher); ok {")
 					if f, ok := w.(http.Flusher); ok {
 						logr.Debugln("f.Flush()")
 						f.Flush()
 					}
 				}
 			}
-			//logr.Debugln("bottom of for")
 		}
 	})
 }
@@ -610,7 +601,6 @@ func makeGrpcSearchTypeFromRestSearchType(st string) grpc_training_data_v1.Query
 
 func getEMetrics(params training_data.GetEMetricsParams) middleware.Responder {
 	logr := logger.LocLogger(logWithEMetricsParams(params))
-	logr.Debug("function entry")
 
 	trainingData, err := trainingDataClient.NewTrainingDataClient()
 	if err != nil {
@@ -696,13 +686,11 @@ func getEMetrics(params training_data.GetEMetricsParams) middleware.Responder {
 	response := training_data.NewGetEMetricsOK().WithPayload(&restmodels.V1EMetricsList{
 		Models: trimmedList,
 	})
-	logr.Debug("function exit")
 	return response
 }
 
 func getLoglines(params training_data.GetLoglinesParams) middleware.Responder {
 	logr := logger.LocLogger(logWithLoglinesParams(params))
-	logr.Debug("function entry")
 
 	trainingData, err := trainingDataClient.NewTrainingDataClient()
 	if err != nil {
@@ -787,7 +775,6 @@ func getLoglines(params training_data.GetLoglinesParams) middleware.Responder {
 	response := training_data.NewGetLoglinesOK().WithPayload(&restmodels.V1LogLinesList{
 		Models: trimmedList,
 	})
-	logr.Debug("function exit")
 	return response
 }
 
@@ -849,283 +836,6 @@ func getMetrics(params models.GetMetricsParams) middleware.Responder {
 	return getLogsOrMetrics(logsParams, true)
 }
 
-func createEventEndpoint(params events.CreateEventEndpointParams) middleware.Responder {
-	logr := logger.LocLogger(logWithCreateEventEndpointParams(params))
-	logr.Debugf("createEventEndpoint invoked: %v", params.HTTPRequest.Header)
-
-	trainer, err := trainerClient.NewTrainer()
-
-	if err != nil {
-		logr.WithError(err).Errorf("Cannot create client for deployer service")
-		return error500(logr, "")
-	}
-	defer trainer.Close()
-
-	rresp, err := trainer.Client().GetTrainingJob(params.HTTPRequest.Context(), &grpc_trainer_v2.GetRequest{
-		TrainingId: params.ModelID,
-		UserId:     getUserID(params.HTTPRequest),
-	})
-	if err != nil {
-		logr.WithError(err).Errorf("Trainer getTrainingJob call failed")
-		if grpc.Code(err) == codes.PermissionDenied {
-			return events.NewCreateEventEndpointUnauthorized().WithPayload(&restmodels.Error{
-				Error:       "Unauthorized",
-				Code:        http.StatusUnauthorized,
-				Description: "",
-			})
-		}
-		if grpc.Code(err) == codes.NotFound {
-			return events.NewCreateEventEndpointNotFound().WithPayload(&restmodels.Error{
-				Error:       "Not found",
-				Code:        http.StatusNotFound,
-				Description: "",
-			})
-		}
-		return error500(logr, err.Error())
-	}
-	logr.Debugf("Trainer service read response: %s", rresp.String())
-
-	lcm, err := client.NewLcm(nil)
-	_, err = lcm.Client().CreateEventEndpoint(params.HTTPRequest.Context(), &service.CreateEventEndpointRequest{
-		TrainingId:   rresp.Job.TrainingId,
-		UserId:       "", // TODO: will be used later
-		EventType:    params.EventType,
-		EndpointUrl:  params.CallbackURL.URL,
-		EndpointType: params.CallbackURL.Type,
-		EndpointId:   params.EndpointID,
-	})
-
-	if err != nil {
-		logr.WithError(err).Errorf("Trainer readOne service call failed")
-		if grpc.Code(err) == codes.PermissionDenied {
-			return events.NewCreateEventEndpointUnauthorized().WithPayload(&restmodels.Error{
-				Error:       "Unauthorized",
-				Code:        http.StatusUnauthorized,
-				Description: "",
-			})
-		}
-		if grpc.Code(err) == codes.NotFound {
-			return events.NewCreateEventEndpointNotFound().WithPayload(&restmodels.Error{
-				Error:       "Not found",
-				Code:        http.StatusNotFound,
-				Description: "",
-			})
-		}
-		return error500(logr, err.Error())
-	}
-
-	return events.NewCreateEventEndpointOK()
-}
-
-func getEventTypeEndpoints(params events.GetEventTypeEndpointsParams) middleware.Responder {
-	logr := logger.LocLogger(logWithGetEventTypeEndpointsParams(params))
-	logr.Debugf("getEventTypeEndpoints invoked: %v", params.HTTPRequest.Header)
-
-	trainer, err := trainerClient.NewTrainer()
-
-	if err != nil {
-		logr.Errorf("Cannot create client for deployer service: %s", err.Error())
-		return error500(logr, err.Error())
-	}
-	defer trainer.Close()
-
-	rresp, err := trainer.Client().GetTrainingJob(params.HTTPRequest.Context(), &grpc_trainer_v2.GetRequest{
-		TrainingId: params.ModelID,
-		UserId:     getUserID(params.HTTPRequest),
-	})
-	if err != nil {
-		logr.WithError(err).Errorf("Trainer getTrainingJob call failed")
-		if grpc.Code(err) == codes.PermissionDenied {
-			return events.NewGetEventTypeEndpointsUnauthorized().WithPayload(&restmodels.Error{
-				Error:       "Unauthorized",
-				Code:        http.StatusUnauthorized,
-				Description: "",
-			})
-		}
-		if grpc.Code(err) == codes.NotFound {
-			return events.NewGetEventTypeEndpointsNotFound().WithPayload(&restmodels.Error{
-				Error:       "Not found",
-				Code:        http.StatusNotFound,
-				Description: "",
-			})
-		}
-		return error500(logr, err.Error())
-	}
-	logr.Debugf("Trainer service read response: %s", rresp.String())
-
-	lcm, err := client.NewLcm(nil)
-	endpoints, err := lcm.Client().GetEventTypeEndpoints(params.HTTPRequest.Context(), &service.GetEventTypeEndpointsRequest{
-		TrainingId: rresp.Job.TrainingId,
-		UserId:     "", // TODO: will be used later
-		EventType:  params.EventType,
-	})
-
-	if err != nil {
-		logr.WithError(err).Errorf("Trainer readOne service call failed")
-		if grpc.Code(err) == codes.PermissionDenied {
-			return events.NewGetEventTypeEndpointsUnauthorized().WithPayload(&restmodels.Error{
-				Error:       "Unauthorized",
-				Code:        http.StatusUnauthorized,
-				Description: "",
-			})
-		}
-		if grpc.Code(err) == codes.NotFound {
-			return events.NewGetEventTypeEndpointsNotFound().WithPayload(&restmodels.Error{
-				Error:       "Not found",
-				Code:        http.StatusNotFound,
-				Description: "",
-			})
-		}
-		return error500(logr, err.Error())
-	}
-
-	ans := make([]*restmodels.Endpoint, 0, len(endpoints.Endpoints))
-	for _, p := range endpoints.Endpoints {
-		ans = append(ans, &restmodels.Endpoint{ID: p.Id, URL: p.Url})
-	}
-
-	return events.NewGetEventTypeEndpointsOK().WithPayload(&restmodels.EndpointList{
-		Endpoints: ans,
-	})
-}
-
-func deleteEventEndpoint(params events.DeleteEventEndpointParams) middleware.Responder {
-
-	logr := logger.LocLogger(logWithDeleteEventEndpointParams(params))
-	logr.Debugf("deleteEventEndpoint invoked: %v", params.HTTPRequest.Header)
-
-	trainer, err := trainerClient.NewTrainer()
-
-	if err != nil {
-		logr.Errorf("Cannot create client for deployer service")
-		return error500(logr, err.Error())
-	}
-	defer trainer.Close()
-
-	rresp, err := trainer.Client().GetTrainingJob(params.HTTPRequest.Context(), &grpc_trainer_v2.GetRequest{
-		TrainingId: params.ModelID,
-		UserId:     getUserID(params.HTTPRequest),
-	})
-	logr.Debugf("Trainer service read response: %s", rresp.String())
-	if err != nil {
-		logr.WithError(err).Errorf("Trainer readOne service call failed")
-		if grpc.Code(err) == codes.PermissionDenied {
-			return events.NewDeleteEventEndpointUnauthorized().WithPayload(&restmodels.Error{
-				Error:       "Unauthorized",
-				Code:        http.StatusUnauthorized,
-				Description: "",
-			})
-		}
-		if grpc.Code(err) == codes.NotFound {
-			return events.NewDeleteEventEndpointNotFound().WithPayload(&restmodels.Error{
-				Error:       "Not found",
-				Code:        http.StatusNotFound,
-				Description: "",
-			})
-		}
-		return error500(logr, err.Error())
-	}
-
-	lcm, err := client.NewLcm(nil)
-	_, err = lcm.Client().DeleteEventEndpoint(params.HTTPRequest.Context(), &service.DeleteEventEndpointRequest{
-		TrainingId: rresp.Job.TrainingId,
-		UserId:     "", // TODO: will be used later
-		EventType:  params.EventType,
-		EndpointId: params.EndpointID,
-	})
-
-	if err != nil {
-		logr.WithError(err).Errorf("LCM deleteEventEndpoint call failed")
-		if grpc.Code(err) == codes.PermissionDenied {
-			return events.NewDeleteEventEndpointUnauthorized().WithPayload(&restmodels.Error{
-				Error:       "Unauthorized",
-				Code:        http.StatusUnauthorized,
-				Description: "",
-			})
-		}
-		if grpc.Code(err) == codes.NotFound {
-			return events.NewDeleteEventEndpointNotFound().WithPayload(&restmodels.Error{
-				Error:       "Not found",
-				Code:        http.StatusNotFound,
-				Description: "",
-			})
-		}
-		return error500(logr, err.Error())
-	}
-
-	return events.NewDeleteEventEndpointOK()
-}
-
-func getEventEndpoint(params events.GetEventEndpointParams) middleware.Responder {
-	logr := logger.LocLogger(logWithGetEventEndpointParams(params))
-	logr.Debugf("deleteEventEndpoint invoked: %v", params.HTTPRequest.Header)
-
-	trainer, err := trainerClient.NewTrainer()
-
-	if err != nil {
-		logr.Errorf("Cannot create client for deployer service")
-		return error500(logr, err.Error())
-	}
-	defer trainer.Close()
-
-	rresp, err := trainer.Client().GetTrainingJob(params.HTTPRequest.Context(), &grpc_trainer_v2.GetRequest{
-		TrainingId: params.ModelID,
-		UserId:     getUserID(params.HTTPRequest),
-	})
-	logr.Debugf("Trainer service read response: %s", rresp.String())
-	if err != nil {
-		logr.WithError(err).Errorf("Trainer getTrainingJob call failed")
-		if grpc.Code(err) == codes.PermissionDenied {
-			return events.NewDeleteEventEndpointUnauthorized().WithPayload(&restmodels.Error{
-				Error:       "Unauthorized",
-				Code:        http.StatusUnauthorized,
-				Description: "",
-			})
-		}
-		if grpc.Code(err) == codes.NotFound {
-			return events.NewDeleteEventEndpointNotFound().WithPayload(&restmodels.Error{
-				Error:       "Not found",
-				Code:        http.StatusNotFound,
-				Description: "",
-			})
-		}
-		return error500(logr, err.Error())
-	}
-
-	lcm, err := client.NewLcm(nil)
-	endpoint, err := lcm.Client().GetEventEndpoint(params.HTTPRequest.Context(), &service.GetEventEndpointRequest{
-		TrainingId: rresp.Job.TrainingId,
-		UserId:     "", // TODO: will be used later
-		EventType:  params.EventType,
-		EndpointId: params.EndpointID,
-	})
-
-	if err != nil {
-		logr.WithError(err).Errorf("LCM GetEventEndpoint call failed")
-		if grpc.Code(err) == codes.PermissionDenied {
-			return events.NewDeleteEventEndpointUnauthorized().WithPayload(&restmodels.Error{
-				Error:       "Unauthorized",
-				Code:        http.StatusUnauthorized,
-				Description: "",
-			})
-		}
-		if grpc.Code(err) == codes.NotFound {
-			return events.NewDeleteEventEndpointNotFound().WithPayload(&restmodels.Error{
-				Error:       "Not found",
-				Code:        http.StatusNotFound,
-				Description: "",
-			})
-		}
-		return error500(logr, err.Error())
-	}
-
-	return events.NewGetEventEndpointOK().WithPayload(&restmodels.Endpoint{
-		URL: endpoint.Url,
-		ID:  endpoint.EndpointType,
-	})
-
-}
-
 //
 // Helper functions
 //
@@ -1168,10 +878,7 @@ func serveLogHandler(trainer trainerClient.TrainerClient, stream grpc_trainer_v2
 			}
 			if logFrame != nil && len(logFrame.Data) > 0 {
 				if isMetrics {
-					// var bytes []byte
-					// bytes = logFrame.Data
-					// to show the payload if needed...
-					// logr.Debugf("bytes: %s", string(bytes[:len(logFrame.Data)]))
+
 					byteReader := bytes.NewReader(logFrame.Data)
 					bufioReader := bufio.NewReader(byteReader)
 					for {
@@ -1189,7 +896,6 @@ func serveLogHandler(trainer trainerClient.TrainerClient, stream grpc_trainer_v2
 									continue
 								}
 
-								// logr.Debugf("bytes: %s", string(bytes[:len(logFrame.Data)]))
 								ws.Write(lineBytes)
 								// Take a short snooze, just to not take over CPU, etc.
 								// time.Sleep(time.Millisecond * 250)
@@ -1210,18 +916,16 @@ func serveLogHandler(trainer trainerClient.TrainerClient, stream grpc_trainer_v2
 				} else {
 					var bytes []byte
 					bytes = logFrame.Data
-					// to show the payload if needed...
-					logr.Debugf("bytes: %s", string(bytes[:len(logFrame.Data)]))
 					n, errWrite := ws.Write(bytes)
 					if errWrite != nil && errWrite != io.EOF {
 						logr.WithError(errWrite).Errorf("serveLogHandler Write returned error")
 						break
 					}
-					logr.Debugf("wrote %d bytes", n)
+					logr.Debugf("Wrote %d bytes.", n)
 				}
 			}
 
-			// either EOF or error reading from trainer
+			// Either EOF or error reading from trainer
 			if err != nil {
 				logr.WithError(err).Debugf("Breaking from Recv() loop")
 				break
@@ -1245,8 +949,6 @@ func getTrainingLogsWS(trainer trainerClient.TrainerClient, params models.GetLog
 }
 
 func serveLogHandlerTest(logr *logger.LocLoggingEntry, cancel context.CancelFunc) websocket.Handler {
-	logr.Debugf("In serveLogHandlerTest")
-
 	return func(ws *websocket.Conn) {
 		defer ws.Close()
 		defer cancel()

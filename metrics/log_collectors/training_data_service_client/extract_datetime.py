@@ -20,6 +20,8 @@
 import os
 import re
 import datetime
+import time
+import threading
 
 from dateutil.parser import parse as datetime_parser
 
@@ -40,6 +42,30 @@ regex_timestamp_iso8601_str = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[.]\d+?Z|[-+]
 
 regex_timestamp_iso8601 = re.compile(regex_timestamp_iso8601_str)
 
+last_time_lock = threading.Lock()  # type: threading.Lock
+
+
+def now_in_milliseconds()->int:
+    return int(time.time() * 1000)
+
+
+last_time = now_in_milliseconds()
+
+
+def get_meta_timestamp()->int:
+    global last_time
+    # We must ensure that timestamps are always unique.  We can improve upon this
+    # a little by making a timestamp object, and then having loglines and emetrics
+    # trap separately.  But, this should be ok for now.
+    with last_time_lock:
+        this_time = now_in_milliseconds()
+        while last_time == this_time:
+            this_time = now_in_milliseconds()
+        last_time = this_time
+        timestamp = this_time
+
+    return timestamp
+
 
 def get_log_created_year(input_file) -> int:
     """Get year from log file system timestamp
@@ -50,7 +76,7 @@ def get_log_created_year(input_file) -> int:
     return log_created_year
 
 
-def to_timestamp(dt, epoch=datetime.datetime(1970,1,1)):
+def to_timestamp(dt, epoch=datetime.datetime(1970, 1, 1)):
     td = dt - epoch
     # return td.total_seconds()
     return int((td.microseconds + (td.seconds + td.days * 86400) * 10**6) / 10**6)

@@ -15,7 +15,7 @@
 #
 
 
-GRPC_DIR = /go/src/github.ibm.com/deep-learning-platform/grpc-health-checker
+GRPC_DIR = /go/src/github.com/IBM/FfDL/grpc-health-checker
 
 install-deps:
 	glide -q install
