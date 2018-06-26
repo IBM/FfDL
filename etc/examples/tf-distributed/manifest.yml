@@ -1,24 +1,24 @@
 #-----------------------------------------------------------------------
-#                                                                   
+#
 # This information contains sample code provided in source code form.
-# You may copy, modify, and distribute these sample programs in any 
+# You may copy, modify, and distribute these sample programs in any
 # form without payment to IBM for the purposes of developing, using,
-# marketing or distributing application programs conforming to the     
-# application programming interface for the operating platform for     
-# which the sample code is written. Notwithstanding anything to the 
-# contrary, IBM PROVIDES THE SAMPLE SOURCE CODE ON AN 'AS IS' BASIS 
-# AND IBM DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING,     
-# BUT NOT LIMITED TO, ANY IMPLIED WARRANTIES OR CONDITIONS OF          
-# MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A PARTICULAR      
+# marketing or distributing application programs conforming to the
+# application programming interface for the operating platform for
+# which the sample code is written. Notwithstanding anything to the
+# contrary, IBM PROVIDES THE SAMPLE SOURCE CODE ON AN 'AS IS' BASIS
+# AND IBM DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING,
+# BUT NOT LIMITED TO, ANY IMPLIED WARRANTIES OR CONDITIONS OF
+# MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A PARTICULAR
 # PURPOSE, TITLE, AND ANY WARRANTY OR CONDITION OF NON-INFRINGEMENT.
-# IBM SHALL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,     
-# SPECIAL, EXEMPLARY OR ECONOMIC CONSEQUENTIAL DAMAGES ARISING OUT     
-# OF THE USE OR OPERATION OF THE SAMPLE SOURCE CODE. IBM SHALL NOT     
-# BE LIABLE FOR LOSS OF, OR DAMAGE TO, DATA, OR FOR LOST PROFITS,     
-# BUSINESS REVENUE, GOODWILL, OR ANTICIPATED SAVINGS. IBM HAS NO     
-# OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS 
-# OR MODIFICATIONS TO THE SAMPLE SOURCE CODE.                        
-#                                                                   
+# IBM SHALL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY OR ECONOMIC CONSEQUENTIAL DAMAGES ARISING OUT
+# OF THE USE OR OPERATION OF THE SAMPLE SOURCE CODE. IBM SHALL NOT
+# BE LIABLE FOR LOSS OF, OR DAMAGE TO, DATA, OR FOR LOST PROFITS,
+# BUSINESS REVENUE, GOODWILL, OR ANTICIPATED SAVINGS. IBM HAS NO
+# OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS
+# OR MODIFICATIONS TO THE SAMPLE SOURCE CODE.
+#
 #-------------------------------------------------------------------
 
 name: Distributed-tensorflow-mnist
@@ -33,11 +33,11 @@ data_stores:
   - id: sl-internal-os
     type: mount_cos
     training_data:
-      container: dlaas-ci-tf-training-data
+      container: tf_training_data
     training_results:
-      container: dlaas-ci-trained-results-tf-training-data
+      container: tf_trained_model
     connection:
-      auth_url: https://s3-api.dal-us-geo.objectstorage.service.networklayer.com
+      auth_url: http://s3.default.svc.cluster.local
       user_name: test
       password: test
 

@@ -11,7 +11,7 @@ layer {
     scale: 0.00390625
   }
   data_param {
-    source: "/job/mnist_lmdb_data/train/"
+    source: "/mnt/data/tf_training_data/train/"
     batch_size: 64
     backend: LMDB
   }
@@ -28,7 +28,7 @@ layer {
     scale: 0.00390625
   }
   data_param {
-    source: "/job/mnist_lmdb_data/test/"
+    source: "/mnt/data/tf_training_data/test/"
     batch_size: 100
     backend: LMDB
   }
