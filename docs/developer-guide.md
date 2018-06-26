@@ -57,6 +57,26 @@ make deploy # Deploy FfDL
 ## Troubleshooting
 If your Object Storage Driver is not successfully installed on your Kubernetes, you can following the step by step instructions at [ibmcloud-object-storage-plugin](https://github.com/IBM/ibmcloud-object-storage-plugin).
 
+If you encounter other issues, please take a look at the experimental [troubleshooting.md](./troubleshooting.md).
+
+
+## Scripts
+There are experimental scripts to setup FfDL including all of its dependencies like Docker, Go, Kubernetes, S3 drivers and the Docker registry starting from an empty SoftLayer VM.
+You can find them in `bin/dind_scripts`. To start on a fresh VM login as root and run:
+```bash
+apt install -y git software-properties-common
+mkdir -p /home/ffdlr/go/src/github.com/IBM/ && cd $_ && git clone https://github.com/fplk/FfDL.git && cd FfDL && git checkout merge_20180514_1536
+cd bin/dind_scripts/
+chmod +x create_user.sh
+. create_user.sh
+```
+Then log back into the VM as the user `ffdlr` and run
+```bash
+cd /home/ffdlr/go/src/github.com/IBM/FfDL/bin/dind_scripts/
+sudo chmod +x experimental_master.sh
+. experimental_master.sh
+```
+
 ## Enable device plugin for GPU workloads with development build
 
 Please modify the `resourceGPU` under [lcm/service/lcm/container_helper.go](../lcm/service/lcm/container_helper.go#L530) and [lcm/service/lcm/resources.go](../lcm/service/lcm/resources.go#L149) to `"nvidia.com/gpu"` and rebuild the lcm image to enable device plugin for all GPU workloads on your development build.
