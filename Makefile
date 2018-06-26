@@ -111,11 +111,11 @@ deploy-plugin:
 		echo 'Installing helm/tiller'; \
 		helm init > /dev/null 2>&1; \
 		sleep 5; \
-		@echo "Waiting tiller to be ready"
-		@while ! (kubectl get pods --all-namespaces | grep tiller-deploy | grep '1/1' > /dev/null); \
+		echo "Waiting tiller to be ready"; \
+		while ! (kubectl get pods --all-namespaces | grep tiller-deploy | grep '1/1' > /dev/null); \
 		do \
 			sleep 1; \
-		done
+		done; \
 	fi;
 	@existingPlugin=$$(helm list | grep ibmcloud-object-storage-plugin | awk '{print $$1}' | head -n 1);
 	@if [ "$(VM_TYPE)" = "dind" ]; then \

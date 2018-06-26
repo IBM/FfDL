@@ -11,7 +11,7 @@ CONFIGMAP_NAME=static-volumes
 volumeType=${1:-dlaas-static-volume}
 
 # Delete configmap
-kubectl delete configmap ${CONFIGMAP_NAME}
+if kubectl get cm | grep static-volumes &> /dev/null; then kubectl delete configmap ${CONFIGMAP_NAME}; else echo "No need to delete ${CONFIGMAP_NAME} since it doesn't exist."; fi
 
 # Create new configmap
 echo

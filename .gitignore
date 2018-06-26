@@ -21,3 +21,7 @@ tmp
 .venv/
 .idea/
 venv/
+bin/dind_scripts/config.json
+bin/dind_scripts/go1.10.1.linux-amd64.tar.gz
+bin/dind_scripts/helm-v2.8.2-linux-amd64.tar.gz
+bin/dind_scripts/linux-amd64/
