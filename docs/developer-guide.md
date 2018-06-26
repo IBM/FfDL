@@ -65,7 +65,7 @@ There are experimental scripts to setup FfDL including all of its dependencies l
 You can find them in `bin/dind_scripts`. To start on a fresh VM login as root and run:
 ```bash
 apt install -y git software-properties-common
-mkdir -p /home/ffdlr/go/src/github.com/IBM/ && cd $_ && git clone https://github.com/fplk/FfDL.git && cd FfDL && git checkout merge_20180514_1536
+mkdir -p /home/ffdlr/go/src/github.com/IBM/ && cd $_ && git clone https://github.com/IBM/FfDL.git && cd FfDL
 cd bin/dind_scripts/
 chmod +x create_user.sh
 . create_user.sh
