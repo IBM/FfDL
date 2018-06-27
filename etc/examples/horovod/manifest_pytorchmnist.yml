@@ -21,5 +21,5 @@ data_stores:
 framework:
   name: horovod
   version: "0.13.4-tf1.8.0-torch0.4.0-py3.5"
-  command: python tensorflow_mnist.py
+  command: python pytorch_mnist.py
   # the command is basically running the above command via openmpi, feel free to remove  -x NCCL_DEBUG=INFO

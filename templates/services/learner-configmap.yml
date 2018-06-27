@@ -45,6 +45,8 @@ data:
   caffe2_gpu_c2v0.8.1.cuda8.cudnn7.ubuntu16.04_CURRENT: master-39
   caffe2_cpu_c2v0.8.0.cpu.full.ubuntu16.04_CURRENT: master-39
   caffe2_gpu_latest_CURRENT: master-39
+  horovod_gpu_0.13.4-tf1.8.0-torch0.4.0-py3.5_CURRENT: manual
+  horovod_gpu_0.13.4-tf1.8.0-torch0.4.0-py2.7_CURRENT: manual
 ---
 
 apiVersion: v1
@@ -54,35 +56,190 @@ metadata:
 data:
   train.sh: |
     #!/bin/bash
-
     echo "Training with training/test data at:"
     echo "  DATA_DIR: $DATA_DIR"
     echo "  MODEL_DIR: $MODEL_DIR"
     echo "  TRAINING_JOB: $TRAINING_JOB"
     echo "  TRAINING_COMMAND: $TRAINING_COMMAND"
-
     echo "Storing trained model at:"
     echo "  RESULT_DIR: $RESULT_DIR"
-
     echo 'Contents of $MODEL_DIR'
     ls -la $MODEL_DIR
     echo 'Contents of $DATA_DIR'
     ls -la $DATA_DIR
-
     # Switch to model dir
     cd $MODEL_DIR
     export PYTHONPATH=$PYTHONPATH:$PWD
-
     env | sort
-
     echo "$(date): Running training job"
     eval "$TRAINING_COMMAND 2>&1"
     cmd_exit=$?
-
     echo "Training process finished. Exit code: $cmd_exit"
-
     if [ ${cmd_exit} -ne 0 ];
     then
       echo "Job exited with error code ${cmd_exit}"
       exit ${cmd_exit}
+    fi
+  train-horovod.sh: |
+    #!/bin/bash
+    function with_backoff {
+      local max_attempts=${ATTEMPTS-5}
+      local timeout=${TIMEOUT-1}
+      local attempt=0
+      local exitCode=0
+
+      while [[ $attempt < $max_attempts ]]
+      do
+        "$@"
+        exitCode=$?
+
+        if [[ $exitCode == 0 ]]
+        then
+          break
+        fi
+
+        echo "Failure! Retrying in $timeout.." 1>&2
+        sleep $timeout
+        attempt=$(( attempt + 1 ))
+        timeout=$(( timeout * 2 ))
+      done
+
+      if [[ $exitCode != 0 ]]
+      then
+        echo "You've failed me for the last time! ($@)" 1>&2
+      fi
+
+      return $exitCode
+    }
+
+    echo "executing installPrerequisites"
+    mkdir -p /usr/lib64/ && ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/lib64/libcuda.so.1 && ln -s /usr/lib64/libcuda.so.1 /usr/lib64/libcuda.so
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64/:/usr/lib64/
+
+    echo 'root:mypassword' | chpasswd
+    mkdir -p ~/.ssh/
+    # Use private and public key from secrets
+    echo $RSA_PRI_KEY | sed s#" RSA PRIVATE "#"RSAPRIVATE"#g | tr " " "\n" | sed s#"RSAPRIVATE"#" RSA PRIVATE "#g > ~/.ssh/id_rsa
+    chmod 600 ~/.ssh/id_rsa
+    echo $RSA_PUB_KEY > ~/.ssh/id_rsa.pub
+    chmod 644 ~/.ssh/id_rsa.pub
+
+    cp ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys
+    ssh-keygen -s ~/.ssh/id_rsa -I host_auth_server -h -n auth.horovod -V +52w /etc/ssh/ssh_host_rsa_key.pub
+
+    mkdir -p /var/run/sshd
+
+    sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+    echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config
+    # SSH login fix. Otherwise user is kicked off after login
+    sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+
+    # running sshd daemon removes all the env variables. Need to reset those env variables back
+    # https://docs.docker.com/engine/examples/running_ssh_service/#build-an-eg_sshd-image
+
+    echo "if [ -f ~/.bashrc ]; then . ~/.bashrc; fi" >> ~/.bash_profile
+    echo "export VISIBLE=now" >> ~/.bashrc
+    echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64/:/usr/lib64/" >> ~/.bashrc
+    echo "export PATH=$PATH" >> ~/.bashrc
+
+    # NEED TO DO THIS to get around the issue of stateful sets. openmpi is not able to ssh between pods if this is not set. Assumes that LEARNER_NAME_PREFIX flag is already set
+    echo -e "Host *\n\tHostname %h.$LEARNER_NAME_PREFIX" >> ~/.ssh/config
+
+    #start the sshd server
+    service ssh start
+
+
+    #set up keras datasets symlink
+    mkdir -p ~/.keras
+    ln -s $DATA_DIR ~/.keras/datasets
+    ln -s $DATA_DIR ~/.keras/models
+
+    # set LEARNER_ID using hostname format statefulset-<ordinal> to extract ordinal. the LEARNER_ID numbering starts from 1, but the hostname starts from 0, so that's why plus 1
+    # need to do both
+    export LEARNER_ID=$((${DOWNWARD_API_POD_NAME##*-} + 1))
+    echo "export LEARNER_ID=$((${DOWNWARD_API_POD_NAME##*-} + 1))" >> ~/.bashrc
+
+    echo "Training with training/test data at:"
+    echo "  DATA_DIR: $DATA_DIR"
+    echo "  MODEL_DIR: $MODEL_DIR"
+    echo "  RESULT_DIR: $RESULT_DIR"
+    echo "  LOG_DIR: $LOG_DIR"
+    echo "  TRAINING_COMMAND: $TRAINING_COMMAND"
+    echo "  GPUs per Learner: $GPU_COUNT"
+    echo "  LEARNER_ID: $LEARNER_ID"
+    echo "  LEARNER_NAME_PREFIX:: $LEARNER_NAME_PREFIX"
+
+    echo "Num learners: $NUM_LEARNERS"
+    echo "creating results directory $RESULT_DIR/learner-$LEARNER_ID"
+    mkdir -p $RESULT_DIR/learner-$LEARNER_ID
+
+
+    # Switch to model dir
+    cd $MODEL_DIR
+    export PYTHONPATH=$PWD
+
+    echo "Making sure ssh is running"
+    service ssh status
+    export TIMEOUT=10; with_backoff service ssh start
+    service ssh status
+
+    # Create a work directory.
+    WORK_DIR="/tmp/work"
+    mkdir -p "$WORK_DIR"
+
+    # Link all models and data from work directory.
+    cd "$WORK_DIR"
+    for i in "$DATA_DIR"/* "$MODEL_DIR"/*; do
+      ln -sf $i
+    done
+
+    # Run training job.
+    cd "$WORK_DIR"
+
+    echo "$(date): Running Tensorflow with horovod"
+    HOSTS_FILE=$PWD/hosts_file
+    if [[ $LEARNER_ID == 1 ]]; then
+       NUM_LEARNERS=${NUM_LEARNERS:-1} #single learner jobs don't have NUM_LEARNERS defined
+       echo "Num learners: $NUM_LEARNERS"
+       NUM_GPUS=${GPU_COUNT%.*}
+       NUM_MPI_TASKS=$(($NUM_LEARNERS * $NUM_GPUS)) #horovod starts one MPI task per GPU
+       if [[ $NUM_GPUS == 0 ]]; then
+          NUM_MPI_TASKS=$(($NUM_LEARNERS * 1))
+          NUM_GPUS=1
+       fi
+       echo "Num MPI tasks: $NUM_MPI_TASKS"
+
+       if [[ $NUM_LEARNERS == 1 ]]; then
+           echo "localhost slots=$NUM_GPUS" >> ${HOSTS_FILE}
+       else
+          for (( i=0; i<NUM_LEARNERS; i++))
+           do
+             LEARNER_NAME=${LEARNER_NAME_PREFIX}-${i}
+             echo "$LEARNER_NAME slots=$NUM_GPUS" >> ${HOSTS_FILE}
+             # attempt ssh operations to the learner with exponential backoff
+             with_backoff ssh -o ConnectTimeout=10  ${LEARNER_NAME} exit
+           done
+       fi
+       # For a single MPI task, use hostfile, for multiple use rankfile with topology
+       if [[ $NUM_MPI_TASKS == 1 ]]; then
+          eval "$TRAINING_COMMAND 2>&1 | tee $RESULT_DIR/training-log.txt; typeset -a PIPE=(\${PIPESTATUS[@]})"
+       else
+          eval "/usr/local/bin/mpirun -x LD_LIBRARY_PATH=$LD_LIBRARY_PATH -x DATA_DIR=$DATA_DIR -x CHECKPOINT_DIR=$CHECKPOINT_DIR -x RESULT_DIR=$RESULT_DIR -x LOG_DIR=$LOG_DIR -x LEARNER_NAME_PREFIX=$LEARNER_NAME_PREFIX -x LEARNER_ID=$LEARNER_ID -np $NUM_MPI_TASKS --hostfile ${HOSTS_FILE}  $TRAINING_COMMAND  2>&1 ; typeset -a PIPE=(\${PIPESTATUS[@]})"
+          #from documentation the redirected log here $RESULT_DIR/learner-$LEARNER_ID/training-log.txt is consolidated log from all the different processes and we redirect it to learner-1. refer below documentation
+          #% mpirun -np 2 my_app < my_input > my_output
+          #Note that in this example only the MPI_COMM_WORLD rank 0 process will receive the stream from my_input on stdin. The stdin on all the other nodes will be tied to /dev/null. However, the stdout from all nodes will be collected into the my_output file.
+          #--output-filename  $RESULT_DIR/learner-$LEARNER_ID/mpi-learner-training-log.txt can use this flag for individual folders
+       fi
+
+    else
+        echo "LEARNER ID $LEARNER_ID so not doing anything...."
+        sleep infinity
+    fi
+
+    if [[ ${PIPE[0]} -ne 0 ]];
+    then
+      echo "horovod test exited with an error code ${PIPE[0]}"
+      echo ${PIPE[0]} > /tmp/error
+      exit ${PIPE[0]}
     fi
