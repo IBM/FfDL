@@ -1,7 +1,5 @@
 # Horovod TensorFlow Example
 
-> Note: These Horovod job are assuming you clusters has at least 2 nodes with 8 CPUs and 16 GB of memory. If your cluster has fewer CPUs and memory, please modify [manifest_tfmnist.yml](manifest_tfmnist.yml) to match your cluster's specs and consider reducing the number of steps in [tensorflow_mnist.py](tensorflow_mnist.py#L95)
-
 0. Deploy [FfDL](https://github.com/IBM/FfDL#5-detailed-installation-instructions) on your Kubernetes Cluster.
 
 1. In the main FfDL repository, run the following commands to obtain the object storage endpoint from your cluster.

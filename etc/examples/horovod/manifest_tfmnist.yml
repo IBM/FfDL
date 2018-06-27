@@ -2,8 +2,8 @@ name: Distributed-horovod-tensorflow
 description: Distributed-horovod-tensorflow examples based on https://github.com/uber/horovod/blob/master/examples/tensorflow_mnist.py
 version: "1.0"
 gpus: 0
-cpus: 8
-memory: 12Gb
+cpus: 1
+memory: 1Gb
 learners: 2
 
 data_stores:
