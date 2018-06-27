@@ -53,14 +53,14 @@ Follow the instructions under [Object Store for FfDL](#3-object-store-for-ffdl).
 
 ### 2.4. Creating Manifest file
 The manifest file contains different fields describing the model in FfDL , its object store information, its resource requirements, and several arguments (including hyperparameters) required for model execution during training and testing.
-Here are [example manifest files](../etc/examples/tf-model/manifest.yml) for Caffe and TensorFlow models. You can use these templates to create manifest file for your models. Below we describe different fields of the manifest file for FfDL.
+Here are the [example manifest files](../etc/examples/tf-model/manifest.yml) for Caffe and TensorFlow models. You can use these templates to create manifest file for your models. Below we describe different fields of the manifest file for FfDL.
 * ```name:``` After a model is deployed in FfDL a unique id for the model is created. The model id is <name>+<mkey>, where <mkey> is a string of alphanumeric characters to uniquely identify the deployed model. <name> is a prefix of the model id. You can provide any value to name.
 * ```version:``` This is version of the manifest file. This field is currently not used.
 * ```description:``` This is for users to keep track of their deployed models. Users can use in future and get information about particular model. FfDL does not interpret it. You can put anything here.
 * ```learners:``` Number of learners to use in training. As FfDL supports distributed learning, you can have more than one learner for your training job.
 * ```gpus:``` Number of gpus used by each learner during training.
-* ```cpus:``` Number of cpus used by each learner during training. The default cpu number is 8.
-* ```memory:``` Memory assigned to each learner during training. The default memory is 60Gb.
+* ```cpus:``` Number of cpus used by each learner during training. The default cpu number is 5.
+* ```memory:``` Memory assigned to each learner during training. The default memory is 8Gb.
 * ```data_stores:```You can specify as many data stores as you want in the manifest file. Each data store has the following fields.
   * ```id:``` Data store id (**which you make up**), to be used when creating a training job.
   * ```type:``` Type of data store, values is "mount_cos" (details below).

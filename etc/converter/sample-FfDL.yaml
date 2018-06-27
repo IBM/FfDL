@@ -9,13 +9,12 @@ memory: 1000MiB
 # Object stores that allow the system to retrieve training data.
 data_stores:
   - id: example-object-storage
-    type: s3_datastore
+    type: mount_cos
     training_data:
       container: training-data-bucket-name
     training_results:
       container: result-data-bucket-name
     connection:
-      type: s3_datastore
       auth_url: <object storage's endpoint_url>
       user_name: <object storage's access key id>
       password: <object storage's secret access key>
