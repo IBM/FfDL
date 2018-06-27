@@ -1,5 +1,5 @@
-name: Distributed-horovod
-description: Distributed-horovod running benchmark tests from https://github.com/uber/horovod/blob/master/docs/benchmarks.md
+name: Distributed-horovod-pytorch
+description: Distributed-horovod-pytorch example from https://github.com/uber/horovod/blob/master/examples/pytorch_mnist.py
 version: "1.0"
 gpus: 0
 cpus: 1
@@ -22,4 +22,3 @@ framework:
   name: horovod
   version: "0.13.4-tf1.8.0-torch0.4.0-py3.5"
   command: python pytorch_mnist.py
-  # the command is basically running the above command via openmpi, feel free to remove  -x NCCL_DEBUG=INFO

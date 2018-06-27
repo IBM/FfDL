@@ -33,6 +33,7 @@ Currently, Fabric for Deep Learning supports following community frameworks
 | [caffe2](https://hub.docker.com/r/caffe2ai/caffe2/)        | c2v0.8.1.cpu.full.ubuntu14.04, c2v0.8.0.cpu.full.ubuntu16.04 | CPU |
 | [caffe2](https://hub.docker.com/r/caffe2ai/caffe2/)        | c2v0.8.1.cuda8.cudnn7.ubuntu16.04, latest | GPU |
 | [h2o3](https://hub.docker.com/r/opsh2oai/h2o3-ffdl/)    | latest | CPU |
+| [horovod](https://hub.docker.com/r/uber/horovod/)       | 0.13.4-tf1.8.0-torch0.4.0-py3.5, 0.13.4-tf1.8.0-torch0.4.0-py2.7 | CPU, GPU |
 
 You can deploy models based on these frameworks and then train your models using the FfDL CLI or FfDL UI.
 
@@ -62,15 +63,15 @@ Here are [example manifest files](../etc/examples/tf-model/manifest.yml) for Caf
 * ```memory:``` Memory assigned to each learner during training. The default memory is 60Gb.
 * ```data_stores:```You can specify as many data stores as you want in the manifest file. Each data store has the following fields.
   * ```id:``` Data store id (**which you make up**), to be used when creating a training job.
-  * ```type:``` Type of data store, values can be "swift_datastore", "s3_datastore", or "mount_cos" (details below).
+  * ```type:``` Type of data store, values is "mount_cos" (details below).
   * ```training_data:``` Location of the training data in the data store.
     * ```container:``` The container where the training data resides.
   * ```training_results:``` Location of the training results in the data store. After training the trained model and training logs will be stored here, under "training-TRAININGJOBID".  
     * ```container:``` The container where the training results will be stored. **This filed is recommended to define by users. e.g. `mnist_trained_model`.** If not, the default location of trained models is FfDL object store.
   * ```connection:``` The connection variables for the data store. The list of connection variables supported is data store type dependent. At present, the following connection variables are supported:
-    * swift_datastore (softlayer credential form): ```auth_url```, ```user_name```, and ```password```
+    <!-- * swift_datastore (softlayer credential form): ```auth_url```, ```user_name```, and ```password```
     * swift_datastore (IBM Cloud credential form): ```auth_url```, ```user_name```, ```password```, ```domain_name```, ```region``` and ```project_id```
-    * s3_datastore: ```auth_url```, ```user_name``` (AWS Access Key), and ```password``` (AWS Secret Access Key)
+    * s3_datastore: ```auth_url```, ```user_name``` (AWS Access Key), and ```password``` (AWS Secret Access Key) -->
     * mount_cos: ```auth_url```, ```user_name``` (AWS Access Key), and ```password``` (AWS Secret Access Key), ```region``` (optional)
 
 * ```framework:``` This field provides deep learning framework specific information.

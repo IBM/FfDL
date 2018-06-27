@@ -221,7 +221,7 @@ s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
 8. Lastly, run the following commands to obtain your Grafana, FfDL Web UI, and FfDL restapi endpoints.
 ``` shell
 # Note: $(make --no-print-directory kubernetes-ip) simply gets the Public IP for your cluster.
-node_ip=$(make --no-print-directory kubernetes-ip)
+node_ip=$PUBLIC_IP
 
 # Echo statements to print out Grafana and Web UI URLs.
 echo "Monitoring dashboard: http://$node_ip:$grafana_port/ (login: admin/admin)"
@@ -239,7 +239,7 @@ MNIST handwritten digit images, store them with Object Storage, and use the FfDL
 
 1. Run the following commands to obtain the object storage endpoint from your cluster.
 ```shell
-node_ip=$(make --no-print-directory kubernetes-ip)
+node_ip=$PUBLIC_IP
 s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
 s3_url=http://$node_ip:$s3_port
 ```
@@ -394,7 +394,7 @@ binary).
 
 ```shell
 restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}')
-export DLAAS_URL=http://$node_ip:$restapi_port; export DLAAS_USERNAME=test-user; export DLAAS_PASSWORD=test;
+export DLAAS_URL=http://$PUBLIC_IP:$restapi_port; export DLAAS_USERNAME=test-user; export DLAAS_PASSWORD=test;
 
 # Obtain the correct CLI for your machine and run the training job with our default TensorFlow model
 CLI_CMD=cli/bin/ffdl-$(if [ "$(uname)" = "Darwin" ]; then echo 'osx'; else echo 'linux'; fi)

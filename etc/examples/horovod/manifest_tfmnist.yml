@@ -1,5 +1,5 @@
-name: Distributed-horovod
-description: Distributed-horovod running benchmark tests from https://github.com/uber/horovod/blob/master/docs/benchmarks.md
+name: Distributed-horovod-tensorflow
+description: Distributed-horovod-tensorflow running benchmark tests from https://github.com/uber/horovod/blob/master/docs/benchmarks.md
 version: "1.0"
 gpus: 0
 cpus: 1
