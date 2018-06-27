@@ -279,9 +279,9 @@ export DLAAS_URL=http://$node_ip:$restapi_port; export DLAAS_USERNAME=test-user;
 Replace the default object storage path with your s3_url. You can skip this step if your already modified the object storage path with your s3_url.
 ```shell
 if [ "$(uname)" = "Darwin" ]; then
-  sed -i '' s#"http://s3.default.svc.cluster.local"#"$s3_url"# etc/examples/tf-model/manifest.yml
+  sed -i '' s/s3.default.svc.cluster.local/$node_ip:$s3_port/ etc/examples/tf-model/manifest.yml
 else
-  sed -i s#"http://s3.default.svc.cluster.local"#"$s3_url"# etc/examples/tf-model/manifest.yml
+  sed -i s/s3.default.svc.cluster.local/$node_ip:$s3_port/ etc/examples/tf-model/manifest.yml
 fi
 ```
 
@@ -374,17 +374,17 @@ done
 5. Next, we need to modify our example job to use your Cloud Object Storage using the following sed commands.
 ```shell
 if [ "$(uname)" = "Darwin" ]; then
-  sed -i '' s#"tf_training_data"#"$trainingDataBucket"# etc/examples/tf-model/manifest.yml
-  sed -i '' s#"tf_trained_model"#"$trainingResultBucket"# etc/examples/tf-model/manifest.yml
-  sed -i '' s#"http://s3.default.svc.cluster.local"#"$s3_url"# etc/examples/tf-model/manifest.yml
-  sed -i '' s#"user_name: test"#"user_name: $AWS_ACCESS_KEY_ID"# etc/examples/tf-model/manifest.yml
-  sed -i '' s#"password: test"#"password: $AWS_SECRET_ACCESS_KEY"# etc/examples/tf-model/manifest.yml
+  sed -i '' s/tf_training_data/$trainingDataBucket/ etc/examples/tf-model/manifest.yml
+  sed -i '' s/tf_trained_model/$trainingResultBucket/ etc/examples/tf-model/manifest.yml
+  sed -i '' s/s3.default.svc.cluster.local/$node_ip:$s3_port/ etc/examples/tf-model/manifest.yml
+  sed -i '' s/user_name: test/user_name: $AWS_ACCESS_KEY_ID/ etc/examples/tf-model/manifest.yml
+  sed -i '' s/password: test/password: $AWS_SECRET_ACCESS_KEY/ etc/examples/tf-model/manifest.yml
 else
-  sed -i s#"tf_training_data"#"$trainingDataBucket"# etc/examples/tf-model/manifest.yml
-  sed -i s#"tf_trained_model"#"$trainingResultBucket"# etc/examples/tf-model/manifest.yml
-  sed -i s#"http://s3.default.svc.cluster.local"#"$s3_url"# etc/examples/tf-model/manifest.yml
-  sed -i s#"user_name: test"#"user_name: $AWS_ACCESS_KEY_ID"# etc/examples/tf-model/manifest.yml
-  sed -i s#"password: test"#"password: $AWS_SECRET_ACCESS_KEY"# etc/examples/tf-model/manifest.yml
+  sed -i s/tf_training_data/$trainingDataBucket/ etc/examples/tf-model/manifest.yml
+  sed -i s/tf_trained_model/$trainingResultBucket/ etc/examples/tf-model/manifest.yml
+  sed -i s/s3.default.svc.cluster.local/$node_ip:$s3_port/ etc/examples/tf-model/manifest.yml
+  sed -i s/user_name: test/user_name: $AWS_ACCESS_KEY_ID/ etc/examples/tf-model/manifest.yml
+  sed -i s/password: test/password: $AWS_SECRET_ACCESS_KEY/ etc/examples/tf-model/manifest.yml
 fi
 ```
 

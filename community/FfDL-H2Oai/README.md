@@ -67,9 +67,9 @@ export DLAAS_URL=http://$node_ip:$restapi_port; export DLAAS_USERNAME=test-user;
 Replace the default object storage path with your s3_url. You can skip this step if your already modified the object storage path with your s3_url.
 ```shell
 if [ "$(uname)" = "Darwin" ]; then
-  sed -i '' s#"http://s3.default.svc.cluster.local"#"$s3_url"# community/FfDL-H2Oai/h2o-model/manifest-h2o.yml
+  sed -i '' s/s3.default.svc.cluster.local/$node_ip:$s3_port/ community/FfDL-H2Oai/h2o-model/manifest-h2o.yml
 else
-  sed -i s#"http://s3.default.svc.cluster.local"#"$s3_url"# community/FfDL-H2Oai/h2o-model/manifest-h2o.yml
+  sed -i s/s3.default.svc.cluster.local/$node_ip:$s3_port/ community/FfDL-H2Oai/h2o-model/manifest-h2o.yml
 fi
 ```
 
