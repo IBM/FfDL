@@ -4,7 +4,7 @@
 
 1. In the main FfDL repository, run the following commands to obtain the object storage endpoint from your cluster.
 ```shell
-node_ip=$(make --no-print-directory kubernetes-ip)
+node_ip=$PUBLIC_IP
 s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
 s3_url=http://$node_ip:$s3_port
 ```
