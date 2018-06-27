@@ -48,7 +48,7 @@ else
 fi
 ```
 
-Obtain the correct CLI for your machine and run the training job with our default H2O model
+Obtain the correct CLI for your machine and run the training job with our default Horovod model
 ```shell
 CLI_CMD=$(pwd)/cli/bin/ffdl-$(if [ "$(uname)" = "Darwin" ]; then echo 'osx'; else echo 'linux'; fi)
 $CLI_CMD train etc/examples/horovod/manifest_tfmnist.yml etc/examples/horovod
