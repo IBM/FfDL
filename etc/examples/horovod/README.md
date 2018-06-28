@@ -55,3 +55,7 @@ $CLI_CMD train etc/examples/horovod/manifest_tfmnist.yml etc/examples/horovod
 ```
 
 Congratulations, you had submitted your first Horovod TensorFlow job on FfDL. You can check your FfDL status either from the FfDL UI or simply run `$CLI_CMD list`
+
+## TroubleShooting
+
+* For Kubeadm-DIND cluster, some users are having issue with inter-node pod communication. Thus, we suggest you to use a real Kubernetes cluster environment or only use one worker node if you are testing on Kubeadm-DIND environment. (e.g. run `export NUM_NODES=1` before provisioning your cluster)
