@@ -1403,7 +1403,14 @@ func (s *trainerService) GetTrainedModelLogs(req *grpc_trainer_v2.TrainedModelLo
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*4)
+	var ctx context.Context
+	var cancel context.CancelFunc
+	logr.Debugf("follow is %t", req.Follow)
+	if req.Follow {
+		ctx, cancel = context.WithTimeout(context.Background(), 10*(time.Hour*24))
+	} else {
+		ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
+	}
 	defer cancel()
 
 	var rindex int64 = 1
