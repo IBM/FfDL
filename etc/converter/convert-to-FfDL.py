@@ -146,6 +146,28 @@ def createJob(sample,data):
 							sample['framework']['version'] = "1.5.0-py3"
 						else:
 							sample['framework']['version'] = "1.5.0-gpu-py3"
+				elif '1.6' in data['model_definition']['framework']['version']:
+					if py2:
+						if CPU:
+							sample['framework']['version'] = "1.6.0"
+						else:
+							sample['framework']['version'] = "1.6.0-gpu"
+					else:
+						if CPU:
+							sample['framework']['version'] = "1.6.0-py3"
+						else:
+							sample['framework']['version'] = "1.6.0-gpu-py3"
+				elif '1.7' in data['model_definition']['framework']['version']:
+					if py2:
+						if CPU:
+							sample['framework']['version'] = "1.7.0"
+						else:
+							sample['framework']['version'] = "1.7.0-gpu"
+					else:
+						if CPU:
+							sample['framework']['version'] = "1.7.0-py3"
+						else:
+							sample['framework']['version'] = "1.7.0-gpu-py3"
 				else:
 					if py2:
 						if CPU:

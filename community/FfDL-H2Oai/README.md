@@ -32,7 +32,7 @@ https://s3.amazonaws.com/h2o-public-test-data/smalldata/higgs/higgs_test_5k.csv
 
 1. In the main FfDL repository, run the following commands to obtain the object storage endpoint from your cluster.
 ```shell
-node_ip=$(make --no-print-directory kubernetes-ip)
+node_ip=$PUBLIC_IP
 s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
 s3_url=http://$node_ip:$s3_port
 ```
@@ -62,8 +62,19 @@ binary).
 ```shell
 restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}')
 export DLAAS_URL=http://$node_ip:$restapi_port; export DLAAS_USERNAME=test-user; export DLAAS_PASSWORD=test;
+```
 
-# Obtain the correct CLI for your machine and run the training job with our default H2O model
+Replace the default object storage path with your s3_url. You can skip this step if your already modified the object storage path with your s3_url.
+```shell
+if [ "$(uname)" = "Darwin" ]; then
+  sed -i '' s/s3.default.svc.cluster.local/$node_ip:$s3_port/ community/FfDL-H2Oai/h2o-model/manifest-h2o.yml
+else
+  sed -i s/s3.default.svc.cluster.local/$node_ip:$s3_port/ community/FfDL-H2Oai/h2o-model/manifest-h2o.yml
+fi
+```
+
+Obtain the correct CLI for your machine and run the training job with our default H2O model
+```shell
 CLI_CMD=$(pwd)/cli/bin/ffdl-$(if [ "$(uname)" = "Darwin" ]; then echo 'osx'; else echo 'linux'; fi)
 $CLI_CMD train community/FfDL-H2Oai/h2o-model/manifest-h2o.yml community/FfDL-H2Oai/h2o-model
 ```

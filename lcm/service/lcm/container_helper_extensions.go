@@ -1,19 +1,3 @@
-/*
- * Copyright 2017-2018 IBM Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package lcm
 
 import (
@@ -55,14 +39,20 @@ func extendLearnerContainer(learner *v1core.Container, req *service.JobDeploymen
 		learnerImage = "pytorch/pytorch:" + req.Version
 	case h2o3FrameworkName:
 		learnerImage = "opsh2oai/h2o3-ffdl:" + req.Version
+	case horovodFrameworkName:
+		learnerImage = "uber/horovod:" + req.Version
 	case customFrameworkName:
 		learnerImage = req.Version
 	default:
 		// TODO!
 	}
 
-
-	extCmd := "export PATH=/usr/local/bin/:$PATH; cp " + learnerEntrypointFilesPath + "/*.sh /usr/local/bin/; chmod +x /usr/local/bin/*.sh;"
+	extCmd := ""
+	if req.Framework != horovodFrameworkName {
+		extCmd = "export PATH=/usr/local/bin/:$PATH; cp " + learnerEntrypointFilesPath + "/*.sh /usr/local/bin/; chmod +x /usr/local/bin/*.sh;"
+	} else {
+		extCmd = "export PATH=/usr/local/bin/:$PATH; cp " + learnerEntrypointFilesPath + "/*.sh /usr/local/bin/; chmod +x /usr/local/bin/*.sh; mv /usr/local/bin/train-horovod.sh /usr/local/bin/train.sh;"
+	}
 	extMount := v1core.VolumeMount{
 		Name:      learnerEntrypointFilesVolume,
 		MountPath: learnerEntrypointFilesPath,
@@ -86,6 +76,14 @@ func extendLearnerContainer(learner *v1core.Container, req *service.JobDeploymen
 
 	learner.Image = learnerImage
 	learner.Command[2] = extCmd + learner.Command[2]
+	if req.Framework == horovodFrameworkName {
+		RSApub := v1core.EnvVar{Name: "RSA_PUB_KEY", ValueFrom: &v1core.EnvVarSource{
+			SecretKeyRef: &v1core.SecretKeySelector{Key: "RSA_PUB_KEY", LocalObjectReference: v1core.LocalObjectReference{Name: "rsa-keys",},},},}
+		RSApri := v1core.EnvVar{Name: "RSA_PRI_KEY", ValueFrom: &v1core.EnvVarSource{
+			SecretKeyRef: &v1core.SecretKeySelector{Key: "RSA_PRI_KEY", LocalObjectReference: v1core.LocalObjectReference{Name: "rsa-keys",},},},}
+		learner.Env = append(learner.Env, RSApub)
+		learner.Env = append(learner.Env, RSApri)
+	}
 }
 
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-# Example picked from https://raw.githubusercontent.com/uber/horovod/master/examples/tensorflow_mnist.py
 
+#example picked from https://raw.githubusercontent.com/uber/horovod/master/examples/tensorflow_mnist.py
 import os, sys
 import tensorflow as tf
 import horovod.tensorflow as hvd
@@ -22,8 +22,6 @@ if training_data_dir == None:
 
 if learner_id == None:
     exit(1)
-
-training_data_dir = training_data_dir+"/mnist/"
 
 
 def conv_model(feature, target, mode):
@@ -91,7 +89,7 @@ def main(argv):
     # of all workers when training is started with random weights or restored
     # from a checkpoint.
     hooks = [hvd.BroadcastGlobalVariablesHook(0),
-             tf.train.StopAtStepHook(last_step=100),
+             tf.train.StopAtStepHook(last_step=100 // hvd.size()),
              tf.train.LoggingTensorHook(tensors={'step': global_step, 'loss': loss},
                                         every_n_iter=10),
              ]

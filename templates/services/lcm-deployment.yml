@@ -82,6 +82,8 @@ spec:
           value: "{{.Values.lcm.milli_cpu}}"
         - name: DLAAS_MEM_IN_MB
           value: "{{.Values.lcm.mem_in_mb}}"
+        - name: DLAAS_DEVICE_PLUGIN
+          value: "{{.Values.lcm.device_plugin}}"
         - name: DLAAS_IMAGE_TAG
           value: {{.Values.restapi.version}}
         - name: DLAAS_IMAGE_PULL_POLICY

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rsa-keys
+type: Opaque
+data:
+  RSA_PUB_KEY: {{.Values.rsapubkey|b64enc}}
+  RSA_PRI_KEY: {{.Values.rsaprikey|b64enc}}
