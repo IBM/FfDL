@@ -1,7 +1,9 @@
 # Jupyter Notebook Using ART to Test the Robustness of Deep Learning Models
 
-This [Jupyter](http://jupyter.org/install) notebook shows how to use the [Adversarial Robustness Toolbox (ART)](https://github.com/IBM/adversarial-robustness-toolbox)
-to test the robustness of Deep Learning models against adversarial attacks.
+This [Jupyter](http://jupyter.org/install) notebook shows how to 
+
+- Launch training on your FfDL cluster using Jupyter notebook as a client
+- Use [Adversarial Robustness Toolbox (ART)](https://github.com/IBM/adversarial-robustness-toolbox) to test the robustness of Deep Learning models against adversarial attacks.
 
 ## Prerequisites
 
