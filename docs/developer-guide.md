@@ -77,18 +77,16 @@ sudo chmod +x experimental_master.sh
 . experimental_master.sh
 ```
 
-## Enable device plugin for GPU workloads with development build
+## Instructions on GPU workloads
 
-Please modify the `resourceGPU` under [lcm/service/lcm/container_helper.go](../lcm/service/lcm/container_helper.go#L530) and [lcm/service/lcm/resources.go](../lcm/service/lcm/resources.go#L149) to `"nvidia.com/gpu"` and rebuild the lcm image to enable device plugin for all GPU workloads on your development build.
+Please refer to the [gpu-guide.md](gpu-guide.md) for more details.
 
 ## Enable custom learner images with development build
 
-Please uncomment the following section under [trainer/trainer/frameworks.go](../trainer/trainer/frameworks.go#L39) and rebuild the trainer image to enable custom learner images from any users. Alternatively, you can use the pre-built images `ffdl/ffdl-trainer:customizable` on DockerHub.
+Please add the following section under [trainer/trainer/frameworks.go](../trainer/trainer/frameworks.go#L42) and rebuild the trainer image to enable custom learner images from any users.
 
 ``` go
 if fwName == "custom" {
   return true, ""
 }
 ```
-
-After you deployed `ffdl-trainer` with custom image feature, you can use your custom learner images by changing the `framework.name` to **custom** and `framework.version` to your learner image in your training job's manifest.yml file. If you are using any private registry, you need to enable access to the private registry in your Kubernetes default namespace.

@@ -30,6 +30,7 @@ lcm:
   load_training_data_mem_in_mb: 300
   milli_cpu: 60
   mem_in_mb: 300
+  device_plugin: true
   # This will used for "volume.beta.kubernetes.io/storage-class" for the shared volume
   shared_volume_storage_class: ""
 trainingdata:
@@ -79,3 +80,32 @@ grafana:
   port: 3000
 log:
   level: INFO
+# Default RSA Creds for Horovod
+rsapubkey: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC/we++xU+toNBQO/MYYQSE0LdEFlEcEoWil9lK2wLILTg7Hep7c8elgXEmIxb90xeFmZW9CJv3oVuverzYwQ0cmXbniZmiI48D48kaf8kmx2cTJID0udM8XlCgoXbljHUSAzCmom7eTuxEkitwi/3kH2MtDIWtKs8FVM68mVEoP2WyqfzbZyGdeQqEKb7TcYtl4LVBVAwEfG1MN/ndmanAzFQwt5okBeJXIMeSdjmGBd/q3DRj5wZpgt9vSa4214+PxuscjizGMaALx7YThwfmPUE5SniGzq+tqh++wUdq689UMPJO97+UwrlMBXkytxc0ci2S5BMumrBDmOGAxRbN root@fa485b34526a"
+rsaprikey: "-----BEGIN RSA PRIVATE KEY-----
+MIIEpQIBAAKCAQEAv8HvvsVPraDQUDvzGGEEhNC3RBZRHBKFopfZStsCyC04Ox3q
+e3PHpYFxJiMW/dMXhZmVvQib96Fbr3q82MENHJl254mZoiOPA+PJGn/JJsdnEySA
+9LnTPF5QoKF25Yx1EgMwpqJu3k7sRJIrcIv95B9jLQyFrSrPBVTOvJlRKD9lsqn8
+22chnXkKhCm+03GLZeC1QVQMBHxtTDf53ZmpwMxUMLeaJAXiVyDHknY5hgXf6tw0
+Y+cGaYLfb0muNtePj8brHI4sxjGgC8e2E4cH5j1BOUp4hs6vraofvsFHauvPVDDy
+Tve/lMK5TAV5MrcXNHItkuQTLpqwQ5jhgMUWzQIDAQABAoIBAQCAeOqrIX7UkR1/
+4+pmtvlUEpH2aA1HhZFK8fl/EWS3wLQfx1dGBrgHxsWMC45n2Hm15MRRtebo7Y6D
+7vN/NTgXpSnozmPEIZa7wG0H9/1IoegJBzfuvmEr3PSf6g3ClWwJ+WErA0DMaIwb
+FONNsD0WDYFguTcGYdv5cmxgJ0gccdO6zdZh8LXrez7XctgOFXqk6BLGElgKecuR
+8pNo9FhnSehIs/Oy1BVYA1Uwnug9Q/vqmF+bAZM1BLo/8oLHKHvOkObFy0vfjHyB
+Kj1/YYR673+S/L+Bmih5cpAFABU9RV0HgPHBmnh4AVj4mgdHrnJAWOX9j5cqucPe
+TtrrydTxAoGBAOuXhCracm2ljxiOXxG1fMdLDUvL3nedWGE5JozwvWMtB8Owj4gx
+tPoQQGe8fOW2AMrtAZl7DlA+Qt4r4OvHyylSzGi53+JWiaYLcqaMA5eKO66XV1RX
+92QGSEV0ZVMzchz4OdyiRsXDZywr1+fnctO832Yte6DgisflMyI1Q2vrAoGBANBe
+WePqeq+PPX4VUAISYTTrlX7JFWmyS5am+9hevZ+S/BhtJewUXd+B5jKdoO8WB5gF
+IOgVgBO4OpNGdbvS9kX3f+x7h4tG0XEeKvMpNQJxTH13LSCZ4H7Sz/3VwEsU0+oF
+x9/nV/IVfg+29Q9uE1jcI/z5fYBmozbkSydRE3InAoGBAND3GeIw1KJw4RX04lqA
+0earqWV7tR3/0G6cFJeayUF4pZRrvUQeYtoTJC1fQKE36EgWJP8P6Ug/kWwjG2PH
+WWqT6H9Tr0PBYmKHcPBM7Lqzf/CCiJFlXSe5cs04Ss+bqDIN8rTCs2eixJanZOBr
+qKwqsTSeTzQJNs/Leqly+RR1AoGAJKVTXdgxN4sTn4cUCSk+W1ZLdn7a+znWPWqk
+xEr1QolROOKJVtnGILbxy1kZorLXJw9P2EFfwxgVhS1RK3VQxsFeiDK5he8wippp
+p1ZJ8mIGt9Ir553oc6WT2uqq5QmGs5PMsT44o2TQROdCdjI/yNL+qVEfl2N1tQO1
+i/agWuUCgYEAx1k2KKs3+rLHgUquOKYzy1VbSSy973rBPwrYa1ed0RO9Sg/KKMqQ
+OJdIhe7lwxrspmUKaObVtpVEsP/Cf7dWT8lruDHsakXfcNCoKXCBMYgnj593TdKu
+SOqZdzFqgInvqttvMiJY1cydGSebuQ8IATOsyEKtBsk/BOPwgZFttGs=
+-----END RSA PRIVATE KEY-----"

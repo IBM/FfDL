@@ -157,6 +157,7 @@ const (
 	loadTrainingDataMemInMBKey = "load_training_data_mem_in_mb"
 	logCollectorMilliCPUKey    = "milli_cpu"
 	logCollectorMemInMBKey     = "mem_in_mb"
+	devicePlugin               = "device_plugin"
 )
 
 var viperInitOnce sync.Once
@@ -218,6 +219,7 @@ func InitViper() {
 		viper.SetDefault(loadTrainingDataMemInMBKey, 300)
 		viper.SetDefault(logCollectorMilliCPUKey, 60)
 		viper.SetDefault(logCollectorMemInMBKey, 300)
+		viper.SetDefault(devicePlugin, true)
 		log.Debugf("Milli CPU is: %d", GetLogCollectorMilliCPU())
 		log.Debugf("Training Data Mem in MB is: %d", GetTrainingDataMemInMB())
 
@@ -646,4 +648,11 @@ func GetLogCollectorMilliCPU() int {
 
 func GetLogCollectorMemInMB() int {
 	return viper.GetInt(logCollectorMemInMBKey)
+}
+
+func GetDevicePlugin() bool {
+	if viper.IsSet(devicePlugin) {
+		return viper.GetBool(devicePlugin)
+	}
+	return true
 }

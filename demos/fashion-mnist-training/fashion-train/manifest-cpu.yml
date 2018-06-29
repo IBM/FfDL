@@ -30,13 +30,12 @@ memory: 16GB
 #                       credentials tab on IBM Cloud
 data_stores:
   - id: test-datastore
-    type: s3_datastore
+    type: mount_cos
     training_data:
       container: fashion-mnist
     training_results:
       container: mnist-trained-model
     connection:
-      type: s3_datastore
       auth_url: http://s3.default.svc.cluster.local
       user_name: test
       password: test
