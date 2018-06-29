@@ -45,7 +45,7 @@ To know more about the architectural details, please read the [design document](
 
 * If you want to leverage Jupyter notebooks to launch training on your FfDL cluster, please follow [these instructions](etc/notebooks/art)
 
-* To invoke [Adversarial Robustness Toolbox]() to find vulnerabilities in your models, follow the [instructions here](etc/notebooks/art)
+* To invoke [Adversarial Robustness Toolbox](https://github.com/IBM/adversarial-robustness-toolbox) to find vulnerabilities in your models, follow the [instructions here](etc/notebooks/art)
 
 * To deploy your trained models, follow [the integration guide with Seldon](community/FfDL-Seldon)
 
