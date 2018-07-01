@@ -3,6 +3,7 @@
 You can leverage Uber's Horovod mechanism for distributed deep learning training with FfDL. Horovod is a distributed training framework for TensorFlow, Keras, and PyTorch. Horovod improves oefficient inter-GPU communication via ring reduction and requires only a few lines of modification to user code, enabling faster, easier distributed training. Horovod enables distributed model training via MPI, a low-level interface for high-performance parallel computing. 
 
 ![horovod](../../../docs/images/horovod.png)
+<img src="../../../docs/images/horovod.png" height="50%" width="50%">
 
 ## Horovod Tensorflow example
 
