@@ -32,6 +32,10 @@ PUBLIC_IP ?= 127.0.0.1
 CI_MINIKUBE_VERSION ?= v0.25.1
 CI_KUBECTL_VERSION ?= v1.9.4
 
+TRAVIS_IMAGE_VERSION ?= v0.1
+TEST_IMAGES = $(addprefix $(DOCKER_NAMESPACE)/, $(TEST_IMAGES_SUFFIX))
+TEST_IMAGES_SUFFIX = ffdl-lcm ffdl-trainer ffdl-metrics ffdl-databroker_s3 ffdl-ui ffdl-restapi ffdl-jobmonitor ffdl-controller log_collector ffdl-databroker_objectstorage tensorboard_extract
+
 AWS_ACCESS_KEY_ID ?= test
 AWS_SECRET_ACCESS_KEY ?= test
 
@@ -616,6 +620,17 @@ test-s3:
 	s3cmd="aws --endpoint-url=$$s3_url s3"; \
 	echo "s3cmd=$$s3cmd"; \
 	$$s3cmd ls
+
+pull-prebuilt-images:  ## Pull FfDL images from dockerhub
+pull-prebuilt-images: $(addprefix pull-, $(TEST_IMAGES))
+
+$(addprefix pull-, $(TEST_IMAGES)): pull-%: %
+	@TRAVIS_IMAGE=$< make .pull-prebuilt-images
+
+$(TEST_IMAGES): ; # Make targets
+
+.pull-prebuilt-images:
+	docker pull $(TRAVIS_IMAGE):$(TRAVIS_IMAGE_VERSION)
 
 
 .build-service:
