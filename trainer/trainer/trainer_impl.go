@@ -527,6 +527,7 @@ func (s *trainerService) CreateTrainingJob(ctx context.Context, req *grpc_traine
 	// upload model definition ZIP file to object store and set location
 	if req.ModelDefinition.Content != nil {
 		// Upload to DLaaS Object store.
+		logr.Infof("Uploading content to: %s filename: %s", s.modelsBucket, getModelZipFileName(id))
 		err := s.datastore.UploadArchive(s.modelsBucket, getModelZipFileName(id), req.ModelDefinition.Content)
 		if err != nil {
 			logr.WithError(err).Errorf("Error uploading model to object store")
@@ -534,9 +535,10 @@ func (s *trainerService) CreateTrainingJob(ctx context.Context, req *grpc_traine
 			return nil, err
 		}
 		req.ModelDefinition.Location = fmt.Sprintf("%s/%s.zip", s.modelsBucket, id)
-		cl.Observe("uploaded model to dlaas object store")
+		cl.Observe("uploaded model to dlaas object store: %s", req.ModelDefinition.Location)
 
 		// Upload to user's result object store.
+		logr.Infof("Upload to user's result object store, type: %s bucket: %s", outputDatastore.Type, outputDatastore.Fields["bucket"])
 		ds, err := storage.CreateDataStore(outputDatastore.Type, outputDatastore.Connection)
 		if err != nil {
 			s.metrics.uploadModelFailedCounter.With("kind", userStoreKind).Add(1)
@@ -552,7 +554,7 @@ func (s *trainerService) CreateTrainingJob(ctx context.Context, req *grpc_traine
 		defer ds.Disconnect()
 		bucket := outputDatastore.Fields["bucket"]
 		object := fmt.Sprintf("%s/_submitted_code/model.zip", id)
-		logr.Infof("Writing to output object store: %s/%s", bucket, object)
+		logr.Infof("Writing to output object store: %s -> %s", bucket, object)
 		err = ds.UploadArchive(bucket, object, req.ModelDefinition.Content)
 		if err != nil {
 			s.metrics.uploadModelFailedCounter.With("kind", userStoreKind).Add(1)
