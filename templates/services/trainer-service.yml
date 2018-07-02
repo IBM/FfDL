@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ffdl-trainer
+  namespace: {{.Values.namespace}}
   labels:
     service: ffdl-trainer
     environment: {{.Values.env}}

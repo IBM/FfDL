@@ -17,7 +17,7 @@ fi
 
 [ -z ${node_ip} ] && echo "Can't get node_ip for grafana, \$VM_TYPE == \"$VM_TYPE\""
 
-grafana_port=$(kubectl get service grafana -o jsonpath='{.spec.ports[0].nodePort}')
+grafana_port=$(kubectl get service grafana -o jsonpath='{.spec.ports[0].nodePort}' -n $Namespace)
 grafana_url="http://$node_ip:$grafana_port"
 
 echo "wait until the grafana service is up (grafana_url=${grafana_url})"

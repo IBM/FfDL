@@ -31,6 +31,7 @@ CLUSTER_NAME ?= mycluster
 PUBLIC_IP ?= 127.0.0.1
 CI_MINIKUBE_VERSION ?= v0.25.1
 CI_KUBECTL_VERSION ?= v1.9.4
+Namespace ?= default
 
 AWS_ACCESS_KEY_ID ?= test
 AWS_SECRET_ACCESS_KEY ?= test
@@ -118,20 +119,21 @@ deploy-plugin:
 		done; \
 	fi;
 	@existingPlugin=$$(helm list | grep ibmcloud-object-storage-plugin | awk '{print $$1}' | head -n 1);
+	@kubectl config set-context $$(kubectl config current-context) --namespace=$$Namespace
 	@if [ "$(VM_TYPE)" = "dind" ]; then \
 		export FFDL_PATH=$$(pwd); \
 		./bin/s3_driver.sh; \
 		sleep 10; \
 		(if [ -z "$$existingPlugin" ]; then \
-			helm install --set dind=true,cloud=false storage-plugin; \
+			helm install --set dind=true,cloud=false,namespace=$$Namespace storage-plugin; \
 		else \
-			helm upgrade --set dind=true,cloud=false $$existingPlugin storage-plugin; \
+			helm upgrade --set dind=true,cloud=false,namespace=$$Namespace $$existingPlugin storage-plugin; \
 		fi) & pid=$$!; \
 	else \
 		(if [ -z "$$existingPlugin" ]; then \
-			helm install storage-plugin; \
+			helm install --set namespace=$$Namespace storage-plugin; \
 		else \
-			helm upgrade $$existingPlugin storage-plugin; \
+			helm upgrade --set namespace=$$Namespace $$existingPlugin storage-plugin; \
 		fi) & pid=$$!; \
 	fi;
 	@echo "Wait while kubectl get pvc shows static-volume-1 in state Pending"
@@ -141,6 +143,7 @@ deploy-plugin:
 
 quickstart-deploy:
 	@echo "collecting existing pods"
+	@kubectl config set-context $$(kubectl config current-context) --namespace=$$Namespace
 	@while kubectl get pods --all-namespaces | \
 		grep -v RESTARTS | \
 		grep -v Running | \
@@ -154,11 +157,11 @@ quickstart-deploy:
 		existing=$$(helm list | grep ffdl | awk '{print $$1}' | head -n 1); \
 		(if [ -z "$$existing" ]; then \
 			echo "Deploying the stack via Helm. This will take a while."; \
-			helm install --set lcm.shared_volume_storage_class=$$SHARED_VOLUME_STORAGE_CLASS . ; \
+			helm install --set lcm.shared_volume_storage_class=$$SHARED_VOLUME_STORAGE_CLASS,namespace=$$Namespace . ; \
 			sleep 10; \
 		else \
 			echo "Upgrading existing Helm deployment ($$existing). This will take a while."; \
-			helm upgrade --set lcm.shared_volume_storage_class=$$SHARED_VOLUME_STORAGE_CLASS $$existing . ; \
+			helm upgrade --set lcm.shared_volume_storage_class=$$SHARED_VOLUME_STORAGE_CLASS,namespace=$$Namespace $$existing . ; \
 		fi) & pid=$$!; \
 		sleep 5; \
 		while kubectl get pods --all-namespaces | \
@@ -201,6 +204,7 @@ quickstart-deploy:
 test-job-submit:      ## Submit test training job
 	@# make sure the buckets with training data exist
 	@echo Downloading Docker images and test training data. This may take a while.
+	@kubectl config set-context $$(kubectl config current-context) --namespace=$$Namespace
 	@if [ "$(VM_TYPE)" = "minikube" ]; then \
 			eval $(minikube docker-env); docker images | grep tensorflow | grep latest > /dev/null || docker pull tensorflow/tensorflow > /dev/null; \
 		fi
@@ -439,6 +443,7 @@ docker-build-logcollectors:
 test-push-data-s3:      ## Test
 	@# Pushes test data to S3 buckets.
 	@echo Pushing test data.
+	@kubectl config set-context $$(kubectl config current-context) --namespace=$$Namespace
 	@s3_ip=$$(make --no-print-directory kubernetes-ip); \
         	s3_port=$$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}'); \
         	s3_url=http://$$s3_ip:$$s3_port; \

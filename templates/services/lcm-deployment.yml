@@ -2,6 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: ffdl-lcm
+  namespace: {{.Values.namespace}}
   labels:
     service: ffdl-lcm
     environment: {{.Values.env}}
@@ -71,6 +72,10 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         - name: DLAAS_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: DLAAS_LEARNER_KUBE_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace

@@ -61,8 +61,6 @@ etcd:
   prefix: test
 objectstore:
   type: s3_datastore
-  # auth_url needs to be the FQDN due to a limitation in the local S3 mock
-  auth_url: http://s3.default.svc.cluster.local
   username: test
   password: test
 elasticsearch:

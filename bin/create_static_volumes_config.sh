@@ -9,15 +9,16 @@
 
 CONFIGMAP_NAME=static-volumes
 volumeType=${1:-dlaas-static-volume}
+Namespace=${Namespace:-default}
 
 # Delete configmap
-if kubectl get cm | grep static-volumes &> /dev/null; then kubectl delete configmap ${CONFIGMAP_NAME}; else echo "No need to delete ${CONFIGMAP_NAME} since it doesn't exist."; fi
+if kubectl get cm -n ${Namespace} | grep static-volumes &> /dev/null; then kubectl delete configmap ${CONFIGMAP_NAME} -n ${Namespace}; else echo "No need to delete ${CONFIGMAP_NAME} since it doesn't exist."; fi
 
 # Create new configmap
 echo
 echo "Using volumes with label type=$volumeType:"
-kubectl get pvc --selector type=${volumeType}
+kubectl get pvc --selector type=${volumeType} -n ${Namespace}
 echo
-kubectl create configmap ${CONFIGMAP_NAME} --from-file=PVCs.yaml=<(
-    kubectl get pvc --selector type=${volumeType} -o yaml
+kubectl create configmap ${CONFIGMAP_NAME} -n ${Namespace} --from-file=PVCs.yaml=<(
+    kubectl get pvc --selector type=${volumeType} -n ${Namespace} -o yaml
 )
