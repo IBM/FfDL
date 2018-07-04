@@ -35,13 +35,21 @@ To know more about the architectural details, please read the [design document](
 
 ## Usage Scenarios
 
-* If you already have a FfDL deployment up and running, you can jump to [FfDL User Guide](docs/user-guide.md) to use FfDL for training your deep learning models.
+* If you have a FfDL deployment up and running, you can jump to [FfDL User Guide](docs/user-guide.md) to use FfDL for training your deep learning models.
 
 * If you have FfDL confiugured to use GPUs, and want to train using GPUs, follow steps [here](docs/gpu-guide.md)
 
-* If you have used FfDL to train your models, and want to use a GPU enabled public cloud hosted service for further training and serving, please follow instructions [here](etc/converter/ffdl-wml.md) to train and serve your models using [Watson Studio Deep Learning](https://www.ibm.com/cloud/deep-learning) service
+* If you have used FfDL to train your models, and want to use a GPU enabled public cloud hosted service for further training and serving, please follow instructions [here](etc/converter/ffdl-wml.md) to train and serve your models using [Watson Studio Deep Learning](https://www.ibm.com/cloud/deep-learning) service.
 
-* If you are getting started and want to setup your own FfDL deployment, please follow the steps below.
+* If you are getting started and want to setup your own FfDL deployment, please follow the steps [below](#1-quick-start).
+
+* If you want to leverage Jupyter notebooks to launch training on your FfDL cluster, please follow [these instructions](etc/notebooks/art)
+
+* To invoke [Adversarial Robustness Toolbox](https://github.com/IBM/adversarial-robustness-toolbox) to find vulnerabilities in your models, follow the [instructions here](etc/notebooks/art)
+
+* To deploy your trained models, follow [the integration guide with Seldon](community/FfDL-Seldon)
+
+* If you are looking for related collateral, slides, webinars, blogs and other materials related to FfDL, please [find them here](demos)
 
 ## Steps
 
@@ -221,7 +229,7 @@ s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
 8. Lastly, run the following commands to obtain your Grafana, FfDL Web UI, and FfDL restapi endpoints.
 ``` shell
 # Note: $(make --no-print-directory kubernetes-ip) simply gets the Public IP for your cluster.
-node_ip=$(make --no-print-directory kubernetes-ip)
+node_ip=$PUBLIC_IP
 
 # Echo statements to print out Grafana and Web UI URLs.
 echo "Monitoring dashboard: http://$node_ip:$grafana_port/ (login: admin/admin)"
@@ -239,7 +247,7 @@ MNIST handwritten digit images, store them with Object Storage, and use the FfDL
 
 1. Run the following commands to obtain the object storage endpoint from your cluster.
 ```shell
-node_ip=$(make --no-print-directory kubernetes-ip)
+node_ip=$PUBLIC_IP
 s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
 s3_url=http://$node_ip:$s3_port
 ```
@@ -279,9 +287,9 @@ export DLAAS_URL=http://$node_ip:$restapi_port; export DLAAS_USERNAME=test-user;
 Replace the default object storage path with your s3_url. You can skip this step if your already modified the object storage path with your s3_url.
 ```shell
 if [ "$(uname)" = "Darwin" ]; then
-  sed -i '' s#"http://s3.default.svc.cluster.local"#"$s3_url"# etc/examples/tf-model/manifest.yml
+  sed -i '' s/s3.default.svc.cluster.local/$node_ip:$s3_port/ etc/examples/tf-model/manifest.yml
 else
-  sed -i s#"http://s3.default.svc.cluster.local"#"$s3_url"# etc/examples/tf-model/manifest.yml
+  sed -i s/s3.default.svc.cluster.local/$node_ip:$s3_port/ etc/examples/tf-model/manifest.yml
 fi
 ```
 
@@ -374,17 +382,17 @@ done
 5. Next, we need to modify our example job to use your Cloud Object Storage using the following sed commands.
 ```shell
 if [ "$(uname)" = "Darwin" ]; then
-  sed -i '' s#"tf_training_data"#"$trainingDataBucket"# etc/examples/tf-model/manifest.yml
-  sed -i '' s#"tf_trained_model"#"$trainingResultBucket"# etc/examples/tf-model/manifest.yml
-  sed -i '' s#"http://s3.default.svc.cluster.local"#"$s3_url"# etc/examples/tf-model/manifest.yml
-  sed -i '' s#"user_name: test"#"user_name: $AWS_ACCESS_KEY_ID"# etc/examples/tf-model/manifest.yml
-  sed -i '' s#"password: test"#"password: $AWS_SECRET_ACCESS_KEY"# etc/examples/tf-model/manifest.yml
+  sed -i '' s/tf_training_data/$trainingDataBucket/ etc/examples/tf-model/manifest.yml
+  sed -i '' s/tf_trained_model/$trainingResultBucket/ etc/examples/tf-model/manifest.yml
+  sed -i '' s/s3.default.svc.cluster.local/$node_ip:$s3_port/ etc/examples/tf-model/manifest.yml
+  sed -i '' s/user_name: test/user_name: $AWS_ACCESS_KEY_ID/ etc/examples/tf-model/manifest.yml
+  sed -i '' s/password: test/password: $AWS_SECRET_ACCESS_KEY/ etc/examples/tf-model/manifest.yml
 else
-  sed -i s#"tf_training_data"#"$trainingDataBucket"# etc/examples/tf-model/manifest.yml
-  sed -i s#"tf_trained_model"#"$trainingResultBucket"# etc/examples/tf-model/manifest.yml
-  sed -i s#"http://s3.default.svc.cluster.local"#"$s3_url"# etc/examples/tf-model/manifest.yml
-  sed -i s#"user_name: test"#"user_name: $AWS_ACCESS_KEY_ID"# etc/examples/tf-model/manifest.yml
-  sed -i s#"password: test"#"password: $AWS_SECRET_ACCESS_KEY"# etc/examples/tf-model/manifest.yml
+  sed -i s/tf_training_data/$trainingDataBucket/ etc/examples/tf-model/manifest.yml
+  sed -i s/tf_trained_model/$trainingResultBucket/ etc/examples/tf-model/manifest.yml
+  sed -i s/s3.default.svc.cluster.local/$node_ip:$s3_port/ etc/examples/tf-model/manifest.yml
+  sed -i s/user_name: test/user_name: $AWS_ACCESS_KEY_ID/ etc/examples/tf-model/manifest.yml
+  sed -i s/password: test/password: $AWS_SECRET_ACCESS_KEY/ etc/examples/tf-model/manifest.yml
 fi
 ```
 
@@ -394,7 +402,7 @@ binary).
 
 ```shell
 restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}')
-export DLAAS_URL=http://$node_ip:$restapi_port; export DLAAS_USERNAME=test-user; export DLAAS_PASSWORD=test;
+export DLAAS_URL=http://$PUBLIC_IP:$restapi_port; export DLAAS_USERNAME=test-user; export DLAAS_PASSWORD=test;
 
 # Obtain the correct CLI for your machine and run the training job with our default TensorFlow model
 CLI_CMD=cli/bin/ffdl-$(if [ "$(uname)" = "Darwin" ]; then echo 'osx'; else echo 'linux'; fi)

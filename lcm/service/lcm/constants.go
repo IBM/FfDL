@@ -58,6 +58,7 @@ const (
 	pytorchFrameworkName         string = "pytorch"
 	customFrameworkName          string = "custom"
 	h2o3FrameworkName            string = "h2o3"
+	horovodFrameworkName         string = "horovod"
 	numRetries                          = 5
 	//maxGPUsPerNode                      = 4
 
