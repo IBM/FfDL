@@ -1403,12 +1403,12 @@ func (s *trainerService) GetTrainedModelLogs(req *grpc_trainer_v2.TrainedModelLo
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*4)
-	defer cancel()
-
 	var rindex int64 = 1
 
 	for {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*4)
+		defer cancel()
+
 		// TODO: Create query from old request
 		query := trainedModelLogRequestToTrainerQuery(req, rindex, oldEndpointInternalPageSize)
 
