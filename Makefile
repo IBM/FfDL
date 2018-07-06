@@ -34,7 +34,7 @@ CI_KUBECTL_VERSION ?= v1.9.4
 
 TRAVIS_IMAGE_VERSION ?= v0.1
 TEST_IMAGES = $(addprefix $(DOCKER_NAMESPACE)/, $(TEST_IMAGES_SUFFIX))
-TEST_IMAGES_SUFFIX = ffdl-lcm ffdl-trainer ffdl-metrics ffdl-databroker_s3 ffdl-ui ffdl-restapi ffdl-jobmonitor ffdl-controller log_collector ffdl-databroker_objectstorage tensorboard_extract
+TEST_IMAGES_SUFFIX = $(shell cat bin/ffdl-microservices.txt)
 
 AWS_ACCESS_KEY_ID ?= test
 AWS_SECRET_ACCESS_KEY ?= test
@@ -627,7 +627,8 @@ pull-prebuilt-images: $(addprefix pull-, $(TEST_IMAGES))
 $(addprefix pull-, $(TEST_IMAGES)): pull-%: %
 	@TRAVIS_IMAGE=$< make .pull-prebuilt-images
 
-$(TEST_IMAGES): ; # Make targets
+# Prebuilt images make targets
+$(TEST_IMAGES): ;
 
 .pull-prebuilt-images:
 	docker pull $(TRAVIS_IMAGE):$(TRAVIS_IMAGE_VERSION)
