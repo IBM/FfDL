@@ -84,9 +84,8 @@ If you have [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-clust
 export VM_TYPE=dind
 export PUBLIC_IP=localhost
 export SHARED_VOLUME_STORAGE_CLASS="";
-export Namespace=default
+export Namespace=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $Namespace` before running the make commands below
 
-#If your namespace does not exist yet, please create the namespace `kubectl create namespace $Namespace` before running the make commands below
 make deploy-plugin
 make quickstart-deploy
 ```
@@ -100,12 +99,11 @@ then deploy the platform services:
 ``` shell
 export VM_TYPE=none
 export PUBLIC_IP=<Cluster Public IP>
-export Namespace=default
+export Namespace=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $Namespace` before running the make commands below
 
 # Change the storage class to what's available on your Cloud Kubernetes Cluster.
 export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold";
 
-#If your namespace does not exist yet, please create the namespace `kubectl create namespace $Namespace` before running the make commands below
 make deploy-plugin
 make quickstart-deploy
 ```
