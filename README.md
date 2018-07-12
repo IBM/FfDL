@@ -72,10 +72,10 @@ To know more about the architectural details, please read the [design document](
 There are multiple installation paths for installing FfDL locally ("1-click-install") or into an existing Kubernetes cluster. You can visit [Step 5](#5-detailed-installation-instructions) for more details on the deployment instructions.
 
 > If you are using bash shell, you can modify the necessary environment variables in `env.txt` and export all of them using the following commands
-  ```shell
-  source env.txt
-  export $(cut -d= -f1 env.txt)
-  ```
+>  ```shell
+>  source env.txt
+>  export $(cut -d= -f1 env.txt)
+>  ```
 
 ### 1.1 Installation using Kubeadm-DIND
 
@@ -142,11 +142,11 @@ kubectl get pods --all-namespaces | grep tiller-deploy
 ```
 
 2. Define the necessary environment variables.
-  > If you are using bash shell, you can modify the necessary environment variables in `env.txt` and export all of them using the following commands
-    ```shell
-    source env.txt
-    export $(cut -d= -f1 env.txt)
-    ```
+> If you are using bash shell, you can modify the necessary environment variables in `env.txt` and export all of them using the following commands
+>  ```shell
+>  source env.txt
+>  export $(cut -d= -f1 env.txt)
+>  ```
 
   * 2.a. For Kubeadm-DIND Cluster only
   ```shell
