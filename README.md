@@ -71,6 +71,12 @@ To know more about the architectural details, please read the [design document](
 
 There are multiple installation paths for installing FfDL locally ("1-click-install") or into an existing Kubernetes cluster. You can visit [Step 5](#5-detailed-installation-instructions) for more details on the deployment instructions.
 
+> If you are using bash shell, you can modify the necessary environment variables in `env.txt` and export all of them using the following commands
+  ```shell
+  source env.txt
+  export $(cut -d= -f1 env.txt)
+  ```
+
 ### 1.1 Installation using Kubeadm-DIND
 
 If you have [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) installed on your machine, use these commands to deploy the FfDL platform:
@@ -136,26 +142,35 @@ kubectl get pods --all-namespaces | grep tiller-deploy
 ```
 
 2. Define the necessary environment variables.
+  > If you are using bash shell, you can modify the necessary environment variables in `env.txt` and export all of them using the following commands
+    ```shell
+    source env.txt
+    export $(cut -d= -f1 env.txt)
+    ```
+
   * 2.a. For Kubeadm-DIND Cluster only
   ```shell
   export FFDL_PATH=$(pwd)
   export SHARED_VOLUME_STORAGE_CLASS=""
-  export Namespace=default
-  #If your namespace does not exist yet, please create the namespace `kubectl create namespace $Namespace` before proceeding to the next step
+  export VM_TYPE=dind
+  export PUBLIC_IP=localhost
+  export Namespace=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $Namespace` before proceeding to the next step
   ```
 
   * 2.b. For Cloud Kubernetes Cluster
+  > Note: If you are using IBM Cloud Cluster, you can obtain your k8s public ip using `bx cs workers <cluster-name>`.
+
   ```shell
   # Change the storage class to what's available on your Cloud Kubernetes Cluster.
   export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold"
-  export Namespace=default
-  #If your namespace does not exist yet, please create the namespace `kubectl create namespace $Namespace` before proceeding to the next step
+  export VM_TYPE=none
+  export PUBLIC_IP=<Cluster Public IP>
+  export Namespace=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $Namespace` before proceeding to the next step
   ```
 
 3. Install the Object Storage driver using helm install.
   * 3.a. For Kubeadm-DIND Cluster only
   ```shell
-  export FFDL_PATH=$(pwd)
   ./bin/s3_driver.sh
   helm install storage-plugin --set dind=true,cloud=false,namespace=$Namespace
   ```
@@ -218,22 +233,7 @@ s3_port=$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}')
   ```
 
 7. Run the following commands to configure Grafana for monitoring FfDL using the logging information from prometheus.
-  * 7.a. For Kubeadm-DIND Cluster only
   ```shell
-  export VM_TYPE=none
-  export PUBLIC_IP=localhost
-
-  ./bin/grafana.init.sh
-  ```
-
-
-  * 7.b. For Cloud Kubernetes Cluster.
-  > Note: If you are using IBM Cloud Cluster, you can obtain your k8s public ip using `bx cs workers <cluster-name>`.
-
-  ``` shell
-  export VM_TYPE=none
-  export PUBLIC_IP=<Cluster Public IP>
-
   ./bin/grafana.init.sh
   ```
 
