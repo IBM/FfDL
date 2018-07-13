@@ -1,19 +1,3 @@
-/*
- * Copyright 2017-2018 IBM Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import {Component, Input, OnInit, OnDestroy, OnChanges, ViewEncapsulation} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
@@ -30,9 +14,9 @@ import * as $ from 'jquery';
   styleUrls: ['./emetrics.component.css'],
   encapsulation: ViewEncapsulation.None
 })
-export class TrainingEMetricsComponent implements OnInit, OnChanges {
+export class TrainingEMetricsComponent implements OnChanges {
 
-  @Input() private trainingId: string;
+  private _trainingId: string;
   // @Input() private dataStream: Observable<any>; // TODO add type
 
   /** Dictionary of scalar key to index that corresponds to slot in charts array. */
@@ -50,12 +34,12 @@ export class TrainingEMetricsComponent implements OnInit, OnChanges {
    */
   public charts: Array<Chart> = [];
   public groupCategoryColors: ChartColor = [
-    'MediumBlue',
-    'DarkOrange',
-    'DarkGreen',
-    'Indigo',
-    'DarkRed',
-    'Sienna'
+    '#99bf00',
+    '#bbbbbb',
+    '#bbbbbb',
+    '#bbbbbb',
+    '#bbbbbb',
+    '#bbbbbb'
   ];
 
   public numberPagesPerUpdate: number = 1;
@@ -73,6 +57,13 @@ export class TrainingEMetricsComponent implements OnInit, OnChanges {
   public follow: boolean = false;
 
   constructor(private dlaas: DlaasService) {
+  }
+
+  @Input()
+  set trainingId(trainId: string) {
+
+    this._trainingId = trainId;
+    this.find(this.pos, this.pagesize, "");
   }
 
   ngOnChanges(changes: any) {
@@ -101,13 +92,6 @@ export class TrainingEMetricsComponent implements OnInit, OnChanges {
     } else {
       this.stopOngoingUpdate()
     }
-  }
-
-  ngOnInit() {
-    for (let i = 0; i < 1; i++) {
-      this.find(this.pos, this.pagesize, "");
-    }
-    this.showSpinner = false;
   }
 
   ngOnDestroy() {
@@ -150,9 +134,15 @@ export class TrainingEMetricsComponent implements OnInit, OnChanges {
         datasets: datasets
       },
       options: {
+        legend: {
+          labels: {
+            fontColor: '#cccccc'
+          }
+        },
         title: {
           display: true,
-          text: title
+          text: title,
+          fontColor: '#cccccc'
         },
         showLines: true,
         spanGaps: true,
@@ -164,7 +154,8 @@ export class TrainingEMetricsComponent implements OnInit, OnChanges {
           },
           line: {
             backgroundColor: 'transparent',
-            borderWidth: 1,
+            borderColor: '#99bf00',
+            borderWidth: 2,
             tension: 0,
           },
         },
@@ -172,7 +163,25 @@ export class TrainingEMetricsComponent implements OnInit, OnChanges {
           xAxes: [{
             type: 'linear',
             position: 'bottom',
-            stacked: true
+            stacked: true,
+            ticks: {
+              fontColor: '#cccccc',
+              fontSize: 14
+            },
+            gridLines: {
+              display: true ,
+              color: 'rgba(204,204,204,.3)'
+            },
+          }],
+          yAxes: [{
+            ticks: {
+              fontColor: '#cccccc',
+              fontSize: 14
+            },
+            gridLines: {
+              display: true ,
+              color: 'rgba(204,204,204,.3)'
+            },
           }]
         }
       }
@@ -197,7 +206,7 @@ export class TrainingEMetricsComponent implements OnInit, OnChanges {
       groupChartDataSet = {
           data: [],
           label: groupLabel,
-          borderColor: this.groupCategoryColors[chart.data.datasets.length],
+          borderColor: this.groupCategoryColors[0],
           spanGaps: true,
         };
       chart.data.datasets = [...chart.data.datasets, groupChartDataSet];
@@ -266,7 +275,7 @@ export class TrainingEMetricsComponent implements OnInit, OnChanges {
 
   private find(pos: number, pagesize: number, since: string) {
     $('#errorMsg').text("");
-    this.findSub = this.dlaas.getTrainingMetrics(this.trainingId, pos, pagesize, since).subscribe(
+    this.findSub = this.dlaas.getTrainingMetrics(this._trainingId, pos, pagesize, since).subscribe(
       data => {
         let eMetricsList: Array<EMetrics> = data;
         if (eMetricsList.length == 0) {

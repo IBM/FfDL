@@ -1,19 +1,3 @@
-/*
- * Copyright 2017-2018 IBM Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { Component, ViewEncapsulation, OnInit, OnChanges, ElementRef, ViewChild } from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 import { DlaasService } from '../shared/services';
@@ -23,6 +7,8 @@ import { Subscription } from 'rxjs/Subscription';
 import { HttpErrorResponse } from "@angular/common/http";
 import {CookieService, CookieOptions} from "ngx-cookie";
 import {Observable} from "rxjs/Observable";
+import {LogLine} from "../shared/models/index";
+import 'rxjs/add/operator/share';
 
 interface LastManifestCookie {
   manifest: Blob,
@@ -42,6 +28,9 @@ export class TrainingsListComponent implements OnInit, OnChanges {
 
     trainings: ModelData[];
     trainingsError: Boolean = false;
+    trainingId: string;
+    current_model: ModelData;
+    display_tabs: string = "none";
 
   constructor(private dlaas: DlaasService,
               private notificationService: NotificationsService,
@@ -56,10 +45,82 @@ export class TrainingsListComponent implements OnInit, OnChanges {
   private trainingSub: Subscription;
 
   form: FormGroup;
-  formData: FormData = new FormData();
+  formData: FormData;
+  zipEvent: HTMLInputElement;
+  manifestEvent: HTMLInputElement;
   loading: boolean = false;
 
   @ViewChild('fileInput') fileInput: ElementRef;
+
+  changeModel(new_model){
+    var tab_manager = document.getElementById("tab_manager");
+    var back_button = document.getElementById("back_button");
+    var jobs_tag = document.getElementById("jobs_tag");
+    var training_list = document.getElementById("training_list");
+
+    var training_num;
+    for (training_num = 0; training_num < this.trainings.length; training_num ++) {
+      if (this.trainings[training_num].model_id == new_model){
+        tab_manager.style.display = "";
+        back_button.style.display = "";
+        jobs_tag.style.display = "none";
+        training_list.style.display = "none";
+
+        this.trainingId = new_model;
+        this.current_model = this.trainings[training_num];
+      }
+    }
+    this.reformatTime()
+    var status_elem = document.getElementById(this.current_model.model_id)
+
+    if (this.current_model.training.training_status.status === 'FAILED') {
+      status_elem.style.backgroundColor = '#048746'
+    } else if (this.current_model.training.training_status.status === 'COMPLETED') {
+      status_elem.style.backgroundColor = '#048746'
+    }
+  }
+
+  showTraining() {
+    var tab_manager = document.getElementById("tab_manager");
+    var back_button = document.getElementById("back_button");
+    var jobs_tag = document.getElementById("jobs_tag");
+    var training_list = document.getElementById("training_list");
+
+    tab_manager.style.display = "none";
+    back_button.style.display = "none";
+    jobs_tag.style.display = "";
+    training_list.style.display = "";
+  }
+
+  reformatTime() {
+    var sub_elem = document.getElementById("submission_time");
+    var comp_elem = document.getElementById("completion_time");
+    var unix_timestamp = parseInt(this.current_model.training.training_status.submitted)
+    var d;
+
+    if (unix_timestamp == null){
+      sub_elem.innerHTML = "N/A";
+    }
+    else{
+      d = new Date(unix_timestamp)
+      sub_elem.innerHTML = d
+    }
+
+    unix_timestamp = parseInt(this.current_model.training.training_status.completed)
+
+    if (unix_timestamp == null){
+      comp_elem.innerHTML = "N/A";
+    }
+    else{
+      d = new Date(unix_timestamp)
+      comp_elem.innerHTML = d
+    }
+  }
+
+  tabGraphActive() {
+    // without this graphs won't resize
+    window.dispatchEvent(new Event('resize'));
+  }
 
   createForm() {
     this.form = this.fb.group({
@@ -74,29 +135,35 @@ export class TrainingsListComponent implements OnInit, OnChanges {
   };
 
   onManifestFileChange(event) {
-    if(event.target.files && event.target.files.length > 0) {
-      let file = event.target.files[0];
+    this.manifestEvent = event.target;
+  }
+
+  onModelzipFileChange(event) {
+    this.zipEvent = event.target;
+  }
+
+  onSubmit() {
+    this.loading = true;
+    this.formData = new FormData();
+    this.createForm();
+    var builtForm = true;
+
+    if(this.manifestEvent.files && this.manifestEvent.files.length > 0
+       && this.zipEvent.files && this.zipEvent.files.length > 0) {
+      let file = this.manifestEvent.files[0];
       this.formData.append('manifest', file, file.name);
       this.form.get('manifest').setValue({
         filename: file.name,
         filetype: file.type,
       });
-    }
-  }
-
-  onModelzipFileChange(event) {
-    if(event.target.files && event.target.files.length > 0) {
-      let file = event.target.files[0];
-      this.formData.append('model_definition', file, file.name);
+      let file2 = this.zipEvent.files[0];
+      this.formData.append('model_definition', file2, file2.name);
       this.form.get('model_definition').setValue({
-        filename: file.name,
-        filetype: file.type,
+        filename: file2.name,
+        filetype: file2.type,
       });
     }
-  }
-
-  onSubmit() {
-    this.loading = true;
+    else {return}
 
     this.trainingSub = this.dlaas.postTraining(this.formData).subscribe(
       data => {
@@ -135,7 +202,7 @@ export class TrainingsListComponent implements OnInit, OnChanges {
 
   ngOnInit() {
     this.find();
-    this.startOngoingUpdate()
+    this.startOngoingUpdate();
   }
 
   ngOnChanges(changes: any) {
@@ -157,16 +224,23 @@ export class TrainingsListComponent implements OnInit, OnChanges {
   }
 
   delete(id: String) {
-    this.notificationService.info('Deleting training', 'ID: ' + id);
-    this.dlaas.deleteTraining(id).subscribe(
-      data => {
-        this.notificationService.success('Training deleted.', 'ID: ' + id);
-        this.find()
-      },
-      err => {
-        this.notificationService.error('Deletion failed', 'Message: ' + err);
-      }
-    );
+    var isConfirmed = confirm("Are you sure you want to delete " + id + "?");
+    if (isConfirmed) {
+      this.notificationService.info('Deleting training', 'ID: ' + id);
+      this.dlaas.deleteTraining(id).subscribe(
+        data => {
+          this.notificationService.success('Training deleted.', 'ID: ' + id);
+          this.find()
+        },
+        err => {
+          this.notificationService.error('Deletion failed', 'Message: ' + err);
+        }
+      );
+    }
+  }
+
+  getStatusId(model: ModelData) {
+    return model.model_id
   }
 
   getStatusColor(model: ModelData): string {

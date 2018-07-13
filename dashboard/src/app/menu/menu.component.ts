@@ -1,19 +1,3 @@
-/*
- * Copyright 2017-2018 IBM Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { NotificationsService } from "angular2-notifications";
@@ -33,6 +17,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   private searchDisabled: boolean = true;
   private subscription: Subscription;
   showMenu: boolean;
+  private lastNav: number = 0;
 
   constructor(private router: Router, private auth: AuthService,
      private notifier: NotificationsService, private dlaas: DlaasService) {
@@ -42,6 +27,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.selectNavbarLoad();
   }
 
   ngOnDestroy() {
@@ -59,6 +45,36 @@ export class MenuComponent implements OnInit, OnDestroy {
         this.notifier.error('Search failed', 'Training ID does not exist.');
       }
     );
+  }
+
+  selectNavbarLoad() {
+    var url = this.router.url;
+    var page_start = url.indexOf("/#/") + 3;
+
+    if (url[page_start].indexOf("trainings") == 0) {
+      this.selectNavbar(0);
+    }
+    else if (url[page_start].indexOf("analytics") == 0) {
+      this.selectNavbar(2);
+    }
+    else{
+      this.selectNavbar(1); 
+    }
+  }
+
+  selectNavbar(nav_item) {
+
+    if (nav_item != this.lastNav) {
+
+      var nav_elem_list = ["training_nav","publication_nav","analytics_nav"];
+      var old_nav_elem = document.getElementById(nav_elem_list[this.lastNav]);
+      var nav_elem;
+
+      nav_elem = document.getElementById(nav_elem_list[nav_item]);
+      nav_elem.style.textDecoration = "underline";
+      old_nav_elem.style.textDecoration = "";
+      this.lastNav = nav_item
+    }
   }
 
   role() {

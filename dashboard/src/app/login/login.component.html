@@ -1,16 +1,18 @@
+  <nav class="navbar navbar-expand-md fixed-top" style="height:60px;background-color: #99bf00"></nav>
   <div class="row vertical-center">
     <div class="col-md-4"></div>
-    <div class="card col-md-4">
+    <div class="card col-md-4" style="border-color: #1c1c1c">
+      <style>div{background-color: #1c1c1c}</style>
       <div class="text-md-center">
         <p>
-          <img class="card-img-top" src="/assets/img/ffdl-text.png" style="height: 200px; width: auto;" alt="FfDL Logo">
+          <img class="card-img-top" src="/assets/img/ffdl-frontpage.jpg" style="height: 150px; width: auto;" alt="FfDL Logo">
         </p>
       </div>
       <div class="card-block">
         <div *ngIf="showExpiredLogin == true" class="alert alert-danger" role="alert">
           Login timed out! Please login again to continue.
         </div>
-        <h4 class="card-title">Login to your account</h4>
+        <h4 class="card-title" style="color:#99bf00">Login to your account</h4>
         <form>
           <!--<div class="form-group">-->
             <!--<div class="input-group">-->
@@ -25,25 +27,90 @@
           <!--</div>-->
           <div class="form-group">
             <div class="input-group">
-              <div class="input-group-addon"><i class="fa fa-server" aria-hidden="true"></i></div>
-              <input type="text" class="form-control" [(ngModel)]="endpoint" name="endpoint" placeholder="Endpoint">
+              <div class="input-group-addon"><i style="color:#99bf00;" class="fa fa-server" aria-hidden="true"></i></div>
+              <input type="text" class="form-control" (keyup.enter)="login()" style="color: white;background-color:#000000; border-color: #FFFFFF;" [(ngModel)]="endpoint" name="endpoint" placeholder="Endpoint">
             </div>
+            <p class="noend" [innerHTML]="noEndpoint()" style="color:red; text-indent: 3em"></p>
           </div>
           <div class="form-group">
             <div class="input-group">
-              <div class="input-group-addon"><i class="fa fa-user" aria-hidden="true"></i></div>
-              <input type="text" class="form-control" [(ngModel)]="username" name="username" placeholder="Username">
+              <div class="input-group-addon"><i style="color:#99bf00" class="fa fa-user" aria-hidden="true"></i></div>
+              <input type="text" class="form-control" (keyup.enter)="login()" style="color: white;background-color:#000000; border-color: #FFFFFF;" [(ngModel)]="username" name="username" placeholder="Username">
+              <style>placeholder{color: white}</style>
             </div>
+            <p class="nouser" [innerHTML]="noUsername()" style="color:red; text-indent:3em"></p>
           </div>
           <div class="form-group">
             <div class="input-group">
-              <div class="input-group-addon"><i class="fa fa-lock" aria-hidden="true"></i></div>
-              <input type="password" class="form-control" [(ngModel)]="password" name="password" placeholder="Password">
+              <div class="input-group-addon"><i style="color:#99bf00" class="fa fa-lock" aria-hidden="true"></i></div>
+              <input type="password" class="form-control" (keyup.enter)="login()" style="color: white;background-color:#000000; border-color: #FFFFFF;" [(ngModel)]="password" name="password" placeholder="Password">
             </div>
           </div>
         </form>
-        <a class="btn btn-secondary" (click)="login()">Login</a>
+        <div class="row vertical-center">
+          <div class="col-md"></div>
+          <button class="button" (click)="login()">Login</button>
+        </div>
       </div>
     </div>
-    <div class="col-md-4"></div>
+  </div>
+  <div class="row vertical-center">
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md">
+      <p>
+        <img class="card-img-top" src="/assets/img/pytorch-square-logo.png" style="height: 100px; width: auto; padding-left: 15px" alt="Pytorch Logo">
+      </p>
+    </div>
+    <div class="col-md">
+      <p>
+        <img class="card-img-top" src="/assets/img/caffe_square.png" style="height: 100px; width: auto;" alt="Caffe Logo">
+      </p>
+    </div>
+    <div class="col-md">
+      <p>
+        <img class="card-img-top" src="/assets/img/caffe2-square-logo.png" style="height: 100px; width: auto; padding-left: 20px" alt="Caffe2 Logo">
+      </p>
+    </div>
+    <div class="col-md">
+      <p>
+        <img class="card-img-top" src="/assets/img/tensorflow-logo-full.png" style="height: 100px; width: auto;" alt="Tensorflow Logo">
+      </p>
+    </div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+  </div>
+  <div class="row vertical-center">
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md">
+      <p>
+        <img class="card-img-top" style="padding-left:0px" src="/assets/img/jupyter-notebook.png" style="height: 100px; width: auto;" alt="Pytorch Logo">
+      </p>
+    </div>
+    <div class="col-md">
+      <p>
+        <img class="card-img-top" src="/assets/img/kubernetes-logo.svg" style="height: 100px; width: auto;" alt="Kubernetes Logo">
+      </p>
+    </div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
+    <div class="col-md"></div>
   </div>

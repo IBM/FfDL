@@ -1,19 +1,3 @@
-/*
- * Copyright 2017-2018 IBM Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import {Component, Input, OnChanges, OnInit} from '@angular/core';
 import {DlaasService} from '../shared/services';
 import {Subscription} from 'rxjs/Subscription';
@@ -36,12 +20,12 @@ import {Observable} from "rxjs/Observable";
         <label ngbButtonLabel style="vertical-align: middle; margin-top: 5px; margin-right: 3em">
           <input type="checkbox" ngbButton [(ngModel)]="follow" (click)="followEvent()" style="vertical-align: middle;" name="follow">&nbsp;&nbsp;Follow&nbsp;&nbsp;
         </label>
-        <button (click)="home()">Home</button>
-        <button (click)="end()">End</button>
-        <button (click)="pageUp()">PgUp</button>
-        <button (click)="pageDown()">PgDn</button>
-        <button (click)="decrement()">Up</button>
-        <button (click)="increment()">Dn</button>
+        <button class="button" (click)="home()">Home</button>
+        <button class="button" (click)="end()">End</button>
+        <button class="button" (click)="pageUp()">PgUp</button>
+        <button class="button" (click)="pageDown()">PgDn</button>
+        <button class="button" (click)="decrement()">Up</button>
+        <button class="button" (click)="increment()">Dn</button>
       </div>
       <pre *ngIf="!showSpinner && !showError" (keydown)="keyEvent($event)" tabindex="0">
         <table>
@@ -66,9 +50,9 @@ import {Observable} from "rxjs/Observable";
     </div>`,
     styleUrls: ['./emetricsraw.component.css']
 })
-export class TrainingEMetricsRawComponent implements OnInit, OnChanges {
+export class TrainingEMetricsRawComponent implements OnChanges {
 
-  @Input() private trainingId: string;
+  private _trainingId: string;
 
   private emetrics: EMetrics[];
   private logsError: Boolean = false;
@@ -100,12 +84,15 @@ export class TrainingEMetricsRawComponent implements OnInit, OnChanges {
   constructor(private dlaas: DlaasService) {
   }
 
-  ngOnChanges(changes: any) {
-    // console.log('ngOnChanges called in training list ')
+  @Input()
+  set trainingId(trainId: string){
+    this._trainingId = trainId;
+    this.pos = -1
+    this.update();
   }
 
-  ngOnInit() {
-    this.find(this.pos, this.pagesize, "");
+  ngOnChanges(changes: any) {
+    // console.log('ngOnChanges called in training list ')
   }
 
   ngOnDestroy() {
@@ -230,7 +217,7 @@ export class TrainingEMetricsRawComponent implements OnInit, OnChanges {
   }
 
   private find(pos: number, pagesize: number, since: string) {
-    this.findSub = this.dlaas.getTrainingMetrics(this.trainingId, pos, pagesize, since).subscribe(
+    this.findSub = this.dlaas.getTrainingMetrics(this._trainingId, pos, pagesize, since).subscribe(
       data => {
         this.emetrics = data;
         if (this.emetrics.length == 0) {

@@ -48,12 +48,12 @@ export enum KEY_CODE {
         <label ngbButtonLabel style="vertical-align: middle; margin-top: 5px; margin-right: 3em">
           <input type="checkbox" ngbButton [(ngModel)]="follow" (click)="followEvent()" style="vertical-align: middle;" name="follow">&nbsp;&nbsp;Follow&nbsp;&nbsp;
         </label>
-        <button (click)="home()">Home</button>
-        <button (click)="end()">End</button>
-        <button (click)="pageUp()">PgUp</button>
-        <button (click)="pageDown()">PgDn</button>
-        <button (click)="decrement()">Up</button>
-        <button (click)="increment()">Dn</button>
+        <button class="button" (click)="home()">Home</button>
+        <button class="button" (click)="end()">End</button>
+        <button class="button" (click)="pageUp()">PgUp</button>
+        <button class="button" (click)="pageDown()">PgDn</button>
+        <button class="button" (click)="decrement()">Up</button>
+        <button class="button" (click)="increment()">Dn</button>
       </div>
       <pre *ngIf="!showSpinner && !showError"  (keydown)="keyEvent($event)" tabindex="0">
         <!--<span *ngFor="let line of logs">{{line.line}}</span>-->
@@ -70,9 +70,9 @@ export enum KEY_CODE {
     </div>`,
     styleUrls: ['./logs.component.css']
 })
-export class TrainingLogsComponent implements OnInit, OnChanges {
+export class TrainingLogsComponent implements OnChanges {
 
-@Input() private trainingId: string;
+  private _trainingId: string;
 
   private logs: LogLine[];
   private logsError: Boolean = false;
@@ -98,12 +98,16 @@ export class TrainingLogsComponent implements OnInit, OnChanges {
   constructor(private dlaas: DlaasService) {
   }
 
-  ngOnChanges(changes: any) {
-    // console.log('ngOnChanges called in training list ')
+  @Input()
+  set trainingId(trainId: string) {
+
+    this._trainingId = trainId;
+    this.pos = -1
+    this.update();
   }
 
-  ngOnInit() {
-    this.find(this.pos, this.pagesize, "");
+  ngOnChanges(changes: any) {
+    // console.log('ngOnChanges called in training list ')
   }
 
   ngOnDestroy() {
@@ -170,7 +174,6 @@ export class TrainingLogsComponent implements OnInit, OnChanges {
 
   keyEvent(event: KeyboardEvent) {
     // console.log(event);
-
     if (document.hidden) {
       return
     }
@@ -229,7 +232,7 @@ export class TrainingLogsComponent implements OnInit, OnChanges {
   }
 
   private find(pos: number, pagesize: number, since: string) {
-    this.findSub = this.dlaas.getTrainingLogs(this.trainingId, pos, pagesize, since).subscribe(
+    this.findSub = this.dlaas.getTrainingLogs(this._trainingId, pos, pagesize, since).subscribe(
       data => {
         // console.log("pos: "+pos+", pageszie: "+pagesize+", since:"+since)
         this.logs = data;
@@ -237,6 +240,7 @@ export class TrainingLogsComponent implements OnInit, OnChanges {
           return;
         }
         this.prevTime = this.logs[this.logs.length - 1].meta.time
+        this.pos = parseInt(this.logs[0].meta.rindex)
       },
       err => {
         this.logsError = true;
