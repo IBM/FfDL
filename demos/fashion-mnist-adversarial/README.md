@@ -73,10 +73,12 @@ Then go to the COS dashboard:
 
 ### Environment Variables
 
+Optional, this step can be done in the notebook itself.
+
 ```bash
 export FFDL_DIR=""              # Path to local clone of FfDL repository
-export CLUSTER_NAME=""          # Name of Kubernetes cluster with FfDL deployed
-export VM_TYPE=""               # Type of VM your Kubernetes cluster is deployed on ['none'|'minikube'|'ibmcloud']
+export PUBLIC_IP=""             # Public IP of FfDL cluster
+export KUBECONFIG=""            # Path to Kubernetes cluster configuration file
 export AWS_ACCESS_KEY_ID=""     # Cloud Object Storage (AWS) Access Key ID
 export AWS_SECRET_ACCESS_KEY="" # Cloud Object Storage (AWS) Secret Access Key
 export AWS_DEFAULT_REGION=""    # Cloud Object Storage region name, i.e. 'us-east-1'
@@ -89,21 +91,22 @@ Before running this notebook for the first time we recommend creating a Python 3
 [virtualenv](https://pypi.org/project/virtualenv/), [venv](https://docs.python.org/3/library/venv.html) (since Python 3.3),
 or [Conda](https://conda.io/docs/user-guide/tasks/manage-environments.html).
 ```bash
+# assuming present working directory to be the FfDL project root
 pip3 install virtualenv
-virtualenv .venv/ffdl_art
-.venv/ffdl_art/bin/pip install -r requirements.txt --upgrade
+virtualenv .venv/art
+.venv/art/bin/pip install -r demos/fashion-mnist-adversarial/requirements.txt --upgrade
 ```
 
 ## Running the Notebook
 
 Activate the Python virtual environment
 ```bash
-source .venv/ffdl_art/bin/activate
+source .venv/art/bin/activate
 ```
 
 Start the Jupyter notebook server
 ```bash
-jupyter-notebook
+jupyter-notebook --notebook-dir demos/fashion-mnist-adversarial
 # ... use Control-C to stop the notebook server
 ```
 
@@ -114,7 +117,7 @@ deactivate
 
 To delete the Python virtual environment run the following command
 ```bash
-rm -rf .venv/ffdl_art
+rm -rf .venv/art
 ```
 
 
