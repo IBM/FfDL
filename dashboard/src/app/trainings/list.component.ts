@@ -70,14 +70,8 @@ export class TrainingsListComponent implements OnInit, OnChanges {
         this.current_model = this.trainings[training_num];
       }
     }
-    this.reformatTime()
-    var status_elem = document.getElementById(this.current_model.model_id)
 
-    if (this.current_model.training.training_status.status === 'FAILED') {
-      status_elem.style.backgroundColor = '#048746'
-    } else if (this.current_model.training.training_status.status === 'COMPLETED') {
-      status_elem.style.backgroundColor = '#048746'
-    }
+    this.reformatTime()
   }
 
   showTraining() {
@@ -248,6 +242,16 @@ export class TrainingsListComponent implements OnInit, OnChanges {
       return 'table-danger';
     } else if (model.training.training_status.status === 'COMPLETED') {
       return 'table-success';
+    }
+  }
+
+  dotClass(model: ModelData) {
+    if (model.training.training_status.status === 'FAILED') {
+      return 'red_dot';
+    } else if (model.training.training_status.status === 'COMPLETED') {
+      return 'green_dot';
+    } else {
+      return 'yellow_dot';
     }
   }
 

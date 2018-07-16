@@ -43,3 +43,18 @@ button {
 .button:active {
   background-color: #eeeeee;
 }
+
+.green_dot {
+  color:#00aa00;
+  font-size: 12px
+}
+
+.yellow_dot {
+  color:#dddd00;
+  font-size: 12px
+}
+
+.red_dot {
+  color:#ee0000;
+  font-size: 12px
+}

@@ -46,7 +46,9 @@
                 <td style="word-wrap:break-word;">{{t.model_id}}</td>
                 <td style="word-wrap:break-word;">{{t.name}}</td>
                 <td style="word-wrap:break-word;">{{t.description}}</td>
-                <td>{{t.training.training_status.status}}</td>
+                <td>{{t.training.training_status.status}}
+                  <span class="{{dotClass(t)}}">&#9679;</span>
+                </td>
                 <td>
                   <button class="btn btn-primary btn-sm" (click)="changeModel(t.model_id)"
                         tooltip="Show training details" tooltipTrigger="focus" tooltipPlacement="top">
@@ -73,7 +75,12 @@
                   <table class="table">
                     <tbody>
                       <tr><th scope="row">Name:</th><td>{{ current_model?.name }}</td></tr>
-                      <tr><th scope="row">Status:</th><td ng-init="setBlack()">{{current_model?.training.training_status.status}}</td></tr>
+                      <tr>
+                        <th scope="row">Status:</th>
+                        <td ng-init="setBlack()">{{current_model?.training.training_status.status}}
+                          <span class="{{dotClass(current_model)}}">&#9679;</span>
+                        </td>
+                      </tr>
                       <tr><th scope="row">Description:</th><td>{{ current_model?.description }}</td></tr>
                       <tr>
                         <th scope="row">Framework:</th>

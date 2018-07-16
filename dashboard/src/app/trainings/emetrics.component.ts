@@ -63,6 +63,8 @@ export class TrainingEMetricsComponent implements OnChanges {
   set trainingId(trainId: string) {
 
     this._trainingId = trainId;
+    this.pos = 0;
+    this.resetCharts();
     this.find(this.pos, this.pagesize, "");
   }
 
