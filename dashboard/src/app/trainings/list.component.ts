@@ -70,8 +70,17 @@ export class TrainingsListComponent implements OnInit, OnChanges {
         this.current_model = this.trainings[training_num];
       }
     }
+    this.reformatTime();
 
-    this.reformatTime()
+    var status_elem = document.getElementById("status_bubble");
+
+    if (this.current_model.training.training_status.status === 'FAILED') {
+      status_elem.style.color = "#ee0000";
+    } else if (this.current_model.training.training_status.status === 'COMPLETED') {
+      status_elem.style.color = "#00aa00"
+    } else {
+      status_elem.style.color = "#dddd00";
+    }
   }
 
   showTraining() {
@@ -230,18 +239,6 @@ export class TrainingsListComponent implements OnInit, OnChanges {
           this.notificationService.error('Deletion failed', 'Message: ' + err);
         }
       );
-    }
-  }
-
-  getStatusId(model: ModelData) {
-    return model.model_id
-  }
-
-  getStatusColor(model: ModelData): string {
-    if (model.training.training_status.status === 'FAILED') {
-      return 'table-danger';
-    } else if (model.training.training_status.status === 'COMPLETED') {
-      return 'table-success';
     }
   }
 

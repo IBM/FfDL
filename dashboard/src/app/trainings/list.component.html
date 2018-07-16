@@ -78,7 +78,7 @@
                       <tr>
                         <th scope="row">Status:</th>
                         <td ng-init="setBlack()">{{current_model?.training.training_status.status}}
-                          <span class="{{dotClass(current_model)}}">&#9679;</span>
+                          <span id="status_bubble" style="font-size: 12px">&#9679;</span>
                         </td>
                       </tr>
                       <tr><th scope="row">Description:</th><td>{{ current_model?.description }}</td></tr>
