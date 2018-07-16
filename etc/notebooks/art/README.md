@@ -37,10 +37,23 @@ Before running this notebook for the first time we recommend creating a Python 3
 or [Conda](https://conda.io/docs/user-guide/tasks/manage-environments.html).
 
 ```bash
-# assuming present working directory to be the project root
+# assuming present working directory to be the FfDL project root
 pip3 install virtualenv
 virtualenv .venv/art
 .venv/art/bin/pip install -r etc/notebooks/art/requirements.txt --upgrade
+```
+
+## Export Environment Variables
+
+Optional, this step can be done in the notebook itself.
+
+```bash
+export PUBLIC_IP=<Public IP of your FfDL cluster>
+export KUBECONFIG=<Path to Kubernetes cluster configuration file>
+export AWS_ACCESS_KEY_ID=<S3 cloud object storage access key ID>              
+export AWS_SECRET_ACCESS_KEY=<S3 cloud object storage secret access key>
+export AWS_ENDPOINT_URL=<Cloud object storage endpoint URL, i.e. 'https://s3-api.us-geo.objectstorage.softlayer.net'>
+export AWS_DEFAULT_REGION=<Cloud object storage default region, i.e. 'us-east-1'>
 ```
 
 ## Running the Notebook
