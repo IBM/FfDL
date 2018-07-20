@@ -428,8 +428,14 @@ func constructLearnerContainer(req *service.JobDeploymentRequest, envVars []v1co
 	if mountResultsStoreInLearner {
 		loadModelComand := `
 			echo "Starting Training $TRAINING_ID" ;
+			echo "trying mkdir -p $MODEL_DIR" ; 
 			mkdir -p "$MODEL_DIR" ;
-			unzip -nq "$RESULT_DIR/_submitted_code/model.zip" -d "$MODEL_DIR" ;`
+			echo "trying ls /mnt/results" ; 
+			ls /mnt/results ; 
+			echo "trying ls $RESULT_DIR" ; 
+			ls $RESULT_DIR/* ; 
+			echo "Calling unzip -nq $RESULT_DIR/_submitted_code/model.zip -d $MODEL_DIR" ; 
+ 			unzip -nq "$RESULT_DIR/_submitted_code/model.zip" -d "$MODEL_DIR" `
 		learnerCommand := `
 			for i in ${!ALERTMANAGER*} ${!DLAAS*} ${!ETCD*} ${!GRAFANA*} ${!HOSTNAME*} ${!KUBERNETES*} ${!MONGO*} ${!PUSHGATEWAY*}; do unset $i; done;
 			export LEARNER_ID=$((${DOWNWARD_API_POD_NAME##*-} + 1)) ;
@@ -640,6 +646,8 @@ func wrapCommand(cmd string, containerName string, controlFilesDirectory string,
 func constructVolumeClaim(name string, namespace string, volumeSize int64, labels map[string]string) *v1core.PersistentVolumeClaim {
 	claim, err := GetVolumeClaim(volumeSize)
 	if err != nil {
+		logr := logger.LocLogger(logger.LogServiceBasic(logger.LogkeyLcmService))
+		logr.Errorf("constructVolumeClaim return nil, volumeSize == %d", volumeSize)
 		return nil
 	}
 	claim.Name = name

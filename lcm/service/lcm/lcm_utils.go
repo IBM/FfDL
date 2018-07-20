@@ -129,17 +129,21 @@ func getStaticVolume(logr *logger.LocLoggingEntry) string {
 	pvcConfigMap := "/etc/static-volumes-v2/PVCs-v2.yaml"
 	bytes, err := ioutil.ReadFile(pvcConfigMap)
 	if err != nil {
-		logr.Warnf("Unable to load %s: %s", pvcConfigMap, err)
+		logr.WithError(err).Warnf("Unable to load %s: %s", pvcConfigMap, err)
 		return ""
 	}
 	err = yaml.Unmarshal(bytes, &staticVolumes)
 	if err != nil {
+		logr.WithError(err).Errorf("Can not unmarshel from /etc/static-volumes-v2/PVCs-v2.yaml")
 		return ""
 	}
 
 	if len(staticVolumes.Volumes) > 0 {
+		logr.Debugf("Fetching a static volume")
 		n := rand.Int() % len(staticVolumes.Volumes)
 		return staticVolumes.Volumes[n].Name
+	} else {
+		logr.Debugf("len(staticVolumes.Volumes) is zero, so can't allocate a volume!")
 	}
 	return ""
 }

@@ -24,6 +24,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"github.com/spf13/viper"
 	"github.com/IBM/FfDL/commons/config"
+	"github.com/IBM/FfDL/commons/logger"
 )
 
 // from https://github.ibm.com/alchemy-containers/armada-storage-file-plugin/blob/master/armada-storage-classes
@@ -43,12 +44,15 @@ var supportedVolumeSizes = []v1resource.Quantity{
 // GetVolumeClaim returns a PersistentVolumeClaim struct for the given volume size (specified in bytes).
 func GetVolumeClaim(volumeSize int64) (*v1core.PersistentVolumeClaim, error) {
 	quantity := getStorageQuantity(volumeSize)
+	logr := logger.LocLogger(logger.LogServiceBasic(logger.LogkeyLcmService))
 	if quantity == nil {
+		logr.Errorf("Unable to find matching storage quantity")
 		return nil, errors.New("Unable to find matching storage quantity")
 	}
 
 	class := getStorageClass(volumeSize)
 	if class == "" {
+		logr.Errorf("Unable to find matching storage class")
 		return nil, errors.New("Unable to find matching storage class")
 	}
 

@@ -153,7 +153,7 @@ func (os *s3ObjectStore) UploadArchive(container string, object string, payload 
 		logr.Errorf("Uploading archive %s/%s failed: %s", container, object, err.Error())
 		return err
 	}
-	cl.Observe("uploaded archive to s3")
+	cl.Observe("uploaded archive to s3: container = %s, object = %s, archive len: %d", container, object, len(payload))
 	return nil
 }
 

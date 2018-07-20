@@ -554,7 +554,7 @@ func (s *trainerService) CreateTrainingJob(ctx context.Context, req *grpc_traine
 		defer ds.Disconnect()
 		bucket := outputDatastore.Fields["bucket"]
 		object := fmt.Sprintf("%s/_submitted_code/model.zip", id)
-		logr.Infof("Writing to output object store: %s -> %s", bucket, object)
+		logr.Infof("Writing to output object store: %s -> %s, length: %d", bucket, object, len(req.ModelDefinition.Content))
 		err = ds.UploadArchive(bucket, object, req.ModelDefinition.Content)
 		if err != nil {
 			s.metrics.uploadModelFailedCounter.With("kind", userStoreKind).Add(1)
@@ -1770,10 +1770,9 @@ func (s *trainerService) validateDatastore(ds *grpc_trainer_v2.Datastore, req *g
 	if ds.Connection == nil || len(ds.Connection) == 0 {
 		return s.failCreateRequest("Data store connection info not set", req, log)
 	}
-	// FfDL Change: FIXME: Disable validation check for bucket until conditionalize for s3fs vs. `mount_volume` option.
-	//if ds.Fields == nil || len(ds.Fields) == 0 || ds.Fields["bucket"] == "" {
-	//	return s.failCreateRequest("Data store bucket is not set", req, log)
-	//}
+	if ds.Fields == nil || len(ds.Fields) == 0 || ds.Fields["bucket"] == "" {
+		return s.failCreateRequest("Data store bucket is not set", req, log)
+	}
 
 	ostore, err := storage.CreateDataStore(ds.Type, ds.Connection)
 	if err != nil {
@@ -1788,16 +1787,15 @@ func (s *trainerService) validateDatastore(ds *grpc_trainer_v2.Datastore, req *g
 			fmt.Sprintf("Data store authentication information for id '%s' incorrect or there is a connection problem", ds.Id), req, log)
 	}
 
-	// FfDL Change: FIXME: Disable validation check for bucket until conditionalize for s3fs vs. `mount_volume` option.
-	//// validate bucket (or container as it is called in Swift)
-	//bucket := ds.Fields["bucket"]
-	//if bucket != "" {
-	//	exists, err := ostore.ContainerExists(bucket)
-	//	if !exists || err != nil {
-	//		return s.failCreateRequestWithCode(trainerClient.ErrInvalidCredentials,
-	//			fmt.Sprintf("Data store bucket '%s' for data store id '%s' incorrect, there may be a connection problem or credentials do not allow access to the bucket", bucket, ds.Id), req, log)
-	//	}
-	//}
+	// validate bucket (or container as it is called in Swift)
+	bucket := ds.Fields["bucket"]
+	if bucket != "" {
+		exists, err := ostore.ContainerExists(bucket)
+		if !exists || err != nil {
+			return s.failCreateRequestWithCode(trainerClient.ErrInvalidCredentials,
+				fmt.Sprintf("Data store bucket '%s' for data store id '%s' incorrect, there may be a connection problem or credentials do not allow access to the bucket", bucket, ds.Id), req, log)
+		}
+	}
 	return nil
 }
 

@@ -214,9 +214,20 @@ func volumesForLearner(req *service.JobDeploymentRequest, learnerEnvVars []v1cor
 				diskFree = 10000
 			}
 
-			volumesStruct.TrainingData = &learner.COSVolume{ID: "cosinputmount-" + req.Name, Region: region, Bucket: req.EnvVars["DATA_STORE_OBJECTID"],
-				Endpoint: req.EnvVars["DATA_STORE_AUTHURL"], SecretRef: "cossecretdata-" + req.Name,
-				MountSpec: learner.VolumeMountSpec{MountPath: getValue(learnerEnvVars, "DATA_DIR"), SubPath: ""}, CacheSize: strconv.Itoa(cacheSize), DiskFree: strconv.Itoa(diskFree)}
+			volumesStruct.TrainingData = &learner.COSVolume{
+				VolumeType: dataStoreType,
+				ID: "cosinputmount-" + req.Name,
+				Region: region,
+				Bucket: req.EnvVars["DATA_STORE_OBJECTID"],
+				Endpoint: req.EnvVars["DATA_STORE_AUTHURL"],
+				SecretRef: "cossecretdata-" + req.Name,
+				MountSpec: learner.VolumeMountSpec {
+					MountPath: getValue(learnerEnvVars, "DATA_DIR"),
+					SubPath: "",
+				},
+				CacheSize: strconv.Itoa(cacheSize),
+				DiskFree: strconv.Itoa(diskFree),
+			}
 		} else if dataStoreType == learner.DataStoreHostMountVolume {
 			hostPath := req.EnvVars["DATA_STORE_PATH"]
 			// The variable the learner will get is the concatenated mount path from envvars.go
@@ -250,14 +261,19 @@ func volumesForLearner(req *service.JobDeploymentRequest, learnerEnvVars []v1cor
 			// drop the "/mnt/results" part of the path and only keep the bucket name
 			_, resultBucketName := path.Split(resultBucketDir)
 			volumesStruct.ResultsDir = &learner.COSVolume{
+				VolumeType: resultStoreType,
 				ID:        "cosoutputmount-" + req.Name,
 				Region:    region,
 				Bucket:    resultBucketName,
 				Endpoint:  req.EnvVars["RESULT_STORE_AUTHURL"],
 				SecretRef: "cossecretresults-" + req.Name,
-				MountSpec: learner.VolumeMountSpec{MountPath: resultBucketDir, SubPath: ""},
+				MountSpec: learner.VolumeMountSpec{
+					MountPath: resultBucketDir,
+					SubPath:   "",
+				},
 				CacheSize: "0",
-				DiskFree:  "2048"}
+				DiskFree:  "2048",
+			}
 		} else if resultStoreType == learner.DataStoreHostMountVolume {
 			hostPath := req.EnvVars["RESULT_STORE_PATH"]
 			// The variable the learner will get is the concatenated mount path from envvars.go
@@ -312,9 +328,14 @@ func volumesForHelper(req *service.JobDeploymentRequest, logr *logger.LocLogging
 
 	} else if useDynamicExternalVolume {
 		sharedVolumeClaim := constructVolumeClaim(req.Name, config.GetLearnerNamespace(), volumeSize, map[string]string{"training_id": req.TrainingId})
-		logr.Infof("Using dynamic external volume for Training %s with name %s", req.TrainingId, sharedVolumeClaim.Name)
-		volumesStruct.SharedSplitLearnerHelperVolume = &helper.SharedNFSVolume{Name: "jobdata", PVCClaimName: sharedVolumeClaim.Name, PVC: sharedVolumeClaim,
-			MountSpec: helper.VolumeMountSpec{MountPath: PodLevelJobDir, SubPath: req.TrainingId}}
+		if sharedVolumeClaim != nil {
+			logr.Infof("Using dynamic external volume for Training %s with name %s", req.TrainingId, sharedVolumeClaim.Name)
+			volumesStruct.SharedSplitLearnerHelperVolume = &helper.SharedNFSVolume{Name: "jobdata", PVCClaimName: sharedVolumeClaim.Name, PVC: sharedVolumeClaim,
+				MountSpec: helper.VolumeMountSpec{MountPath: PodLevelJobDir, SubPath: req.TrainingId}}
+		} else {
+			logr.Errorf("Can't construct volume claim for Training %s with name %s", req.TrainingId, req.Name)
+
+		}
 	}
 	return volumesStruct
 }
@@ -349,10 +370,14 @@ func (t *training) constructAuxillaryContainers() []v1core.Container {
 	if !learnerDefn.mountTrainingDataStoreInLearner {
 		helperContainers = append(helperContainers, constructLoadTrainingDataContainer(helperDefn.sharedVolumeMount, helperDefn.sharedEnvVars))
 	}
+	logr := logger.LocLogger(logger.LogServiceBasic(logger.LogkeyLcmService))
 	if !learnerDefn.mountResultsStoreInLearner {
+		logr.Info("learnerDefn.mountResultsStoreInLearner is false, creating extra helper containers")
 		helperContainers = append(helperContainers, constructLoadModelContainer(helperDefn.sharedVolumeMount, helperDefn.sharedEnvVars))
 		helperContainers = append(helperContainers, constructStoreResultsContainer(helperDefn.sharedVolumeMount, helperDefn.sharedEnvVars))
 		helperContainers = append(helperContainers, constructStoreLogsContainer(helperDefn.sharedVolumeMount, helperDefn.sharedEnvVars))
+	} else {
+		logr.Info("learnerDefn.mountResultsStoreInLearner is true")
 	}
 	return helperContainers
 }

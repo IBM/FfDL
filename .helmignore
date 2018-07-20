@@ -23,4 +23,8 @@ cli/
 community/
 persistentvol/
 design/
+demos/
 list/
+mybucket/
+persistentvol/
+storage-plugin/
