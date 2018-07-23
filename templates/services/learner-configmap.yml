@@ -31,10 +31,10 @@ data:
   tensorflow_gpu_1.4.0-gpu_CURRENT: manual
   tensorflow_cpu_1.4.0_CURRENT: manual
   tensorflow_cpu_1.4.0-py3_CURRENT: manual
-  tensorflow_gpu_1.3.0-gpu-py3_CURRENT: manual
-  tensorflow_gpu_1.3.0-gpu_CURRENT: manual
-  tensorflow_cpu_1.3.0_CURRENT: manual
-  tensorflow_cpu_1.3.0-py3_CURRENT: manual
+  tensorflow_gpu_1.9.0-gpu-py3_CURRENT: manual
+  tensorflow_gpu_1.9.0-gpu_CURRENT: manual
+  tensorflow_cpu_1.9.0_CURRENT: manual
+  tensorflow_cpu_1.9.0-py3_CURRENT: manual
   h2o3_cpu_latest_CURRENT: manual
   caffe_cpu_cpu_CURRENT: master-39
   caffe_gpu_gpu_CURRENT: master-39
@@ -45,8 +45,8 @@ data:
   caffe2_gpu_c2v0.8.1.cuda8.cudnn7.ubuntu16.04_CURRENT: master-39
   caffe2_cpu_c2v0.8.0.cpu.full.ubuntu16.04_CURRENT: master-39
   caffe2_gpu_latest_CURRENT: master-39
-  horovod_gpu_0.13.4-tf1.8.0-torch0.4.0-py3.5_CURRENT: manual
-  horovod_gpu_0.13.4-tf1.8.0-torch0.4.0-py2.7_CURRENT: manual
+  horovod_gpu_0.13.10-tf1.9.0-torch0.4.0-py3.5_CURRENT: manual
+  horovod_gpu_0.13.10-tf1.9.0-torch0.4.0-py2.7_CURRENT: manual
 ---
 
 apiVersion: v1
