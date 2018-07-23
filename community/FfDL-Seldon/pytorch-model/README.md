@@ -1,5 +1,10 @@
 # PyTorch MNIST Classifier
 
+# Assumptions
+
+ * You have installed [seldon-core](https://github.com/SeldonIO/seldon-core/blob/master/docs/install.md) on you FfDL cluster.
+
+
 # Train Model
 
 Train the [pyTorch MNIST model](https://github.com/IBM/FfDL/tree/master/etc/examples/pytorch-model) following the steps in the [user guide](https://github.com/IBM/FfDL#6-detailed-testing-instructions).
