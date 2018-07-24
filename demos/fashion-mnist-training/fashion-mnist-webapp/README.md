@@ -10,7 +10,7 @@ The webapp is designed to take images that are uploaded, display them on the web
   ```
 
 2. Modify deployment resource from the template `fashion-mnist-webapp.yaml`. You need to set:
-  * `MODEL_ENDPOINT`: Your Seldon model endpoint. (e.g. http://<AMBASSADOR_API_IP>/seldon/<modelDeploymentName>/api/v0.1/predictions") The `AMBASSADOR_API_IP` is your `seldon-core-ambassador`'s service endpoint which by default is exposed with NodePort.
+  * `MODEL_ENDPOINT`: Your Seldon model endpoint. (e.g. http://<AMBASSADOR_API_IP>/seldon/<Model_Deployment_Name>/api/v0.1/predictions) The `AMBASSADOR_API_IP` is your `seldon-core-ambassador`'s service endpoint which by default is exposed with NodePort.
   * `image` : Your web app image at DockerHub
 
 3. Congratulations, your web app should be running now. You can use the following commands to check where your web app is hosted.
