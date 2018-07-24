@@ -449,52 +449,26 @@ test-push-data-s3:      ## Test
 	@# Pushes test data to S3 buckets.
 	@echo Pushing test data.
 	@s3_ip=$$(make --no-print-directory kubernetes-ip); \
-			export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}; \
-			export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}; \
-			export AWS_DEFAULT_REGION=us-east-1; \
-        	s3cmd="aws --endpoint-url=${AWS_URL} s3"; \
-        	$$s3cmd mb s3://tf_training_data ; \
-        	$$s3cmd mb s3://tf_trained_model ; \
-        	$$s3cmd mb s3://mnist_lmdb_data ; \
-        	$$s3cmd mb s3://dlaas-trained-models ; \
-        	for file in t10k-images-idx3-ubyte.gz t10k-labels-idx1-ubyte.gz train-images-idx3-ubyte.gz train-labels-idx1-ubyte.gz; do \
-               		test -e $(TMPDIR)/$$file || wget -q -O $(TMPDIR)/$$file http://yann.lecun.com/exdb/mnist/$$file; \
-               		$$s3cmd cp $(TMPDIR)/$$file s3://tf_training_data/$$file ; \
-        	done; \
-        	for phase in train test; do \
-               		for file in data.mdb lock.mdb; do \
-                      		tmpfile=$(TMPDIR)/$$phase.$$file; \
-                      		test -e $$tmpfile || wget -q -O $$tmpfile https://github.com/albarji/caffe-demos/raw/master/mnist/mnist_"$$phase"_lmdb/$$file; \
-                      		$$s3cmd cp $$tmpfile s3://mnist_lmdb_data/$$phase/$$file ; \
-               		done; \
-        	done;
-	@echo "Done uploading data to S3"
-
-test-push-data-cos:      ## Push data to cloud object store
-	@# Pushes test data to S3 buckets.
-	@echo Pushing test data.
-	@s3_ip=$$(make --no-print-directory kubernetes-ip); \
         	s3_port=$$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}'); \
         	s3_url=http://$$s3_ip:$$s3_port; \
-					export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}; export AWS_DEFAULT_REGION=us-east-1; \
-        	s3cmd="aws --endpoint-url=${AWS_URL}"; \
-        	$$s3cmd mb s3://dlaas-ci-tf-training-data ; \
-        	$$s3cmd mb s3://dlaas-ci-trained-results-tf-training-data ; \
-        	$$s3cmd mb s3://mnist_lmdb_data ; \
-        	$$s3cmd mb s3://dlaas-ci-trained-results-tf-training-data ; \
+					export AWS_ACCESS_KEY_ID=test; export AWS_SECRET_ACCESS_KEY=test; export AWS_DEFAULT_REGION=us-east-1; \
+        	s3cmd="aws --endpoint-url=$$s3_url s3"; \
+        	$$s3cmd mb s3://tf_training_data > /dev/null; \
+        	$$s3cmd mb s3://tf_trained_model > /dev/null; \
+        	$$s3cmd mb s3://mnist_lmdb_data > /dev/null; \
+        	$$s3cmd mb s3://dlaas-trained-models > /dev/null; \
         	for file in t10k-images-idx3-ubyte.gz t10k-labels-idx1-ubyte.gz train-images-idx3-ubyte.gz train-labels-idx1-ubyte.gz; do \
                		test -e $(TMPDIR)/$$file || wget -q -O $(TMPDIR)/$$file http://yann.lecun.com/exdb/mnist/$$file; \
-               		$$s3cmd cp $(TMPDIR)/$$file s3://tf_training_data/$$file ; \
+               		$$s3cmd cp $(TMPDIR)/$$file s3://tf_training_data/$$file > /dev/null; \
         	done; \
         	for phase in train test; do \
                		for file in data.mdb lock.mdb; do \
                       		tmpfile=$(TMPDIR)/$$phase.$$file; \
                       		test -e $$tmpfile || wget -q -O $$tmpfile https://github.com/albarji/caffe-demos/raw/master/mnist/mnist_"$$phase"_lmdb/$$file; \
-                      		$$s3cmd cp $$tmpfile s3://mnist_lmdb_data/$$phase/$$file ; \
+                      		$$s3cmd cp $$tmpfile s3://mnist_lmdb_data/$$phase/$$file > /dev/null; \
                		done; \
         	done;
 	@echo "Done uploading data to S3"
-
 
 test-push-data-hostmount:      ## Test
 	@# Pushes test data to S3 buckets.
@@ -583,7 +557,7 @@ test-submit:      ## Submit test training job
                 s3_ip=$$(kubectl get po/storage-0 -o=jsonpath='{.status.hostIP}'); \
 		s3_port=$$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}'); \
 		./bin/escape_for_sed.sh ${AWS_URL}; \
-		s3_url=$$(./escape_for_sed.sh ${AWS_URL}); \
+		s3_url=$$(./bin/escape_for_sed.sh ${AWS_URL}); \
 		echo "s3_url=$${s3_url}"; \
 		echo "Submitting example training job ($(TEST_SAMPLE))"; \
 		restapi_port=$$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}'); \
