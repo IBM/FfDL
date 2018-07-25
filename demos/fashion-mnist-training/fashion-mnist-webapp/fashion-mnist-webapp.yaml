@@ -20,7 +20,7 @@ spec:
         env:
           - name: MODEL_ENDPOINT
             # Put down your Seldon model endpoint
-            value: <your Seldon model endpoint hosted on AMBASSADOR_API_IP>
+            value: http://<PUBLIC_IP:AMBASSADOR_API_NODEPORT>/seldon/<Model_Deployment_Name>/api/v0.1/predictions
         ports:
         - containerPort: 8088
 ---
