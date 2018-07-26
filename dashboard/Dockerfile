@@ -11,7 +11,7 @@ WORKDIR /ffdl/ffdl-dashboard
 RUN npm config set user 0
 RUN npm config set unsafe-perm true
 # install global dependencies
-RUN npm install --quiet -g @angular/cli
+RUN npm install --quiet -g @angular/cli@6.0.8
 RUN npm install --quiet -g http-server
 
 # set non-root user
