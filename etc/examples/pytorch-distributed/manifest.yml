@@ -45,8 +45,8 @@ data_stores:
 # version: The version of the framework to be used
 # command: The command to initiate training
 framework:
-  name: custom
-  version: "tomcli/pytorch:latest"
+  name: pytorch
+  version: "latest"
   command: python train_dist_ffdl.py --batch_size 1024
 
 # Setup for Graphics that will be plotted within FfDL UI
