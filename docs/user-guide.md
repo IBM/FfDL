@@ -25,15 +25,15 @@ Currently, Fabric for Deep Learning supports following community frameworks
 
 | Framework     | Versions      | Processing Unit |
 | ------------- | ------------- | --------------- |
-| [tensorflow](https://hub.docker.com/r/tensorflow/tensorflow/)    | 1.3.0, 1.3.0-py3, 1.4.0, 1.4.0-py3, 1.5.0, 1.5.0-py3, 1.5.1, 1.5.1-py3, 1.6.0, 1.6.0-py3, 1.7.0, 1.7.0-py3, 1.8.0, 1.8.0-py3, latest, latest-py3 | CPU |
-| [tensorflow](https://hub.docker.com/r/tensorflow/tensorflow/)    | 1.3.0-gpu, 1.3.0-gpu-py3, 1.4.0-gpu, 1.4.0-gpu-py3, 1.5.0-gpu, 1.5.0-gpu-py3, 1.5.1-gpu, 1.5.1-gpu-py3, 1.6.0-gpu, 1.6.0-gpu-py3, 1.7.0-gpu, 1.7.0-gpu-py3, 1.8.0-gpu, 1.8.0-gpu-py3, latest-gpu, latest-gpu-py3 | GPU |
+| [tensorflow](https://hub.docker.com/r/tensorflow/tensorflow/)    | 1.4.0, 1.4.0-py3, 1.5.0, 1.5.0-py3, 1.5.1, 1.5.1-py3, 1.6.0, 1.6.0-py3, 1.7.0, 1.7.0-py3, 1.8.0, 1.8.0-py3, 1.9.0, 1.9.0-py3, latest, latest-py3 | CPU |
+| [tensorflow](https://hub.docker.com/r/tensorflow/tensorflow/)    | 1.4.0-gpu, 1.4.0-gpu-py3, 1.5.0-gpu, 1.5.0-gpu-py3, 1.5.1-gpu, 1.5.1-gpu-py3, 1.6.0-gpu, 1.6.0-gpu-py3, 1.7.0-gpu, 1.7.0-gpu-py3, 1.8.0-gpu, 1.8.0-gpu-py3, 1.9.0-gpu, 1.9.0-gpu-py3, latest-gpu, latest-gpu-py3 | GPU |
 | [caffe](https://hub.docker.com/r/bvlc/caffe/)         | cpu, intel   | CPU |
 | [caffe](https://hub.docker.com/r/bvlc/caffe/)         | gpu           | GPU |
 | [pytorch](https://hub.docker.com/r/pytorch/pytorch/)       | v0.2, latest | CPU, GPU |
 | [caffe2](https://hub.docker.com/r/caffe2ai/caffe2/)        | c2v0.8.1.cpu.full.ubuntu14.04, c2v0.8.0.cpu.full.ubuntu16.04 | CPU |
 | [caffe2](https://hub.docker.com/r/caffe2ai/caffe2/)        | c2v0.8.1.cuda8.cudnn7.ubuntu16.04, latest | GPU |
 | [h2o3](https://hub.docker.com/r/opsh2oai/h2o3-ffdl/)    | latest | CPU |
-| [horovod](https://hub.docker.com/r/uber/horovod/)       | 0.13.4-tf1.8.0-torch0.4.0-py3.5, 0.13.4-tf1.8.0-torch0.4.0-py2.7 | CPU, GPU |
+| [horovod](https://hub.docker.com/r/uber/horovod/)       | 0.13.10-tf1.9.0-torch0.4.0-py2.7, 0.13.10-tf1.9.0-torch0.4.0-py3.5 | CPU, GPU |
 
 You can deploy models based on these frameworks and then train your models using the FfDL CLI or FfDL UI.
 
