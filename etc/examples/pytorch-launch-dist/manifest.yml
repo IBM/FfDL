@@ -47,7 +47,7 @@ data_stores:
 framework:
   name: custom
   version: "tomcli/pytorch:latest"
-  command:  ./setup.sh; . env_file; python -m torch.distributed.launch --nproc_per_node=1 --nnodes=2 --node_rank=$node_rank --master_addr=$master_node --master_port=1234 train_dist_launcher.py --batch_size=1024;
+  command:  ./setup.sh; . env_file; python -m torch.distributed.launch --nproc_per_node=$NUM_GPUS --nnodes=$NUM_LEARNERS --node_rank=$node_rank --master_addr=$master_node --master_port=1234 train_dist_launcher.py --batch_size=1024;
 
 # Setup for Graphics that will be plotted within FfDL UI
 evaluation_metrics:

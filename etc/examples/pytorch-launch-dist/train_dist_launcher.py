@@ -174,5 +174,9 @@ if __name__ == "__main__":
     init_processes(local_rank, world_rank, run, batch_size, True, backend)
     print("COMPLETION TIME: " + str(time.time() - start_time))
 
-    print("Destroying Process Group")
-    torch.distributed.destroy_process_group()
+    if int(os.environ.get("LEARNER_ID")) == 1:
+        print("Destroying Process Group")
+        torch.distributed.destroy_process_group()
+    else:
+        while True:
+            time.sleep(1000000)

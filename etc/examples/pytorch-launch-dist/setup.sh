@@ -8,4 +8,5 @@ else
   done
 fi;
 export node_rank="$(($LEARNER_ID-1))"
+export NUM_GPUS=${GPU_COUNT%.*}
 printenv | sed 's/^/export /;s/=/=\"/;s/$/\"/' > env_file
