@@ -526,42 +526,44 @@ func (s *trainerService) CreateTrainingJob(ctx context.Context, req *grpc_traine
 
 	// upload model definition ZIP file to object store and set location
 	if req.ModelDefinition.Content != nil {
-		// Upload to DLaaS Object store.
-		logr.Infof("Uploading content to: %s filename: %s", s.modelsBucket, getModelZipFileName(id))
-		err := s.datastore.UploadArchive(s.modelsBucket, getModelZipFileName(id), req.ModelDefinition.Content)
-		if err != nil {
-			logr.WithError(err).Errorf("Error uploading model to object store")
-			s.metrics.uploadModelFailedCounter.With("kind", dlaasStoreKind).Add(1)
-			return nil, err
-		}
-		req.ModelDefinition.Location = fmt.Sprintf("%s/%s.zip", s.modelsBucket, id)
-		cl.Observe("uploaded model to dlaas object store: %s", req.ModelDefinition.Location)
+		if outputDatastore.Type != "mount_volume" {
+			// Upload to DLaaS Object store.
+			logr.Infof("Uploading content to: %s filename: %s", s.modelsBucket, getModelZipFileName(id))
+			err := s.datastore.UploadArchive(s.modelsBucket, getModelZipFileName(id), req.ModelDefinition.Content)
+			if err != nil {
+				logr.WithError(err).Errorf("Error uploading model to object store")
+				s.metrics.uploadModelFailedCounter.With("kind", dlaasStoreKind).Add(1)
+				return nil, err
+			}
+			req.ModelDefinition.Location = fmt.Sprintf("%s/%s.zip", s.modelsBucket, id)
+			cl.Observe("uploaded model to dlaas object store: %s", req.ModelDefinition.Location)
 
-		// Upload to user's result object store.
-		logr.Infof("Upload to user's result object store, type: %s bucket: %s", outputDatastore.Type, outputDatastore.Fields["bucket"])
-		ds, err := storage.CreateDataStore(outputDatastore.Type, outputDatastore.Connection)
-		if err != nil {
-			s.metrics.uploadModelFailedCounter.With("kind", userStoreKind).Add(1)
-			logr.WithError(err).Fatalf("Cannot create datastore for output data store %s", outputDatastore.Id)
-			return nil, err
+			// Upload to user's result object store.
+			logr.Infof("Upload to user's result object store, type: %s bucket: %s", outputDatastore.Type, outputDatastore.Fields["bucket"])
+			ds, err := storage.CreateDataStore(outputDatastore.Type, outputDatastore.Connection)
+			if err != nil {
+				s.metrics.uploadModelFailedCounter.With("kind", userStoreKind).Add(1)
+				logr.WithError(err).Fatalf("Cannot create datastore for output data store %s", outputDatastore.Id)
+				return nil, err
+			}
+			err = ds.Connect()
+			if err != nil {
+				s.metrics.uploadModelFailedCounter.With("kind", userStoreKind).Add(1)
+				logr.WithError(err).Fatalf("Cannot connect to output object store %s", outputDatastore.Id)
+				return nil, err
+			}
+			defer ds.Disconnect()
+			bucket := outputDatastore.Fields["bucket"]
+			object := fmt.Sprintf("%s/_submitted_code/model.zip", id)
+				logr.Infof("Writing to output object store: %s -> %s, length: %d", bucket, object, len(req.ModelDefinition.Content))
+			err = ds.UploadArchive(bucket, object, req.ModelDefinition.Content)
+			if err != nil {
+				s.metrics.uploadModelFailedCounter.With("kind", userStoreKind).Add(1)
+				logr.WithError(err).Errorf("Error uploading model to output object store")
+				return nil, err
+			}
+			cl.Observe("uploaded model to user's object store")
 		}
-		err = ds.Connect()
-		if err != nil {
-			s.metrics.uploadModelFailedCounter.With("kind", userStoreKind).Add(1)
-			logr.WithError(err).Fatalf("Cannot connect to output object store %s", outputDatastore.Id)
-			return nil, err
-		}
-		defer ds.Disconnect()
-		bucket := outputDatastore.Fields["bucket"]
-		object := fmt.Sprintf("%s/_submitted_code/model.zip", id)
-		logr.Infof("Writing to output object store: %s -> %s, length: %d", bucket, object, len(req.ModelDefinition.Content))
-		err = ds.UploadArchive(bucket, object, req.ModelDefinition.Content)
-		if err != nil {
-			s.metrics.uploadModelFailedCounter.With("kind", userStoreKind).Add(1)
-			logr.WithError(err).Errorf("Error uploading model to output object store")
-			return nil, err
-		}
-		cl.Observe("uploaded model to user's object store")
 	}
 
 	// create a copy of the model definition without the content field (do not store it to the database)

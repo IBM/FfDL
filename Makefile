@@ -358,36 +358,36 @@ minikube:         ## Configure Minikube (local Kubernetes)
   ifeq ($(filter $(UNAME),Linux Darwin),)
 	@echo "Sorry, currently only supported for Mac OS and Linux"; exit 1
   endif
-	@which minikube > /dev/null || (echo Please install Minikube; exit 1)
-	@minikube ip > /dev/null 2>&1 || ( \
+	@which minikube || (echo Please install Minikube; exit 1)
+	@sudo minikube ip 2>&1 || ( \
 		echo "Starting up Minikube"; \
-		minikube start --insecure-registry 9.0.0.0/8 --insecure-registry 10.0.0.0/8 \
+		sudo minikube start --insecure-registry 9.0.0.0/8 --insecure-registry 10.0.0.0/8 \
 				--cpus $(MINIKUBE_CPUS) \
 				--memory $(MINIKUBE_RAM) \
-				--vm-driver=$(MINIKUBE_DRIVER) --apiserver-ips 127.0.0.1 --apiserver-name localhost > /dev/null; \
+				--vm-driver=$(MINIKUBE_DRIVER) --apiserver-ips 127.0.0.1 --apiserver-name localhost ; \
 		sleep 5; \
 	)
 	@set -o verbose; \
-	minikube ip > /dev/null 2>&1 && ( \
+	sudo minikube ip 2>&1 && ( \
 		if [ "$(SET_LOCAL_ROUTES)" == "1" ]; then \
 			echo "Update local network routes, using '$(MINIKUBE_BRIDGE)' as network bridge (you may be prompted for your sudo password)"; \
 			if [ "$(UNAME)" == "Linux" ]; then \
 				sudo route -n add -net 10.0.0.0/24 gw $(minikube ip); \
 			elif [ "$(UNAME)" == "Darwin" ]; then \
-				sudo route -n delete 10.0.0.0/24 > /dev/null 2>&1; \
-				sudo route -n add 10.0.0.0/24 $$(minikube ip) > /dev/null 2>&1; \
+				sudo route -n delete 10.0.0.0/24 2>&1; \
+				sudo route -n add 10.0.0.0/24 $$(minikube ip) 2>&1; \
 				member_interface=$$(ifconfig $(MINIKUBE_BRIDGE) | grep member | awk '{print $$2}' | head -1); \
 				if [ "$$member_interface" != "" ]; then sudo ifconfig $(MINIKUBE_BRIDGE) -hostfilter $$member_interface; fi; \
 			fi; \
 			kubectl get configmap/kube-dns --namespace kube-system -o yaml > /tmp/kube-dns.cfg; \
-			grep upstreamNameservers /tmp/kube-dns.cfg > /dev/null || (echo 'data:' >> /tmp/kube-dns.cfg; \
+			grep upstreamNameservers /tmp/kube-dns.cfg || (echo 'data:' >> /tmp/kube-dns.cfg; \
 				echo '  upstreamNameservers: '"'"'["8.8.8.8"]'"'" >> /tmp/kube-dns.cfg); \
-			kubectl replace -f /tmp/kube-dns.cfg > /dev/null; \
+			kubectl replace -f /tmp/kube-dns.cfg; \
 		fi; \
 	)
 
 minikube-undo:    ## Revert changes applied by the "minikube" target (e.g., local network routes)
-	@minikube ip > /dev/null 2>&1 && ( \
+	@sudo minikube ip > /dev/null 2>&1 && ( \
 		sudo route -n delete 10.0.0.0/24 > /dev/null 2>&1; \
 	) || true
 
@@ -480,7 +480,11 @@ test-push-data-hostmount:      ## Test
         	sudo mkdir /cosdata/local-dlaas-ci-tf-training-data; \
         	sudo mkdir /cosdata/mnist_lmdb_data; \
         	sudo mkdir /cosdata/local-dlaas-ci-trained-results-tf-training-data; \
+        	sudo mkdir /cosdata/local-dlaas-ci-trained-results-tf-training-data/_submitted_code; \
         	sudo chmod 777 -R /cosdata ; \
+			sudo apt-get install zip > /dev/null; \
+			rm /cosdata/local-dlaas-ci-trained-results-tf-training-data/_submitted_code/model.zip > /dev/null; \
+			(cd etc/examples/$(TEST_SAMPLE); zip -r /cosdata/local-dlaas-ci-trained-results-tf-training-data/_submitted_code/model.zip .); \
         	for file in t10k-images-idx3-ubyte.gz t10k-labels-idx1-ubyte.gz train-images-idx3-ubyte.gz train-labels-idx1-ubyte.gz; do \
                		test -e $(TMPDIR)/$$file || wget -q -O $(TMPDIR)/$$file http://yann.lecun.com/exdb/mnist/$$file; \
                		cp $(TMPDIR)/$$file /cosdata/local-dlaas-ci-tf-training-data; \
@@ -495,7 +499,7 @@ test-push-data-hostmount:      ## Test
         	done;
 
 test-submit-minikube-run-test:      ## Submit test training job
-	@echo Downloading Docker images
+		@echo Downloading Docker images
 	@if [ "$(VM_TYPE)" = "minikube" ]; then \
 			eval $(minikube docker-env); docker images | grep tensorflow | grep latest > /dev/null || docker pull tensorflow/tensorflow > /dev/null; \
 		fi
@@ -506,43 +510,22 @@ test-submit-minikube-run-test:      ## Submit test training job
 		echo REST URL: $$restapi_url; \
 		export DLAAS_URL=http://$$node_ip:$$restapi_port; export DLAAS_USERNAME=$(TEST_USER); export DLAAS_PASSWORD=test; \
 		echo Executing in etc/examples/$(TEST_SAMPLE): DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$$DLAAS_USERNAME DLAAS_PASSWORD=test $(CLI_CMD) train manifest.yml . ; \
-		(cd etc/examples/$(TEST_SAMPLE); pwd; $(CLI_CMD) train manifest-hostmount.yml .); \
+        sudo rm -rf /cosdata/local-dlaas-ci-trained-results-tf-training-data/model; \
+        sudo rm -rf /cosdata/local-dlaas-ci-trained-results-tf-training-data/learner-1; \
+		(cd etc/examples/$(TEST_SAMPLE); pwd; $(CLI_CMD) train manifest-hostmount.yml . 2>&1 | tee train.log); \
+		training_id=$$(cat etc/examples/$(TEST_SAMPLE)/train.log | grep "Model ID" | cut -d " " -f 3); \
+		echo Training id: $${training_id} ; \
+		rm -f etc/examples/$(TEST_SAMPLE)/train.log ; \
 		echo Test job submitted. Track the status via '"'DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$(TEST_USER) DLAAS_PASSWORD=test $(CLI_CMD) list'"'. ; \
-		sleep 10; \
-        		(for i in $$(seq 1 5); do output=$$($(CLI_CMD) list 2>&1 | grep training-); \
-        				if echo $$output | grep 'FAILED'; then \
-        					echo 'Job failed'; exit 1; \
-        				fi; \
-        				if echo $$output | grep 'COMPLETED'; then \
-        					echo 'Job completed'; exit 0; \
-        				fi; \
-        				echo "kubectl dump objects:"; \
-        				kubectl get pod,pvc,pv,sc,deploy,svc,statefulset,secrets --show-all  -o wide ; \
-        				echo "kubectl dump secrets:"; \
-        				kubectl get secrets  -o yaml ; \
-        				echo "Dumping Statefulsets" ; \
-        				kubectl get statefulsets | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl get statefulsets '{}' -o yaml; \
-        				echo "================:"; \
-        				echo "LCM:"; \
-        				kubectl logs --selector=service=ffdl-lcm ; \
-        				echo "---------------- previous:"; \
-        				kubectl logs -p --selector=service=ffdl-lcm ; \
-        				echo "---------------- Describe:"; \
-        				kubectl describe pods --selector=service=ffdl-lcm ; \
-        				echo "================:"; \
-        				echo "Trainer:"; \
-                        kubectl get pods | grep trainer- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}'; \
-        				echo "Jobmonitor:"; \
-        				kubectl get pods | grep jobmonitor- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}'; \
-        				echo "Learner:"; \
-        				kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
-        				kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
-        				echo $$output; \
-        				sleep 60; \
-        		done; exit 1) || \
-        		($(CLI_CMD) list; \
-        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
-        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
+		(for i in $$(seq 1 500); do output=$$($(CLI_CMD) list 2>&1 | grep $${training_id}); \
+				if echo $$output | grep 'FAILED'; then echo 'Job failed'; exit 1; fi; \
+				if echo $$output | grep 'COMPLETED'; then echo 'Job completed'; exit 0; fi; \
+				echo $$output; \
+				sleep 20; \
+		done; exit 1) || \
+		($(CLI_CMD) list; \
+			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
+			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
         exit 1);
 
 test-submit-minikube-ci: test-push-data-hostmount test-submit-minikube-run-test

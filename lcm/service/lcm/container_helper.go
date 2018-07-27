@@ -421,21 +421,14 @@ func constructLearnerContainer(req *service.JobDeploymentRequest, envVars []v1co
 			cmd_exit=$? ;
 			echo "$(date): Training exit with exit code ${cmd_exit}." >> $JOB_STATE_DIR/latest-log`
 	}
-
 	//FIXME need to have the learner IDs start from 1 rather than 0
 	var cmd string
 	var doCondExitWrite = true
 	if mountResultsStoreInLearner {
 		loadModelComand := `
-			echo "Starting Training $TRAINING_ID" ;
-			echo "trying mkdir -p $MODEL_DIR" ; 
+			echo "Starting Training $TRAINING_ID"
 			mkdir -p "$MODEL_DIR" ;
-			echo "trying ls /mnt/results" ; 
-			ls /mnt/results ; 
-			echo "trying ls $RESULT_DIR" ; 
-			ls $RESULT_DIR/* ; 
-			echo "Calling unzip -nq $RESULT_DIR/_submitted_code/model.zip -d $MODEL_DIR" ; 
- 			unzip -nq "$RESULT_DIR/_submitted_code/model.zip" -d "$MODEL_DIR" `
+			unzip -nq "$RESULT_DIR/_submitted_code/model.zip" -d "$MODEL_DIR"`
 		learnerCommand := `
 			for i in ${!ALERTMANAGER*} ${!DLAAS*} ${!ETCD*} ${!GRAFANA*} ${!HOSTNAME*} ${!KUBERNETES*} ${!MONGO*} ${!PUSHGATEWAY*}; do unset $i; done;
 			export LEARNER_ID=$((${DOWNWARD_API_POD_NAME##*-} + 1)) ;
