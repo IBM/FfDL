@@ -1,3 +1,7 @@
+"""
+Distributed Learning using Pytorch's torch.distributed.launcher
+"""
+
 import time
 import argparse
 import sys
@@ -14,7 +18,6 @@ from random import Random
 from torch.multiprocessing import Process
 from torch.autograd import Variable
 from torchvision import datasets, transforms
-
 
 class Partition(object):
     """ Dataset-like object, but only access a subset of it. """
@@ -70,15 +73,14 @@ class Net(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.dropout(x, training=self.training)
         x = self.fc2(x)
-        return F.log_softmax(x)
+        return F.log_softmax(x, dim=1)
 
 
 def partition_dataset(batch_size, is_distributed):
     """ Partitioning MNIST """
-    data_path = os.environ.get("DATA_DIR") + '/data'
-    print(data_path)
+    vision_data = os.environ.get("DATA_DIR") + "/data"
     dataset = datasets.MNIST(
-        data_path,
+        vision_data,
         train=True,
         download=True,
         transform=transforms.Compose([
@@ -109,9 +111,10 @@ def average_gradients(model):
         param.grad.data /= size
 
 
-def run(rank, size, batch_size, is_gpu):
+def run(rank, world_rank, batch_size, is_gpu):
     """ Distributed Synchronous SGD Example """
     torch.manual_seed(1234)
+    size = os.environ.get("WORLD_SIZE")
     train_set, bsz = partition_dataset(batch_size, (not (size == 1)))
     # For GPU use
     if is_gpu:
@@ -136,71 +139,40 @@ def run(rank, size, batch_size, is_gpu):
             optimizer.zero_grad()
             output = model(data)
             loss = F.nll_loss(output, target)
-            epoch_loss += loss.data[0]
+            epoch_loss += loss.item()
             loss.backward()
             if not (size == 1):
                 average_gradients(model)
             optimizer.step()
-        print('Process ', rank,
+        print('Process ', world_rank,
               ', epoch ', epoch, ': ',
               epoch_loss / num_batches)
 
 # Change 'backend' to appropriate backend identifier
-def init_processes(rank, size, fn, path_to_file, batch_size, is_gpu, backend):
+def init_processes(local_rank, world_rank, fn, batch_size, is_gpu, backend):
     """ Initialize the distributed environment. """
-    print("Process " + str(rank) + " connected")
-    dist.init_process_group(backend,
-                            init_method=path_to_file,
-                            world_size=size, group_name="train_dist")
-    print("FOUND SHARED FILE")
-    fn(rank, size, batch_size, is_gpu)
+    print("World Rank: " + str(world_rank) + "  Local Rank: " + str(local_rank)  + " connected")
+    dist.init_process_group(backend, init_method="env://")
+    print("GROUP CREATED")
+    fn(local_rank, world_rank, batch_size, is_gpu)
 
-def local_process(target, args):
-    return Process(target=target, args=args)
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', help='Specify the batch size to be used in training')
+    parser.add_argument("--local_rank", type=int)
+    parser.add_argument("--batch_size", type=int)
     args = parser.parse_args()
-
+    local_rank = args.local_rank
     batch_size = args.batch_size
-    # Default batch size is set to 1024. When using a large numbers of learners, a larger batch
-    # size is sometimes necessary to see speed improvements.
-    if batch_size is None:
-        batch_size = 1024
-    else:
-        batch_size = int(batch_size)
 
+    world_rank = os.environ.get("RANK")
+
+    backend = 'gloo'
     start_time = time.time()
-    num_gpus = int(float(os.environ.get("GPU_COUNT")))
-    if num_gpus == 0:
-        world_size = int(os.environ.get("NUM_LEARNERS"))
-    else:
-        world_size = num_gpus * int(os.environ.get("NUM_LEARNERS"))
-    data_dir = "file:///job/" + os.environ.get("TRAINING_ID")
-    processes = []
-    print("data_dir is " + data_dir)
 
-    if world_size == 1:
-        run(0, 1, batch_size, (num_gpus == 1))
-        print("COMPLETION TIME: ", time.time() - start_time)
-    else:
-        if num_gpus == 0:
-            p = local_process(init_processes, (0 , world_size, run, data_dir, batch_size, False, 'gloo'))
-            p.start()
-            processes.append(p)
+    init_processes(local_rank, world_rank, run, batch_size, True, backend)
+    print("COMPLETION TIME: " + str(time.time() - start_time))
 
-        for process_num in range(0, num_gpus):
-            p = local_process(init_processes, (process_num, world_size, run, data_dir, batch_size, True, 'gloo'))
-            p.start()
-            processes.append(p)
-
-        for p in processes:
-            p.join()
-
-        print("COMPLETION TIME: ", time.time() - start_time)
-
-        if int(os.environ.get("LEARNER_ID")) != 1:
-            while True:
-                time.sleep(1000000)
+    print("Destroying Process Group")
+    torch.distributed.destroy_process_group()
