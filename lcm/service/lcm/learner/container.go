@@ -3,6 +3,7 @@ package learner
 import (
 	"github.com/IBM/FfDL/lcm/lcmconfig"
 
+	"github.com/IBM/FfDL/commons/config"
 	v1core "k8s.io/api/core/v1"
 	v1resource "k8s.io/apimachinery/pkg/api/resource"
 )
