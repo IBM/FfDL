@@ -156,7 +156,7 @@ quickstart-deploy:
 	do \
 		sleep 1; \
 	done
-	@echo "calling big command"
+	@echo "calling big command from quickstart-deploy "
 	@sleep 5;
 	@set -o verbose; \
 		existing=$$(helm list | grep ffdl | awk '{print $$1}' | head -n 1); \
@@ -268,6 +268,7 @@ deploy:           ## Deploy the services to Kubernetes
 	done
 	@echo calling big command
 	@set -o verbose; \
+		echo HELM_DEPLOY_DIR: ${HELM_DEPLOY_DIR}; \
 		mkdir -p ${HELM_DEPLOY_DIR}; \
 		cp -rf Chart.yaml values.yaml templates ${HELM_DEPLOY_DIR}; \
 		existing=$$(helm list | grep ffdl | awk '{print $$1}' | head -n 1); \
@@ -520,8 +521,29 @@ test-submit-minikube-run-test:      ## Submit test training job
 		(for i in $$(seq 1 500); do output=$$($(CLI_CMD) list 2>&1 | grep $${training_id}); \
 				if echo $$output | grep 'FAILED'; then echo 'Job failed'; exit 1; fi; \
 				if echo $$output | grep 'COMPLETED'; then echo 'Job completed'; exit 0; fi; \
+				echo "kubectl dump objects:"; \
+				kubectl get pod,pvc,pv,sc,deploy,svc,statefulset,secrets --show-all  -o wide ; \
+				echo "kubectl dump secrets:"; \
+				kubectl get secrets  -o yaml ; \
+				echo "Dumping Statefulsets" ; \
+				kubectl get statefulsets | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl get statefulsets '{}' -o yaml; \
+				echo "================:"; \
+				echo "LCM:"; \
+				kubectl logs --selector=service=ffdl-lcm ; \
+				echo "---------------- previous:"; \
+				kubectl logs -p --selector=service=ffdl-lcm ; \
+				echo "---------------- Describe:"; \
+				kubectl describe pods --selector=service=ffdl-lcm ; \
+				echo "================:"; \
+				echo "Trainer:"; \
+				kubectl get pods | grep trainer- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}'; \
+				echo "Jobmonitor:"; \
+				kubectl get pods | grep jobmonitor- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}'; \
+				echo "Learner:"; \
+				kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
+				kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
 				echo $$output; \
-				sleep 20; \
+				sleep 60; \
 		done; exit 1) || \
 		($(CLI_CMD) list; \
 			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
