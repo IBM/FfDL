@@ -44,3 +44,4 @@
 1. Implement a new module that handles creating the `volumemanage` for VCK
 2. Insert logic to provision `volumemanage` resource and monitor it for completion before executing the training job workload.
 3. To make it more elastic, we need to come up with some algorithm on how much data replicas we need for each job. Then create some labels/tags to allow users to reuse the same dataset volume.
+4. Need to figure out a shared file storage for all the learner pods (required for many distributed learning methods) and a way to store the model results for our users.
