@@ -58,7 +58,6 @@ kubectl create -f ibmc-s3fs-standard-StorageClass.yaml
 cd $GOPATH/src/github.com/IBM/FfDL/bin
 ./create_static_volumes.sh
 ./create_static_volumes_config.sh
-./create_static_volumes_v2_config.sh
 cd ..
 glide install
 make docker-build-base

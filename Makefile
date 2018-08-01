@@ -109,8 +109,7 @@ create-volumes:
 	@cd bin; \
 		./create_static_pv.sh; \
 		./create_static_volumes.sh; \
-		./create_static_volumes_config.sh; \
-		./create_static_volumes_v2_config.sh;
+		./create_static_volumes_config.sh
 
 deploy-plugin:
 	@# deploy the stack via helm
