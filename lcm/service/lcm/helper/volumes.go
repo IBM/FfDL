@@ -21,9 +21,6 @@ import (
 
 	"github.com/IBM/FfDL/commons/config"
 	v1core "k8s.io/api/core/v1"
-
-	log "github.com/sirupsen/logrus"
-	"github.com/IBM/FfDL/commons/logger"
 )
 
 //ETCDVolume ...
@@ -78,16 +75,11 @@ func (volumes Volumes) CreateETCDVolumeMount() v1core.VolumeMount {
 
 //CreateDataVolume ...
 func (volumes Volumes) CreateDataVolume() v1core.Volume {
-	logr := logger.LocLogger(log.StandardLogger().WithField(logger.LogkeyModule, logger.LogkeyLcmService))
 
 	if volumes.SharedNonSplitLearnerHelperVolume != nil {
 		//local volume is required since operating in non split mode
 		return localEmptyDirVolume(volumes.SharedNonSplitLearnerHelperVolume.Name)
 	}
-
-	logr.Debugf("calling sharedVolume(%s, %s)",
-		volumes.SharedSplitLearnerHelperVolume.Name,
-		volumes.SharedSplitLearnerHelperVolume.PVCClaimName)
 
 	//shared NFS volume is required
 	return sharedVolume(volumes.SharedSplitLearnerHelperVolume.Name, volumes.SharedSplitLearnerHelperVolume.PVCClaimName)
@@ -95,8 +87,6 @@ func (volumes Volumes) CreateDataVolume() v1core.Volume {
 
 //CreateDataVolumeMount ...
 func (volumes Volumes) CreateDataVolumeMount() v1core.VolumeMount {
-	//logr := logger.LocLogger(log.StandardLogger().WithField(logger.LogkeyModule, logger.LogkeyLcmService))
-
 	if volumes.SharedNonSplitLearnerHelperVolume != nil {
 		return localEmptyDirVolumeMount(volumes.SharedNonSplitLearnerHelperVolume.Name, volumes.SharedNonSplitLearnerHelperVolume.MountSpec.MountPath, volumes.SharedNonSplitLearnerHelperVolume.MountSpec.SubPath)
 	}

@@ -4,6 +4,7 @@ UNAME_SHORT = $(shell if [ "$(UNAME)" = "Darwin" ]; then echo 'osx'; else echo '
 SERVICES = metrics lcm trainer restapi jobmonitor
 IMAGES = metrics lcm trainer restapi jobmonitor controller databroker_objectstorage databroker_s3
 THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+HELM_DEPLOY_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))helmdeploy
 DOCKER_REPO ?= docker.io
 DOCKER_REPO_USER ?= user-test
 DOCKER_REPO_PASS ?= test
@@ -34,6 +35,7 @@ CI_KUBECTL_VERSION ?= v1.9.4
 
 AWS_ACCESS_KEY_ID ?= test
 AWS_SECRET_ACCESS_KEY ?= test
+AWS_URL ?= http:\/\/s3\.default\.svc\.cluster\.local
 
 # This will used for "volume.beta.kubernetes.io/storage-class" for the shared volume
 # Most likely "standard" in Minikube and "" in DIND, (other value is "default" or "ibmc-s3fs-standard")
@@ -57,6 +59,11 @@ endif
 
 
 # Main targets
+
+showvars:
+	@echo THIS_DIR=$(THIS_DIR); \
+	echo DEPLOY_DIR=$(DEPLOY_DIR)
+
 
 usage:            ## Show this help
 	@fgrep -h " ## " $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
@@ -102,7 +109,7 @@ create-volumes:
 	@cd bin; \
 		./create_static_pv.sh; \
 		./create_static_volumes.sh; \
-		./create_static_volumes_config.sh;
+		./create_static_volumes_config.sh
 
 deploy-plugin:
 	@# deploy the stack via helm
@@ -148,7 +155,7 @@ quickstart-deploy:
 	do \
 		sleep 1; \
 	done
-	@echo "calling big command"
+	@echo "calling big command from quickstart-deploy "
 	@sleep 5;
 	@set -o verbose; \
 		existing=$$(helm list | grep ffdl | awk '{print $$1}' | head -n 1); \
@@ -231,7 +238,6 @@ test-job-submit:      ## Submit test training job
         		($(CLI_CMD) list; \
         			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
         			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
-        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c load-data; \
         exit 1);
 
 
@@ -261,6 +267,9 @@ deploy:           ## Deploy the services to Kubernetes
 	done
 	@echo calling big command
 	@set -o verbose; \
+		echo HELM_DEPLOY_DIR: ${HELM_DEPLOY_DIR}; \
+		mkdir -p ${HELM_DEPLOY_DIR}; \
+		cp -rf Chart.yaml values.yaml templates ${HELM_DEPLOY_DIR}; \
 		existing=$$(helm list | grep ffdl | awk '{print $$1}' | head -n 1); \
 		if [ "$$CI" = "true" ]; then \
 			export helm_params='--set lcm.shared_volume_storage_class=${SHARED_VOLUME_STORAGE_CLASS},has_static_volumes=${HAS_STATIC_VOLUMES},prometheus.deploy=false,learner.docker_namespace=${DOCKER_NAMESPACE},docker.namespace=${DOCKER_NAMESPACE},learner.tag=${IMAGE_TAG},docker.pullPolicy=${DOCKER_PULL_POLICY},docker.registry=${DOCKER_REPO},trainer.version=${IMAGE_TAG},restapi.version=${IMAGE_TAG},lcm.version=${IMAGE_TAG},trainingdata.version=${IMAGE_TAG},databroker.tag=${IMAGE_TAG},databroker.version=${IMAGE_TAG},webui.version=${IMAGE_TAG}'; \
@@ -269,11 +278,11 @@ deploy:           ## Deploy the services to Kubernetes
 		fi; \
 		(if [ -z "$$existing" ]; then \
 			echo "Deploying the stack via Helm. This will take a while."; \
-			helm --debug install $$helm_params . ; \
+			helm --debug install $$helm_params ${HELM_DEPLOY_DIR} ; \
 			sleep 10; \
 		else \
 			echo "Upgrading existing Helm deployment ($$existing). This will take a while."; \
-			helm --debug upgrade $$helm_params $$existing . ; \
+			helm --debug upgrade $$helm_params $$existing ${HELM_DEPLOY_DIR} ; \
 		fi) & pid=$$!; \
 		sleep 5; \
 		while kubectl get pods --all-namespaces | \
@@ -349,36 +358,36 @@ minikube:         ## Configure Minikube (local Kubernetes)
   ifeq ($(filter $(UNAME),Linux Darwin),)
 	@echo "Sorry, currently only supported for Mac OS and Linux"; exit 1
   endif
-	@which minikube > /dev/null || (echo Please install Minikube; exit 1)
-	@minikube ip > /dev/null 2>&1 || ( \
+	@which minikube || (echo Please install Minikube; exit 1)
+	@sudo minikube ip 2>&1 || ( \
 		echo "Starting up Minikube"; \
-		minikube start --insecure-registry 9.0.0.0/8 --insecure-registry 10.0.0.0/8 \
+		sudo minikube start --insecure-registry 9.0.0.0/8 --insecure-registry 10.0.0.0/8 \
 				--cpus $(MINIKUBE_CPUS) \
 				--memory $(MINIKUBE_RAM) \
-				--vm-driver=$(MINIKUBE_DRIVER) --apiserver-ips 127.0.0.1 --apiserver-name localhost > /dev/null; \
+				--vm-driver=$(MINIKUBE_DRIVER) --apiserver-ips 127.0.0.1 --apiserver-name localhost ; \
 		sleep 5; \
 	)
 	@set -o verbose; \
-	minikube ip > /dev/null 2>&1 && ( \
+	sudo minikube ip 2>&1 && ( \
 		if [ "$(SET_LOCAL_ROUTES)" == "1" ]; then \
 			echo "Update local network routes, using '$(MINIKUBE_BRIDGE)' as network bridge (you may be prompted for your sudo password)"; \
 			if [ "$(UNAME)" == "Linux" ]; then \
 				sudo route -n add -net 10.0.0.0/24 gw $(minikube ip); \
 			elif [ "$(UNAME)" == "Darwin" ]; then \
-				sudo route -n delete 10.0.0.0/24 > /dev/null 2>&1; \
-				sudo route -n add 10.0.0.0/24 $$(minikube ip) > /dev/null 2>&1; \
+				sudo route -n delete 10.0.0.0/24 2>&1; \
+				sudo route -n add 10.0.0.0/24 $$(minikube ip) 2>&1; \
 				member_interface=$$(ifconfig $(MINIKUBE_BRIDGE) | grep member | awk '{print $$2}' | head -1); \
 				if [ "$$member_interface" != "" ]; then sudo ifconfig $(MINIKUBE_BRIDGE) -hostfilter $$member_interface; fi; \
 			fi; \
 			kubectl get configmap/kube-dns --namespace kube-system -o yaml > /tmp/kube-dns.cfg; \
-			grep upstreamNameservers /tmp/kube-dns.cfg > /dev/null || (echo 'data:' >> /tmp/kube-dns.cfg; \
+			grep upstreamNameservers /tmp/kube-dns.cfg || (echo 'data:' >> /tmp/kube-dns.cfg; \
 				echo '  upstreamNameservers: '"'"'["8.8.8.8"]'"'" >> /tmp/kube-dns.cfg); \
-			kubectl replace -f /tmp/kube-dns.cfg > /dev/null; \
+			kubectl replace -f /tmp/kube-dns.cfg; \
 		fi; \
 	)
 
 minikube-undo:    ## Revert changes applied by the "minikube" target (e.g., local network routes)
-	@minikube ip > /dev/null 2>&1 && ( \
+	@sudo minikube ip > /dev/null 2>&1 && ( \
 		sudo route -n delete 10.0.0.0/24 > /dev/null 2>&1; \
 	) || true
 
@@ -471,7 +480,11 @@ test-push-data-hostmount:      ## Test
         	sudo mkdir /cosdata/local-dlaas-ci-tf-training-data; \
         	sudo mkdir /cosdata/mnist_lmdb_data; \
         	sudo mkdir /cosdata/local-dlaas-ci-trained-results-tf-training-data; \
+        	sudo mkdir /cosdata/local-dlaas-ci-trained-results-tf-training-data/_submitted_code; \
         	sudo chmod 777 -R /cosdata ; \
+			sudo apt-get install zip > /dev/null; \
+			rm /cosdata/local-dlaas-ci-trained-results-tf-training-data/_submitted_code/model.zip > /dev/null; \
+			(cd etc/examples/$(TEST_SAMPLE); zip -r /cosdata/local-dlaas-ci-trained-results-tf-training-data/_submitted_code/model.zip .); \
         	for file in t10k-images-idx3-ubyte.gz t10k-labels-idx1-ubyte.gz train-images-idx3-ubyte.gz train-labels-idx1-ubyte.gz; do \
                		test -e $(TMPDIR)/$$file || wget -q -O $(TMPDIR)/$$file http://yann.lecun.com/exdb/mnist/$$file; \
                		cp $(TMPDIR)/$$file /cosdata/local-dlaas-ci-tf-training-data; \
@@ -486,7 +499,7 @@ test-push-data-hostmount:      ## Test
         	done;
 
 test-submit-minikube-run-test:      ## Submit test training job
-	@echo Downloading Docker images
+		@echo Downloading Docker images
 	@if [ "$(VM_TYPE)" = "minikube" ]; then \
 			eval $(minikube docker-env); docker images | grep tensorflow | grep latest > /dev/null || docker pull tensorflow/tensorflow > /dev/null; \
 		fi
@@ -497,44 +510,43 @@ test-submit-minikube-run-test:      ## Submit test training job
 		echo REST URL: $$restapi_url; \
 		export DLAAS_URL=http://$$node_ip:$$restapi_port; export DLAAS_USERNAME=$(TEST_USER); export DLAAS_PASSWORD=test; \
 		echo Executing in etc/examples/$(TEST_SAMPLE): DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$$DLAAS_USERNAME DLAAS_PASSWORD=test $(CLI_CMD) train manifest.yml . ; \
-		(cd etc/examples/$(TEST_SAMPLE); pwd; $(CLI_CMD) train manifest-hostmount.yml .); \
+        sudo rm -rf /cosdata/local-dlaas-ci-trained-results-tf-training-data/model; \
+        sudo rm -rf /cosdata/local-dlaas-ci-trained-results-tf-training-data/learner-1; \
+		(cd etc/examples/$(TEST_SAMPLE); pwd; $(CLI_CMD) train manifest-hostmount.yml . 2>&1 | tee train.log); \
+		training_id=$$(cat etc/examples/$(TEST_SAMPLE)/train.log | grep "Model ID" | cut -d " " -f 3); \
+		echo Training id: $${training_id} ; \
+		rm -f etc/examples/$(TEST_SAMPLE)/train.log ; \
 		echo Test job submitted. Track the status via '"'DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$(TEST_USER) DLAAS_PASSWORD=test $(CLI_CMD) list'"'. ; \
-		sleep 10; \
-        		(for i in $$(seq 1 5); do output=$$($(CLI_CMD) list 2>&1 | grep training-); \
-        				if echo $$output | grep 'FAILED'; then \
-        					echo 'Job failed'; exit 1; \
-        				fi; \
-        				if echo $$output | grep 'COMPLETED'; then \
-        					echo 'Job completed'; exit 0; \
-        				fi; \
-        				echo "kubectl dump objects:"; \
-        				kubectl get pod,pvc,pv,sc,deploy,svc,statefulset,secrets --show-all  -o wide ; \
-        				echo "kubectl dump secrets:"; \
-        				kubectl get secrets  -o yaml ; \
-        				echo "Dumping Statefulsets" ; \
-        				kubectl get statefulsets | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl get statefulsets '{}' -o yaml; \
-        				echo "================:"; \
-        				echo "LCM:"; \
-        				kubectl logs --selector=service=ffdl-lcm ; \
-        				echo "---------------- previous:"; \
-        				kubectl logs -p --selector=service=ffdl-lcm ; \
-        				echo "---------------- Describe:"; \
-        				kubectl describe pods --selector=service=ffdl-lcm ; \
-        				echo "================:"; \
-        				echo "Trainer:"; \
-                        kubectl get pods | grep trainer- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}'; \
-        				echo "Jobmonitor:"; \
-        				kubectl get pods | grep jobmonitor- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}'; \
-        				echo "Learner:"; \
-        				kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
-        				kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
-        				echo $$output; \
-        				sleep 60; \
-        		done; exit 1) || \
-        		($(CLI_CMD) list; \
-        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
-        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
-        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c load-data; \
+		(for i in $$(seq 1 500); do output=$$($(CLI_CMD) list 2>&1 | grep $${training_id}); \
+				if echo $$output | grep 'FAILED'; then echo 'Job failed'; exit 1; fi; \
+				if echo $$output | grep 'COMPLETED'; then echo 'Job completed'; exit 0; fi; \
+				echo "kubectl dump objects:"; \
+				kubectl get pod,pvc,pv,sc,deploy,svc,statefulset,secrets --show-all  -o wide ; \
+				echo "kubectl dump secrets:"; \
+				kubectl get secrets  -o yaml ; \
+				echo "Dumping Statefulsets" ; \
+				kubectl get statefulsets | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl get statefulsets '{}' -o yaml; \
+				echo "================:"; \
+				echo "LCM:"; \
+				kubectl logs --selector=service=ffdl-lcm ; \
+				echo "---------------- previous:"; \
+				kubectl logs -p --selector=service=ffdl-lcm ; \
+				echo "---------------- Describe:"; \
+				kubectl describe pods --selector=service=ffdl-lcm ; \
+				echo "================:"; \
+				echo "Trainer:"; \
+				kubectl get pods | grep trainer- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}'; \
+				echo "Jobmonitor:"; \
+				kubectl get pods | grep jobmonitor- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}'; \
+				echo "Learner:"; \
+				kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
+				kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
+				echo $$output; \
+				sleep 60; \
+		done; exit 1) || \
+		($(CLI_CMD) list; \
+			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
+			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
         exit 1);
 
 test-submit-minikube-ci: test-push-data-hostmount test-submit-minikube-run-test
@@ -548,7 +560,9 @@ test-submit:      ## Submit test training job
 	@node_ip=$$(make --no-print-directory kubernetes-ip); \
                 s3_ip=$$(kubectl get po/storage-0 -o=jsonpath='{.status.hostIP}'); \
 		s3_port=$$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}'); \
-		s3_url=http://$$s3_ip:$$s3_port; \
+		./bin/escape_for_sed.sh ${AWS_URL}; \
+		s3_url=$$(./bin/escape_for_sed.sh ${AWS_URL}); \
+		echo "s3_url=$${s3_url}"; \
 		echo "Submitting example training job ($(TEST_SAMPLE))"; \
 		restapi_port=$$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}'); \
 		restapi_url=http://$$node_ip:$$restapi_port; \
@@ -556,23 +570,26 @@ test-submit:      ## Submit test training job
 		export DLAAS_URL=http://$$node_ip:$$restapi_port; export DLAAS_USERNAME=$(TEST_USER); export DLAAS_PASSWORD=test; \
 		echo Executing in etc/examples/$(TEST_SAMPLE): DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$$DLAAS_USERNAME DLAAS_PASSWORD=test $(CLI_CMD) train manifest.yml . ; \
 		cp etc/examples/tf-model/manifest.yml etc/examples/tf-model/manifest_testrun.yml ; \
-		sed -i '' -e "s/user_name: test/user_name: ${AWS_ACCESS_KEY_ID}/g" etc/examples/tf-model/manifest_testrun.yml ; \
-		sed -i '' -e "s/password: test/password: ${AWS_SECRET_ACCESS_KEY}/g" etc/examples/tf-model/manifest_testrun.yml ; \
-		cat etc/examples/tf-model/manifest_testrun.yml ; \
-		(cd etc/examples/$(TEST_SAMPLE); pwd; $(CLI_CMD) train manifest_testrun.yml .); \
-		rm -f etc/examples/tf-model/manifest_testrun.yml ; \
+		sed -i -e "s/user_name: test/user_name: ${AWS_ACCESS_KEY_ID}/g" etc/examples/tf-model/manifest_testrun.yml ; \
+		sed -i -e "s/password: test/password: ${AWS_SECRET_ACCESS_KEY}/g" etc/examples/tf-model/manifest_testrun.yml ; \
+		sed -i "s/auth_url:\stest/auth_url: $${s3_url}/g" etc/examples/tf-model/manifest_testrun.yml ; \
+		# cat etc/examples/tf-model/manifest_testrun.yml ; \
+		(cd etc/examples/$(TEST_SAMPLE); pwd; $(CLI_CMD) train manifest_testrun.yml . 2>&1 | tee train.log); \
+		training_id=$$(cat etc/examples/$(TEST_SAMPLE)/train.log | grep "Model ID" | cut -d " " -f 3); \
+		echo Training id: $${training_id} ; \
+		rm -f etc/examples/$(TEST_SAMPLE)/train.log ; \
+		rm -f etc/examples/$(TEST_SAMPLE)/manifest_testrun.yml ; \
 		echo Test job submitted. Track the status via '"'DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$(TEST_USER) DLAAS_PASSWORD=test $(CLI_CMD) list'"'. ; \
 		sleep 10; \
-        		(for i in $$(seq 1 50); do output=$$($(CLI_CMD) list 2>&1 | grep training-); \
-        				if echo $$output | grep 'FAILED'; then echo 'Job failed'; exit 1; fi; \
-        				if echo $$output | grep 'COMPLETED'; then echo 'Job completed'; exit 0; fi; \
-        				echo $$output; \
-        				sleep 20; \
-        		done; exit 1) || \
-        		($(CLI_CMD) list; \
-        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
-        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
-        			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c load-data; \
+		(for i in $$(seq 1 500); do output=$$($(CLI_CMD) list 2>&1 | grep $${training_id}); \
+				if echo $$output | grep 'FAILED'; then echo 'Job failed'; exit 1; fi; \
+				if echo $$output | grep 'COMPLETED'; then echo 'Job completed'; exit 0; fi; \
+				echo $$output; \
+				sleep 20; \
+		done; exit 1) || \
+		($(CLI_CMD) list; \
+			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl describe pod '{}'; \
+			kubectl get pods | grep learner- | awk '{print $$1}' | xargs -I '{}' kubectl logs '{}' -c learner; \
         exit 1);
 
 test-localmount-submit:      ## Submit test training job
@@ -611,10 +628,9 @@ test-s3:
 	node_ip=$$(make --no-print-directory kubernetes-ip); \
 	s3_port=$$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}'); \
 	s3_url=http://$$node_ip:$$s3_port; \
-	s3_url="https://s3.us-west.objectstorage.uat.softlayer.net"; \
+	s3_url=${AWS_URL}; \
 	export AWS_DEFAULT_REGION=us-west-1; \
-	s3cmd="aws --endpoint-url=$$s3_url s3"; \
-	echo "s3cmd=$$s3cmd"; \
+	s3cmd="aws --endpoint-url=${AWS_URL} s3" ; \
 	$$s3cmd ls
 
 

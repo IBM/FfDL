@@ -357,6 +357,14 @@ message Framework {
     string name = 1;
     string version = 2;
     string image_tag = 3; // Optional: tag used for learner testing
+    ImageLocation image_location = 4; // Optional: non-standard location for learner image
+}
+
+message ImageLocation {
+    string registry = 1; // the server name for the docker registry
+    string namespace = 2; // namespace within the registry
+    string access_token = 3; // Token used to access images stored in the registry+namespace
+    string email = 4; // Email address associated with the account
 }
 
 message Training {

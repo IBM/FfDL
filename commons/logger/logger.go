@@ -131,6 +131,7 @@ func FileInfoFindGood() string {
 		if strings.Contains(file, "runtime/extern.go") {
 			continue
 		}
+		// FfDL Change: Not sure if this can be handled in a common way.  Moot point once DLaaS is based on FfDL.
 		if strings.Contains(file, "logger/logger.go") {
 			continue
 		}
@@ -164,6 +165,7 @@ func FileInfoFindGood() string {
 	return fmt.Sprintf("%s:%d %s -", file, line, funcName)
 }
 
+// FfDL Change: Because it's useful
 func LogStackTrace() {
 	pc := make([]uintptr, 30)
 	stackDepth := runtime.Callers(0, pc)

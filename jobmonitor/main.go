@@ -20,9 +20,10 @@ import (
 	"strconv"
 
 	"github.com/IBM/FfDL/commons/config"
-	jobM "github.com/IBM/FfDL/jobmonitor/jobmonitor"
 	"github.com/IBM/FfDL/commons/logger"
 	"github.com/IBM/FfDL/commons/metricsmon"
+	"github.com/IBM/FfDL/commons/util"
+	jobM "github.com/IBM/FfDL/jobmonitor/jobmonitor"
 
 	"os"
 	"time"
@@ -46,18 +47,23 @@ func main() {
 	jm, err := jobM.NewJobMonitor(trainingID, userID, numLearners, jobName, useNativeDistribution, statsdClient, logr)
 
 	if err != nil {
-		logr.WithError(err).Errorf("Failed to bring up job monitor for training %s, giving up and restarting", trainingID)
-		statsdClient.NewCounter("jobmonitor.restarts", 1).Add(1)
-		panic(err)
+		logr.WithError(err).Errorf("failed to bring up job monitor for training %s, already must have signaled to kill the jm", trainingID)
+	} else {
+		logr.Infof("Job Monitor instantiated and ready to go. Starting to manage %s", jm.TrainingID)
+
+		go jm.ManageDistributedJob(logr)
+
+		util.HandleOSSignals(func() {
+			logr.Warningln(" ###### shutting down job monitor ###### ")
+			jm.EtcdClient.Close(logr)
+
+		})
+
+		//This seems to be the only way to prevent the container from exiting.
+		//JobMonitor is not a service. In the LCM we can use service.Start() to keep the container from exiting.
+		for true {
+			time.Sleep(600 * time.Second)
+		}
 	}
 
-	logr.Infof("Job Monitor instantiated and ready to go. Starting to manage %s", jm.TrainingID)
-
-	go jm.ManageDistributedJob(logr)
-
-	//This seems to be the only way to prevent the container from exiting.
-	//JobMonitor is not a service. In the LCM we can use service.Start() to keep the container from exiting.
-	for true {
-		time.Sleep(600 * time.Second)
-	}
 }

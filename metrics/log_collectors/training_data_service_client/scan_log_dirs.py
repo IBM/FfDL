@@ -315,7 +315,8 @@ class LogScanner:
                                 runner.start()
 
                 time.sleep(.5)
-
+                if states.is_learner_done() and states.global_scanner_count == 0:
+                    break
             except Exception as inst:
                 self.logger.error("Error thrown (recovering): %r", sys.exc_info()[0])
 

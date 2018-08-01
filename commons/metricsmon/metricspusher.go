@@ -28,6 +28,7 @@ import (
 	"github.com/sony/gobreaker"
 )
 
+//StartMetricsPusher ...
 func StartMetricsPusher(label string, interval time.Duration, url string) chan struct{} {
 	log.Info("Starting code to push out metrics")
 	quit := make(chan struct{})
@@ -74,10 +75,11 @@ func pushMetrics(job string, url string) error {
 	return nil
 }
 
-// Pushes metrics out to statsd server every 30s
+//StartStatsdMetricsPusher ... pushes metrics out to statsd server every 30s
 func StartStatsdMetricsPusher(statsd *statsd.Statsd, pushInterval time.Duration) {
 	log.Info("Starting code to push out metrics via statsd")
 	report := time.NewTicker(pushInterval)
-	// TODO defer report.Stop()
+	//TODO
+	//defer report.Stop()
 	go statsd.SendLoop(report.C, "udp", "statsdexporter:9125")
 }
