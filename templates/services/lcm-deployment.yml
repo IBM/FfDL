@@ -31,6 +31,9 @@ spec:
         - name: static-volumes-config-volume
           configMap:
             name: static-volumes
+        - name: static-volumes-config-volume-v2
+          configMap:
+            name: static-volumes-v2
 {{ end }}
         - name: etcd-ssl-cert
           secret:
@@ -61,6 +64,8 @@ spec:
 {{ if (eq .Values.has_static_volumes true) }}
         - mountPath: /etc/static-volumes
           name: static-volumes-config-volume
+        - mountPath: /etc/static-volumes-v2
+          name: static-volumes-config-volume-v2
 {{ end }}
         - mountPath: /etc/certs/
           name: etcd-ssl-cert

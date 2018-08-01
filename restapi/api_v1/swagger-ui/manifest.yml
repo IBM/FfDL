@@ -14,26 +14,10 @@
 # limitations under the License.
 #
 
-DOCKER_REPO ?= docker.io
-DOCKER_NAMESPACE ?= ffdl
-WHOAMI ?= $(shell whoami)
-IMAGE_TAG ?= user-$(WHOAMI)
 
-IMAGE_NAME?=${DOCKER_REPO}/${DOCKER_NAMESPACE}/tensorboard_extract:${IMAGE_TAG}
-
-DOCKER_OPTIONS ?=
-
-all: build push
-
-build:
-	cp -r ../training_data_service_client .
-	docker build -q ${DOCKER_OPTIONS} -t ${DOCKER_REPO}/${DOCKER_NAMESPACE}/tensorboard_extract:${IMAGE_TAG} -f Dockerfile .
-	rm -r training_data_service_client
-
-push:
-	docker push ${REPO}/tensorboard_extract:${IMAGE_TAG}
-
-imagename:
-	echo ${IMAGE_NAME}
-	echo "Docker options: ${DOCKER_OPTIONS}"
-
+---
+applications:
+- buildpack: https://github.com/cloudfoundry/staticfile-buildpack.git
+  host: dlaas-api
+  name: dlaas-api
+  memory: 64M

@@ -1,5 +1,5 @@
 #!/bin/bash
-sudo chown -R ffdlr /home/ffdlr
+sudo chown -R ${USER} /home/${USER}
 chmod +x build_ffdl.sh compile_s3fs.sh create_user.sh import_registry_certificates.sh install_docker.sh install_go.sh install_kubernetes.sh install_nfs.sh install_registry.sh launch_kubernetes.sh launch_registry.sh s3_driver.sh
 echo "This script assumes that you have created a user, e.g. via create_user.sh, and are now logged in as that user."
 
@@ -21,7 +21,7 @@ export DOCKER_REPO_USER=$USER
 export DOCKER_REPO_PASS=7312mInalM4n
 ./launch_registry.sh
 ./launch_kubernetes.sh
-sudo chown -R ffdlr /home/ffdlr/.kube/
+sudo chown -R ${USER} /home/${USER}/.kube/
 ./import_registry_certificates.sh
 ./s3_driver.sh
 

@@ -40,6 +40,8 @@ func (jm *JobMonitor) checkIfJobStarted(logr *logger.LocLoggingEntry) {
 		numRunning := 0
 		numFailed := 0
 
+		numPodsExpected := jm.NumLearners + 2 //1 helper plus 1 job monitor
+
 		if err == nil {
 			for _, pod := range pods.Items {
 				switch pod.Status.Phase {
@@ -95,18 +97,9 @@ func (jm *JobMonitor) checkIfJobStarted(logr *logger.LocLoggingEntry) {
 			}
 		}
 
-		if jm.UseNativeDistribution {
-			//NumLearners + 1 Job Monitor
-			if numRunning >= jm.NumLearners+1 {
-				logr.Debugf("All learner pods and one job monitor seem to have started")
-				return
-			}
-		} else {
-			//NumLearners + 1 Job Monitor + 1 Parameter Server
-			if numRunning >= jm.NumLearners+2 {
-				logr.Debugf("All learner pods and one job monitor seem to have started")
-				return
-			}
+		if numRunning >= numPodsExpected {
+			logr.Debugf("All learner pods, one helper and one job monitor seem to have started")
+			return
 		}
 
 		if i == insuffResourcesRetries && numPending >= 1 {

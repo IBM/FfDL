@@ -54,6 +54,7 @@ import (
 
 	"errors"
 
+	"github.com/IBM/FfDL/trainer/instrumentation"
 	"github.com/IBM/FfDL/trainer/storage"
 )
 
@@ -125,7 +126,7 @@ type trainerMetrics struct {
 
 type queueHandler struct {
 	stopQueue chan struct{}
-	JobQueue
+	*TrainingJobQueue
 }
 
 type trainerService struct {
@@ -344,11 +345,17 @@ func (s *trainerService) StartQueues() {
 func (s *trainerService) StopTrainer() {
 	logr := logger.LocLogger(logEntry())
 	logr.Debugf("stopping trainer")
+
+	// Close mongodb connections
+	s.repo.Close()
+	s.jobHistoryRepo.Close()
 	for _, qHandler := range s.queues {
 		qHandler.stopQueue <- struct{}{}
 		close(qHandler.stopQueue)
+		qHandler.TrainingJobQueue.session.Close()
 	}
 	s.Stop() // stop Service
+
 }
 
 func (s *trainerService) pullJobFromQueue(gpuType string) {
@@ -371,6 +378,10 @@ func (s *trainerService) pullJobFromQueue(gpuType string) {
 			qHandler.Unlock()
 		}
 	}()
+
+	qSize, err := qHandler.Size()
+	logr.Infof("queue %s has %d elements", gpuType, qSize)
+	s.metrics.queueSizeGauge.With("gpuType", gpuType).Set(float64(qSize))
 
 	empty, err := qHandler.Empty()
 	if err != nil {
@@ -478,31 +489,13 @@ func (s *trainerService) CreateTrainingJob(ctx context.Context, req *grpc_traine
 	duration := metrics.NewTimer(s.metrics.createTrainingDuration)
 	defer duration.ObserveDuration()
 
-	start := time.Now()
-
 	sid, _ := shortid.Generate()
 	id := fmt.Sprintf("training-%s", sid)
 
 	logr := logger.LocLogger(logWith(id, req.UserId))
 
-	// Adjust deadline for debugging.
-	deadline, _ := ctx.Deadline()
-	ctx, _ = context.WithDeadline(ctx, deadline.Add(-2*time.Second))
-
-	deadline, _ = ctx.Deadline()
-	returned := false
-	defer func() {
-		returned = true
-		now := time.Now()
-		logr.Debugf("CreateTrainingJob returning at %v, %v before deadline", now, deadline.Sub(now))
-	}()
-
-	done := ctx.Done()
-	logr.Debugf("CreateTrainingJob now is %v, context deadline is %v, duration %v", start, deadline, deadline.Sub(start))
-	go func() {
-		_ = <-done
-		logr.Debugf("CreateTrainingJob done at %v, returned=%v, started at %v", time.Now(), returned, start)
-	}()
+	cl := instrumentation.NewCallLogger(ctx, "CreateTrainingJob", logr)
+	defer cl.Returned()
 
 	if err := s.validateRequest(logr.Logger, req); err != nil {
 		return nil, err
@@ -533,46 +526,44 @@ func (s *trainerService) CreateTrainingJob(ctx context.Context, req *grpc_traine
 
 	// upload model definition ZIP file to object store and set location
 	if req.ModelDefinition.Content != nil {
-		// Upload to DLaaS Object store.
-		err := s.datastore.UploadArchive(s.modelsBucket, getModelZipFileName(id), req.ModelDefinition.Content)
-		if err != nil {
-			logr.Errorf("Error uploading model to object store: %s", err.Error())
-			s.metrics.uploadModelFailedCounter.With("kind", dlaasStoreKind).Add(1)
-			return nil, err
-		}
-		req.ModelDefinition.Location = fmt.Sprintf("%s/%s.zip", s.modelsBucket, id)
+		if outputDatastore.Type != "mount_volume" {
+			// Upload to DLaaS Object store.
+			logr.Infof("Uploading content to: %s filename: %s", s.modelsBucket, getModelZipFileName(id))
+			err := s.datastore.UploadArchive(s.modelsBucket, getModelZipFileName(id), req.ModelDefinition.Content)
+			if err != nil {
+				logr.WithError(err).Errorf("Error uploading model to object store")
+				s.metrics.uploadModelFailedCounter.With("kind", dlaasStoreKind).Add(1)
+				return nil, err
+			}
+			req.ModelDefinition.Location = fmt.Sprintf("%s/%s.zip", s.modelsBucket, id)
+			cl.Observe("uploaded model to dlaas object store: %s", req.ModelDefinition.Location)
 
-		now := time.Now()
-		logr.Debugf("CreateTrainingJob uploaded model to dlaas object store at %v, %s from start", now, now.Sub(start))
-
-		// Upload to user's result object store in the background, and ignore errors.
-		// We're not using the model in the user's object store yet, so failures here won't affect the job.
-		go func() {
+			// Upload to user's result object store.
+			logr.Infof("Upload to user's result object store, type: %s bucket: %s", outputDatastore.Type, outputDatastore.Fields["bucket"])
 			ds, err := storage.CreateDataStore(outputDatastore.Type, outputDatastore.Connection)
 			if err != nil {
 				s.metrics.uploadModelFailedCounter.With("kind", userStoreKind).Add(1)
 				logr.WithError(err).Fatalf("Cannot create datastore for output data store %s", outputDatastore.Id)
+				return nil, err
 			}
 			err = ds.Connect()
 			if err != nil {
 				s.metrics.uploadModelFailedCounter.With("kind", userStoreKind).Add(1)
 				logr.WithError(err).Fatalf("Cannot connect to output object store %s", outputDatastore.Id)
+				return nil, err
 			}
 			defer ds.Disconnect()
-
 			bucket := outputDatastore.Fields["bucket"]
 			object := fmt.Sprintf("%s/_submitted_code/model.zip", id)
-			logr.Infof("Writing to output object store: %s/%s", bucket, object)
+				logr.Infof("Writing to output object store: %s -> %s, length: %d", bucket, object, len(req.ModelDefinition.Content))
 			err = ds.UploadArchive(bucket, object, req.ModelDefinition.Content)
 			if err != nil {
 				s.metrics.uploadModelFailedCounter.With("kind", userStoreKind).Add(1)
-				logr.Errorf("Error uploading model to output object store: %s", err.Error())
+				logr.WithError(err).Errorf("Error uploading model to output object store")
+				return nil, err
 			}
-
-			now = time.Now()
-			logr.Debugf("CreateTrainingJob uploaded model to user's object store at %v, %s from start", now, now.Sub(start))
-		}()
-
+			cl.Observe("uploaded model to user's object store")
+		}
 	}
 
 	// create a copy of the model definition without the content field (do not store it to the database)
@@ -649,11 +640,10 @@ func (s *trainerService) CreateTrainingJob(ctx context.Context, req *grpc_traine
 		// store training record with QUEUED status
 		err := s.repo.Store(tr)
 		if err != nil {
-			logr.Errorf("Failed to resolve output datastore: %s", err.Error())
+			logr.WithError(err).Errorf("Failed to resolve output datastore")
 			return nil, gerrf(codes.Internal, grpcErrorDesc(err))
 		}
-		now := time.Now()
-		logr.Debugf("CreateTrainingJob stored record in mongo at %v, %s from start", now, now.Sub(start))
+		cl.Observe("stored record in mongo")
 	} else {
 		logr.Infof("%s queue is empty and job is not rate-limited, sending %s directly to LCM", gpuType, tr.TrainingID)
 
@@ -662,8 +652,7 @@ func (s *trainerService) CreateTrainingJob(ctx context.Context, req *grpc_traine
 			// err logged in submitJobToLCM
 			return nil, err
 		}
-		now := time.Now()
-		logr.Debugf("CreateTrainingJob submitted job to lcm at %v, %s from start", now, now.Sub(start))
+		cl.Observe("submitted job to lcm")
 	}
 
 	//request is validated, now bump up the counter
@@ -690,23 +679,10 @@ func (s *trainerService) CreateTrainingJob(ctx context.Context, req *grpc_traine
 }
 
 func (s *trainerService) GetTrainingJob(ctx context.Context, req *grpc_trainer_v2.GetRequest) (*grpc_trainer_v2.GetResponse, error) {
-
 	logr := logger.LocLogger(logWith(req.TrainingId, req.UserId))
 
-	// Adjust deadline for debugging.
-	deadline, _ := ctx.Deadline()
-	ctx, _ = context.WithDeadline(ctx, deadline.Add(-2*time.Second))
-
-	deadline, _ = ctx.Deadline()
-	returned := false
-	defer func() {
-		returned = true
-	}()
-
-	done := ctx.Done()
-	go func() {
-		_ = <-done
-	}()
+	cl := instrumentation.NewCallLogger(ctx, "GetTrainingJob", logr)
+	defer cl.Returned()
 
 	tr, err := s.repo.Find(req.TrainingId)
 	if err != nil {
@@ -716,6 +692,8 @@ func (s *trainerService) GetTrainingJob(ctx context.Context, req *grpc_trainer_v
 		logr.WithError(err).Errorf("Cannot retrieve training record")
 		return nil, err
 	}
+
+	cl.Observe("got training job record")
 
 	if tr.UserID != req.UserId {
 		msg := fmt.Sprint("User does not have permission to read training data")
@@ -754,6 +732,9 @@ func (s *trainerService) GetTrainingStatusID(ctx context.Context, req *grpc_trai
 }
 
 func (s *trainerService) UpdateTrainingJob(ctx context.Context, req *grpc_trainer_v2.UpdateRequest) (*grpc_trainer_v2.UpdateResponse, error) {
+	logr := logger.LocLogger(logWith(req.TrainingId, req.UserId))
+	logr.Debugf("UpdateTrainingJob called for training %s", req.TrainingId)
+
 	return updateTrainingJobPostLock(s, req)
 }
 
@@ -763,7 +744,7 @@ func updateTrainingJobPostLock(s *trainerService, req *grpc_trainer_v2.UpdateReq
 	logr := logger.LocLogger(logWith(req.TrainingId, req.UserId))
 	training, err := s.repo.Find(req.TrainingId)
 	if err != nil {
-		logr.Errorf("Cannot retrieve training ''%s': %s", req.TrainingId, err.Error())
+		logr.WithError(err).Errorf("Cannot retrieve training '%s'", req.TrainingId)
 		return nil, err
 	}
 	if training == nil {
@@ -797,6 +778,8 @@ func updateTrainingJobPostLock(s *trainerService, req *grpc_trainer_v2.UpdateReq
 		if req.Timestamp != "" {
 			ts.CompletionTimestamp = req.Timestamp
 		}
+		// erase sensitive data from the db
+		training.ModelDefinition.Framework.ImageLocation = nil
 	}
 	if req.Status == grpc_trainer_v2.Status_DOWNLOADING {
 		ts.DownloadStartTimestamp = nowMillis
@@ -865,14 +848,14 @@ func updateTrainingJobPostLock(s *trainerService, req *grpc_trainer_v2.UpdateReq
 	}
 	err = s.repo.Store(training)
 	if err != nil {
-		logr.Errorf("Failed updating status of training %s in DB: %s", req.TrainingId, err.Error())
+		logr.WithError(err).Errorf("Failed updating status of training %s in DB", req.TrainingId)
 		return nil, err
 	}
 
 	// verify that the training job details have been updated properly
 	training, err = s.repo.Find(req.TrainingId)
 	if err != nil {
-		logr.Errorf("Cannot retrieve training '%s': %s", req.TrainingId, err.Error())
+		logr.WithError(err).Errorf("Cannot retrieve training '%s'", req.TrainingId)
 		return nil, err
 	}
 	if training == nil {
@@ -910,6 +893,9 @@ func updateTrainingJobPostLock(s *trainerService, req *grpc_trainer_v2.UpdateReq
 func (s *trainerService) GetAllTrainingsJobs(ctx context.Context, req *grpc_trainer_v2.GetAllRequest) (*grpc_trainer_v2.GetAllResponse, error) {
 	logr := logger.LocLogger(logEntry().WithField(logger.LogkeyUserID, req.UserId))
 	logr.Debugf("GetAllTrainingsJobs called")
+
+	cl := instrumentation.NewCallLogger(ctx, "GetAllTrainingsJobs", logr)
+	defer cl.Returned()
 
 	jobs, err := s.repo.FindAll(req.UserId)
 	if err != nil {
@@ -996,22 +982,9 @@ func (s *trainerService) DeleteTrainingJob(ctx context.Context,
 	req *grpc_trainer_v2.DeleteRequest) (*grpc_trainer_v2.DeleteResponse, error) {
 
 	logr := logger.LocLogger(logWith(req.TrainingId, req.UserId))
-	logr.Debugf("DeleteTrainingJob called")
 
-	// Adjust deadline for debugging.
-	deadline, _ := ctx.Deadline()
-	ctx, _ = context.WithDeadline(ctx, deadline.Add(-2*time.Second))
-
-	deadline, _ = ctx.Deadline()
-	returned := false
-	defer func() {
-		returned = true
-	}()
-
-	done := ctx.Done()
-	go func() {
-		_ = <-done
-	}()
+	cl := instrumentation.NewCallLogger(ctx, "DeleteTrainingJob", logr)
+	defer cl.Returned()
 
 	s.metrics.deleteTrainingJobCounter.Add(1)
 
@@ -1025,6 +998,8 @@ func (s *trainerService) DeleteTrainingJob(ctx context.Context,
 		return nil, err
 	}
 
+	cl.Observe("got training job record")
+
 	// We've noticed that deleting from the TDS can take several minutes, and we don't want to delay this
 	// call due to that. This is a temporary workaround until we find out root cause of the TDS slowdowns.
 	go func() {
@@ -1037,6 +1012,8 @@ func (s *trainerService) DeleteTrainingJob(ctx context.Context,
 		if err != nil {
 			logr.WithError(err).Warn("deleteJobFromTDS returned error")
 		}
+
+		cl.Observe("cleaned up job in TDS")
 	}()
 
 	var job *grpc_trainer_v2.Job
@@ -1078,14 +1055,17 @@ func (s *trainerService) DeleteTrainingJob(ctx context.Context,
 				return
 			}
 			logr.Debugf("Kubernetes job '%s' does not longer exist.", job.JobId)
+
+			cl.Observe("killed job in LCM")
 		}()
 
 		// delete model content from data store
 		err = s.datastore.DeleteArchive(s.modelsBucket, getModelZipFileName(job.JobId))
 		if err != nil {
-			logr.Errorf("Error deleting model from object store: %s", err.Error())
+			logr.WithError(err).Errorf("Error deleting model from object store")
 			// log this error, but continue with deleting the training record anyway
 		}
+		cl.Observe("deleted model from object store")
 
 		// delete from DB
 		err = s.repo.Delete(job.TrainingId)
@@ -1093,6 +1073,8 @@ func (s *trainerService) DeleteTrainingJob(ctx context.Context,
 			logr.WithError(err).Errorf("Failed to delete training job '%s' from database", job.TrainingId)
 			return nil, err
 		}
+		cl.Observe("deleted model from mongo")
+
 		return &grpc_trainer_v2.DeleteResponse{TrainingId: job.JobId}, nil
 	}
 	return nil, gerrf(codes.NotFound, "Training with id '%s' not found.", req.TrainingId)
@@ -1194,7 +1176,7 @@ func (s *trainerService) GetModelDefinition(req *grpc_trainer_v2.ModelDefinition
 	// TODO we need to change this to accept a writer to be more efficient
 	payload, err := s.datastore.DownloadArchive(s.modelsBucket, getModelZipFileName(req.TrainingId))
 	if err != nil {
-		logr.Errorf("Downloading model definition archive failed: %s", err)
+		logr.WithError(err).Errorf("Downloading model definition archive failed")
 	}
 	err = stream.Send(&grpc_trainer_v2.ZippedDataChunk{
 		Data: payload,
@@ -1214,7 +1196,8 @@ func (s *trainerService) GetTrainedModel(req *grpc_trainer_v2.TrainedModelReques
 	logr.Infof("GetTrainedModel")
 
 	s.metrics.downloadTrainedModelJobCounter.Add(1)
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	resp, err := s.GetTrainingJob(ctx, &grpc_trainer_v2.GetRequest{
 		TrainingId: req.TrainingId,
 		UserId:     req.UserId,
@@ -1289,7 +1272,7 @@ func (s *trainerService) GetTrainedModel(req *grpc_trainer_v2.TrainedModelReques
 		}
 		// process buf
 		if err != nil && err != io.EOF {
-			logr.Errorf("Downloading trained model failed: %s", err.Error())
+			logr.WithError(err).Errorf("Downloading trained model failed")
 			return err
 		}
 		err = stream.Send(&grpc_trainer_v2.ZippedDataChunk{
@@ -1668,12 +1651,19 @@ func (s *trainerService) validateRequest(log *logrus.Entry, req *grpc_trainer_v2
 	if m.Framework.Name == "" {
 		return s.failCreateRequest("Framework name is not set", req, log)
 	}
+
 	if m.Framework.Version == "" {
 		return s.failCreateRequest("Framework version is not set", req, log)
 	}
-	if ok, msg := validateFrameworks(m.Framework); !ok {
-		return s.failCreateRequest(msg, req, log)
-	}
+
+	// FfDL Change: FIXME: temporarily disable framework validation
+	// custom image check
+	//if m.Framework.ImageLocation == nil {
+	//	if ok, msg := validateFrameworks(m.Framework); !ok {
+	//		return s.failCreateRequest(msg, req, log)
+	//	}
+	//}
+	//
 	if len(m.Content) == 0 {
 		return s.failCreateRequest("Model definition content is not set", req, log)
 	}
@@ -1776,38 +1766,41 @@ func (s *trainerService) validateDatastore(ds *grpc_trainer_v2.Datastore, req *g
 	if ds == nil {
 		return s.failCreateRequest("Data store is not set", req, log)
 	}
-	if ds.Id == "" {
-		return s.failCreateRequest("Data store id is not set", req, log)
-	}
-	if ds.Connection == nil || len(ds.Connection) == 0 {
-		return s.failCreateRequest("Data store connection info not set", req, log)
-	}
-	if ds.Fields == nil || len(ds.Fields) == 0 || ds.Fields["bucket"] == "" {
-		return s.failCreateRequest("Data store bucket is not set", req, log)
-	}
+	log.Infof("Datastore type: %s", ds.Type)
+	if ds.Type == "mount_cos" {
+		if ds.Id == "" {
+			return s.failCreateRequest("Data store id is not set", req, log)
+		}
+		if ds.Connection == nil || len(ds.Connection) == 0 {
+			return s.failCreateRequest("Data store connection info not set", req, log)
+		}
+		if ds.Fields == nil || len(ds.Fields) == 0 || ds.Fields["bucket"] == "" {
+			return s.failCreateRequest("Data store bucket is not set", req, log)
+		}
 
-	ostore, err := storage.CreateDataStore(ds.Type, ds.Connection)
-	if err != nil {
-		log.Errorf("Validation failed: %s", err.Error())
-		return s.failCreateRequestWithCode(trainerClient.ErrInvalidCredentials,
-			fmt.Sprintf("Data store authentication information for id '%s' incorrect or there is a connection problem", ds.Id), req, log)
-	}
+		ostore, err := storage.CreateDataStore(ds.Type, ds.Connection)
+		if err != nil {
+			log.Errorf("Validation failed: %s", err.Error())
+			return s.failCreateRequestWithCode(trainerClient.ErrInvalidCredentials,
+				fmt.Sprintf("Data store authentication information for id '%s' incorrect or there is a connection problem", ds.Id), req, log)
+		}
 
-	if err := ostore.Connect(); err != nil {
-		log.Errorf("Validation failed: %s", err.Error())
-		return s.failCreateRequestWithCode(trainerClient.ErrInvalidCredentials,
-			fmt.Sprintf("Data store authentication information for id '%s' incorrect or there is a connection problem", ds.Id), req, log)
-	}
+		if err := ostore.Connect(); err != nil {
+			log.Errorf("Validation failed: %s", err.Error())
+			return s.failCreateRequestWithCode(trainerClient.ErrInvalidCredentials,
+				fmt.Sprintf("Data store authentication information for id '%s' incorrect or there is a connection problem", ds.Id), req, log)
+		}
 
-	// validate bucket (or container as it is called in Swift)
-	//bucket := ds.Fields["bucket"]
-	//if bucket != "" {
-	//	exists, err := ostore.ContainerExists(bucket)
-	//	if !exists || err != nil {
-	//		return s.failCreateRequestWithCode(trainerClient.ErrInvalidCredentials,
-	//			fmt.Sprintf("Data store bucket '%s' for data store id '%s' incorrect, there may be a connection problem or credentials do not allow access to the bucket", bucket, ds.Id), req, log)
-	//	}
-	//}
+		// validate bucket (or container as it is called in Swift)
+		bucket := ds.Fields["bucket"]
+		if bucket != "" {
+			exists, err := ostore.ContainerExists(bucket)
+			if !exists || err != nil {
+				return s.failCreateRequestWithCode(trainerClient.ErrInvalidCredentials,
+					fmt.Sprintf("Data store bucket '%s' for data store id '%s' incorrect, there may be a connection problem or credentials do not allow access to the bucket", bucket, ds.Id), req, log)
+			}
+		}
+	}
 	return nil
 }
 
@@ -1913,14 +1906,11 @@ func (s *trainerService) createJobConfig(tr *TrainingRecord) (*service.JobDeploy
 	// Storing data in container at
 	envvars["DATA_DIR"] = trainingData.Fields["bucket"]
 
-	logr.Debugf("DATA_DIR: %s", envvars["DATA_DIR"])
-
 	// Storing model in container at
 	envvars["MODEL_DIR"] = "/model-code"
 
 	// Storing trained model at
 	envvars["RESULT_DIR"] = trainingResults.Fields["bucket"]
-	logr.Debugf("RESULT_DIR: %s", envvars["RESULT_DIR"])
 
 	// TODO: This is pointing to currently where the logs are put, but should be redefined per nfs log mount proposal.
 	// (by the time it gets to the learners/log-collectors, it will be "/job/logs", at the time of this writing.)
@@ -1969,10 +1959,25 @@ func (s *trainerService) createJobConfig(tr *TrainingRecord) (*service.JobDeploy
 		TrainingId:            tr.TrainingID,
 		Framework:             tr.ModelDefinition.Framework.Name,
 		Version:               tr.ModelDefinition.Framework.Version,
+		ImageLocation:         parseImageLocation(tr),
 		EvaluationMetricsSpec: tr.EvaluationMetricsSpec,
 	}
 
 	return job, nil
+}
+
+func parseImageLocation(tr *TrainingRecord) *service.ImageLocation {
+	tril := tr.ModelDefinition.Framework.ImageLocation
+	var il (*service.ImageLocation)
+	if tril != nil {
+		il = &service.ImageLocation{
+			Registry:    tril.Registry,
+			Namespace:   tril.Namespace,
+			AccessToken: tril.AccessToken,
+			Email:       tril.Email,
+		}
+	}
+	return il
 }
 
 func setDefaultResourceRequirements(t *grpc_trainer_v2.Training) {
@@ -2058,7 +2063,7 @@ func getModelZipFileName(trainingID string) string {
 func (s *trainerService) submitJobToLCM(tr *TrainingRecord, logr *logger.LocLoggingEntry) error {
 	jobConfig, err := s.createJobConfig(tr)
 	if err != nil {
-		logr.Errorf("Failed to create job config: %s", err.Error())
+		logr.WithError(err).Errorf("Failed to create job config")
 		return gerrf(codes.Internal, grpcErrorDesc(err))
 	}
 
@@ -2066,13 +2071,13 @@ func (s *trainerService) submitJobToLCM(tr *TrainingRecord, logr *logger.LocLogg
 	tr.TrainingStatus.Status = grpc_trainer_v2.Status_PENDING
 	err = s.repo.Store(tr)
 	if err != nil {
-		logr.Errorf("Failed to resolve output datastore: %s", err.Error())
+		logr.WithError(err).Errorf("Failed to resolve output datastore")
 		return gerrf(codes.Internal, grpcErrorDesc(err))
 	}
 
 	lcm, err := s.lcmClient()
 	if err != nil {
-		logr.Errorf("Cannot create LCM service client: %s", err.Error())
+		logr.WithError(err).Errorf("Cannot create LCM service client")
 		return gerrf(codes.Internal, grpcErrorDesc(err))
 	}
 	defer lcm.Close()
@@ -2080,14 +2085,13 @@ func (s *trainerService) submitJobToLCM(tr *TrainingRecord, logr *logger.LocLogg
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	logr.Debugf("Submitting training job to LCM: %s", tr.JobID)
 	_, err = lcm.Client().DeployTrainingJob(ctx, jobConfig)
 	if err != nil {
-		logr.Errorf("Cannot deploy training job with id %s: %s", tr.TrainingID, err.Error())
+		logr.WithError(err).Errorf("Cannot deploy training job with id %s", tr.TrainingID)
 		return gerrf(codes.Internal, grpcErrorDesc(err))
 	}
 
-	logr.Infof("training job %s submitted to lcm", tr.TrainingID)
+	logr.Printf("training job %s submitted to lcm", tr.TrainingID)
 
 	// capture the gpu usage when the job is submitted to LCM
 	gpusUsed := tr.Training.Resources.Gpus

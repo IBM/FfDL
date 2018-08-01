@@ -24,12 +24,15 @@ IMAGE_NAME?=${DOCKER_REPO}/${DOCKER_NAMESPACE}/regex_extractor:${IMAGE_TAG}
 
 DOCKER_OPTIONS ?=
 
-all: build
+all: build push
 
 build:
 	cp -r ../training_data_service_client .
 	docker build -q ${DOCKER_OPTIONS} -t ${IMAGE_NAME} -f Dockerfile .
 	rm -r training_data_service_client
+
+push:
+	docker push ${REPO}/regex_extractor:${IMAGE_TAG}
 
 imagename:
 	echo ${IMAGE_NAME}

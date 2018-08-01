@@ -17,12 +17,7 @@
 package learner
 
 import (
-	//	"strconv"
-	//	"github.com/IBM/FfDL/commons/logger"
 	v1core "k8s.io/api/core/v1"
-	log "github.com/sirupsen/logrus"
-	"github.com/IBM/FfDL/commons/logger"
-	yaml "gopkg.in/yaml.v2"
 )
 
 const cosMountDriverName = "ibm/ibmc-s3fs"
@@ -43,7 +38,7 @@ const (
 //COSVolume ...
 type COSVolume struct {
 	VolumeType, ID, Region, Bucket, Endpoint, SecretRef, CacheSize, DiskFree, HostPath string
-	MountSpec      VolumeMountSpec
+	MountSpec                                                    VolumeMountSpec
 }
 
 //Volumes ...
@@ -59,26 +54,15 @@ type VolumeMountSpec struct {
 
 //CreateVolumeForLearner ...
 func (volumes Volumes) CreateVolumeForLearner() []v1core.Volume {
-	logr := logger.LocLogger(log.StandardLogger().WithField(logger.LogkeyModule, logger.LogkeyLcmService))
 
 	var volumeSpecs []v1core.Volume
 
 	if volumes.TrainingData != nil {
 		trainingDataParams := volumes.TrainingData
-		logr.Debugf("trainingDataParams.VolumeType: %s", trainingDataParams.VolumeType)
 		if trainingDataParams.VolumeType == DataStoreTypeMountCOSS3 {
-			volumeSpecs = append(volumeSpecs,
-				generateCOSTrainingDataVolume(trainingDataParams.ID,
-					trainingDataParams.Region,
-					trainingDataParams.Bucket,
-					trainingDataParams.Endpoint,
-					trainingDataParams.SecretRef,
-					trainingDataParams.CacheSize,
-					trainingDataParams.DiskFree))
+			volumeSpecs = append(volumeSpecs, generateCOSTrainingDataVolume(trainingDataParams.ID, trainingDataParams.Region, trainingDataParams.Bucket,
+				trainingDataParams.Endpoint, trainingDataParams.SecretRef, trainingDataParams.CacheSize, trainingDataParams.DiskFree))
 		} else if trainingDataParams.VolumeType == DataStoreHostMountVolume  {
-			logr.Debugf("Calling generateHostMountTrainingDataVolume(%s, %s)",
-				trainingDataParams.ID,
-				trainingDataParams.HostPath)
 			volumeSpecs = append(volumeSpecs,
 				generateHostMountTrainingDataVolume(
 					trainingDataParams.ID,
@@ -88,32 +72,15 @@ func (volumes Volumes) CreateVolumeForLearner() []v1core.Volume {
 
 	if volumes.ResultsDir != nil {
 		resultDirParams := volumes.ResultsDir
-		logr.Debugf("resultDirParams.VolumeType: %s", resultDirParams.VolumeType)
 		if resultDirParams.VolumeType == DataStoreTypeMountCOSS3 {
-			volumeSpecs = append(volumeSpecs,
-				generateCOSResultsVolume(resultDirParams.ID,
-					resultDirParams.Region,
-					resultDirParams.Bucket,
-					resultDirParams.Endpoint,
-					resultDirParams.SecretRef,
-					resultDirParams.CacheSize,
-					resultDirParams.DiskFree))
-		} else if resultDirParams.VolumeType == DataStoreHostMountVolume  {
-			logr.Debugf("Calling generateHostMountTrainingDataVolume(%s, %s)",
-				resultDirParams.ID,
-				resultDirParams.HostPath)
+			volumeSpecs = append(volumeSpecs, generateCOSResultsVolume(resultDirParams.ID, resultDirParams.Region, resultDirParams.Bucket,
+				resultDirParams.Endpoint, resultDirParams.SecretRef, resultDirParams.CacheSize, resultDirParams.DiskFree))
+		}  else if resultDirParams.VolumeType == DataStoreHostMountVolume  {
 			volumeSpecs = append(volumeSpecs,
 				generateHostMountTrainingDataVolume(
 					resultDirParams.ID,
 					resultDirParams.HostPath))
 		}
-
-	}
-	bytes, err := yaml.Marshal(volumeSpecs)
-	if err != nil {
-		logr.WithError(err).Warning("Could not marshal volumeSpecs for diagostic logging!")
-	} else {
-		logr.Debugf("volumeSpecs:\n %s\n", string(bytes))
 	}
 
 	return volumeSpecs
@@ -121,28 +88,16 @@ func (volumes Volumes) CreateVolumeForLearner() []v1core.Volume {
 
 //CreateVolumeMountsForLearner ...
 func (volumes Volumes) CreateVolumeMountsForLearner() []v1core.VolumeMount {
-	logr := logger.LocLogger(log.StandardLogger().WithField(logger.LogkeyModule, logger.LogkeyLcmService))
 
 	var mounts []v1core.VolumeMount
 	if volumes.TrainingData != nil {
-		mounts = append(mounts,
-			generateDataDirVolumeMount(volumes.TrainingData.ID,
-				volumes.TrainingData.MountSpec.MountPath,
-				volumes.TrainingData.MountSpec.SubPath))
+		mounts = append(mounts, generateDataDirVolumeMount(volumes.TrainingData.ID, volumes.TrainingData.MountSpec.MountPath,
+			volumes.TrainingData.MountSpec.SubPath))
 	}
 
 	if volumes.ResultsDir != nil {
-		mounts = append(mounts,
-			generateResultDirVolumeMount(volumes.ResultsDir.ID,
-				volumes.ResultsDir.MountSpec.MountPath,
-				volumes.ResultsDir.MountSpec.SubPath))
-	}
-
-	bytes, err := yaml.Marshal(volumes)
-	if err != nil {
-		logr.WithError(err).Warning("Could not marshal volumes mount specs for diagostic logging!")
-	} else {
-		logr.Debugf("volumes mount specs:\n %s\n", string(bytes))
+		mounts = append(mounts, generateResultDirVolumeMount(volumes.ResultsDir.ID, volumes.ResultsDir.MountSpec.MountPath,
+			volumes.ResultsDir.MountSpec.SubPath))
 	}
 
 	return mounts
@@ -156,7 +111,7 @@ func generateCOSTrainingDataVolume(id, region, bucket, endpoint, secretRef, cach
 				Driver:    cosMountDriverName,
 				FSType:    "",
 				SecretRef: &v1core.LocalObjectReference{Name: secretRef},
-				ReadOnly:  true,
+				ReadOnly:  false,
 				Options: map[string]string{
 					"bucket":           bucket,
 					"endpoint":         endpoint,
@@ -171,6 +126,7 @@ func generateCOSTrainingDataVolume(id, region, bucket, endpoint, secretRef, cach
 					"kernel-cache":     "true",
 					"debug-level":      "warn",
 					"curl-debug":       "false",
+					"s3fs-fuse-retry-count": "30", // 4 second delay between retries * 30 = 2min
 				},
 			},
 		},
@@ -217,6 +173,7 @@ func generateCOSResultsVolume(id, region, bucket, endpoint, secretRef, cacheSize
 					"kernel-cache":     "false",
 					"debug-level":      "warn",
 					"curl-debug":       "false",
+					"s3fs-fuse-retry-count": "30", // 4 second delay between retries * 30 = 2min
 				},
 			},
 		},

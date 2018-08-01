@@ -20,8 +20,6 @@ FROM dlaas-service-base:ubuntu16.04
 ADD bin/main /main
 ADD docker/certs/* /etc/ssl/dlaas/
 RUN chmod 755 /main
-ADD docker/csf_env.properties /etc/
-RUN chmod 0644 /etc/csf_env.properties
 
 # assign "random" non-root user id
 USER 6342627

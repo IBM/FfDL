@@ -14,43 +14,45 @@
  * limitations under the License.
  */
 
+
 package lcm
 
 const (
-	//zkState            = "state"
+	zkState            = "state"
 	zkNotes            = "notes"
 	zkJobName          = "jobname"
 	zkLearners         = "learners"
-	//zkParamServer      = "paramservers"
+	zkParamServer      = "paramservers"
 	zkTotLearners      = "total_learners"
-	//zkLock             = "lock"
-	//zkShardes          = "total_shards"
-	//zkLcm              = "lcm"
-	//zkDoneLearner      = "done_learner_"
-	//zkLearner          = "learner_"
-	//zkStatus           = "status"
-	//zkOwner            = "owner"
+	zkLock             = "lock"
+	zkShardes          = "total_shards"
+	zkLcm              = "lcm"
+	zkDoneLearner      = "done_learner_"
+	zkLearner          = "learner_"
+	zkStatus           = "status"
+	zkOwner            = "owner"
 	zkAliveLearners    = "alive_learners"
-	//zkFinishedLearners = "finished_learners"
+	zkFinishedLearners = "finished_learners"
 	zkLearnerCounter   = "counter"
 	zkLearnerLock      = "lock"
 	zkUserID           = "userid"
-	//zkNodeExists       = "zk: node already exists"
+	zkNodeExists       = "zk: node already exists"
 	zkGlobalCursor     = "globalcursor"
 	zkGCState          = "gcstate"
 	zkFramework        = "framework"
 )
 
-//const (
-//	internalInit     string = "Init"
-//	internalPS       string = "PS"
-//	internalLearners string = "Learners"
-//	internalRunning  string = "Running"
-//	internalDone     string = "Done"
-//)
+const (
+	internalInit     string = "Init"
+	internalPS       string = "PS"
+	internalLearners string = "Learners"
+	internalRunning  string = "Running"
+	internalDone     string = "Done"
+)
 
 const (
-	psPort                       int32  = 50051
+	psPort             int32  = 50051
+	// FfDL Change: Specialized for FfDL
 	caffeFrameworkName           string = "caffe"
 	tfFrameworkName              string = "tensorflow"
 	torchFrameworkName           string = "torch"
@@ -60,17 +62,17 @@ const (
 	h2o3FrameworkName            string = "h2o3"
 	horovodFrameworkName         string = "horovod"
 	numRetries                          = 5
-	//maxGPUsPerNode                      = 4
+	maxGPUsPerNode                      = 4
 
 	// Not sure if these should stay or go, -sb 3/15/2018
-	//errCodeNormal                       = "000"
-	//errCodeInsufficientResources        = "100"
-	//errCodeFailedDeploy                 = "101"
-	//errCodeFailedPS                     = "102" // TODO: unused?
-	//errCodeImagePull                    = "103"
-	//errFailedPodReasonUnknown           = "104"
+	errCodeNormal                       = "000"
+	errCodeInsufficientResources        = "100"
+	errCodeFailedDeploy                 = "101"
+	errCodeFailedPS                     = "102" // TODO: unused?
+	errCodeImagePull                    = "103"
+	errFailedPodReasonUnknown           = "104"
 	errCodeK8SConnection                = "200"
-	//errCodeEtcdConnection               = "201"
+	errCodeEtcdConnection               = "201"
 )
 
 const (
@@ -81,11 +83,16 @@ const (
 	loadModelMilliCPU=20
 	loadModelMemInMB=50
 	loadTrainingDataMilliCPU=20
+	// FfDL Change: parameterized
+	//loadTrainingDataMemInMB=100
+	//logCollectorMilliCPU=20
+	//logCollectorMemInMB=100
 	controllerMilliCPU=20
 	controllerMemInMB=100
 )
 
 const (
+	component                       = "component"
 	reason                          = "reason"
 	framework                       = "framework"
 	progress                        = "progress"
@@ -98,9 +105,7 @@ const (
 	killed                          = "job_killed"
 	servicesDeletedPhaseComplete    = "servicesDeletedPhaseComplete"
 	deploymentsDeletedPhaseComplete = "deploymentsDeletedPhaseComplete"
-	replicaSetsDeletedPhaseComplete = "replicaSetsDeletedPhaseComplete"
 	jobsDeletedPhaseComplete        = "jobsDeletedPhaseComplete"
-	podsDeletedPhaseComplete        = "podsDeletedPhaseComplete"
 	pvsDeletedPhaseComplete         = "pvsDeletedPhaseComplete"
 	secretsDeletedPhaseComplete     = "secretsDeletedPhaseComplete"
 	etcdKeysDeletedPhaseComplete    = "etcdKeysDeletedPhaseComplete"
