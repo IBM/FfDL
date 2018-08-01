@@ -22,3 +22,18 @@ echo
 kubectl create configmap ${CONFIGMAP_NAME} -n ${Namespace} --from-file=PVCs.yaml=<(
     kubectl get pvc --selector type=${volumeType} -n ${Namespace} -o yaml
 )
+
+CONFIGMAP_NAME2=static-volumes-v2
+
+# Delete configmap
+#if kubectl get cm | grep static-volumes &> /dev/null; then kubectl delete configmap ${CONFIGMAP_NAME2}; else echo "No need to delete ${CONFIGMAP_NAME2} since it doesn't exist."; fi
+
+# Create new configmap
+echo
+echo "Using volumes with label type=$volumeType"
+kubectl get pvc --selector type=${volumeType}
+echo
+
+kubectl get pvc --selector type="dlaas-static-volume" -o jsonpath='{"static-volumes-v2:"}{range .items[*]}{"\n  - name: "}{.metadata.name}{"\n    zlabel: "}{.metadata.name}{"\n    status: active\n"}' > PVCs-v2.yaml
+
+kubectl create configmap ${CONFIGMAP_NAME2} --from-file=PVCs-v2.yaml

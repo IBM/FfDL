@@ -107,6 +107,12 @@ func (c *DlaasPlugin) Run(context plugin.PluginContext, args []string) {
 			if er == nil {
 				os.Exit(exitCode)
 			}
+
+			// FIXME QuietPanic does not exist
+			//if err != terminal.QuietPanic {
+			//	fmt.Printf("%v\n", err)
+			//}
+
 			os.Exit(1)
 		}
 	}()

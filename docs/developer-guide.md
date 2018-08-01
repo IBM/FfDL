@@ -50,6 +50,7 @@ make docker-push # Push built Docker images to registry, not used for Minikube
 Make sure `kubectl` points to the right target context/namespace, then deploy the services to your Kubernetes
 environment (using `helm`):
 ```shell
+make create-volumes # Create static volumes for sharing across pods
 make deploy-plugin # Deploy S3 storage plugin
 make deploy # Deploy FfDL
 ```

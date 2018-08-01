@@ -184,7 +184,7 @@ func fetchImageNameFromEvaluationMetrics(evalMetricsString string,
 				// Assume the image name has been validated upstream
 				logCollectorImageShortName = imageType.(string)
 				if logCollectorImageShortName == "tensorboard" || logCollectorImageShortName == "tensorboard_extractor" {
-					// TODO For the moment we're just going to use TF 1.3, but the tag should change to be non-version
+					// For the moment we're just going to use TF 1.3, but the tag should change to be non-version
 					// specific, and we should just use latest TF.
 					logCollectorImageShortName = fmt.Sprintf("%s_extract", "tensorboard")
 				}
@@ -263,6 +263,7 @@ func constructLogCollector(sharedVolumeMount v1core.VolumeMount, k8sClient kuber
 		vars = append(vars, v1core.EnvVar{Name: "EM_DESCRIPTION", Value: req.EvaluationMetricsSpec})
 	}
 
+	// FfDL Change: to make values configurable
 	cpuCount := v1resource.NewMilliQuantity(int64(config.GetLogCollectorMilliCPU()), v1resource.DecimalSI)
 	memInBytes := int64(config.GetLogCollectorMemInMB() * 1024 * 1024)
 	memCount := v1resource.NewQuantity(memInBytes, v1resource.DecimalSI)
@@ -311,6 +312,7 @@ func constructLoadTrainingDataContainer(sharedVolumeMount v1core.VolumeMount, jo
 	}
 
 	cpuCount := v1resource.NewMilliQuantity(int64(loadTrainingDataMilliCPU), v1resource.DecimalSI)
+	// FfDL Change: to make values configurable
 	memInBytes := int64(config.GetTrainingDataMemInMB() * 1024 * 1024)
 	memCount := v1resource.NewQuantity(memInBytes, v1resource.DecimalSI)
 
@@ -392,68 +394,66 @@ func constructLoadModelContainer(sharedVolumeMount v1core.VolumeMount, jobEnvVar
 }
 
 func constructLearnerContainer(req *service.JobDeploymentRequest, envVars []v1core.EnvVar, learnerVolumeMounts []v1core.VolumeMount, sharedVolumeMount v1core.VolumeMount, mountTrainingDataStoreInLearner, mountResultsStoreInLearner bool, logr *logger.LocLoggingEntry) v1core.Container {
+
 	cpuCount := v1resource.NewMilliQuantity(int64(float64(req.Resources.Cpus)*1000.0), v1resource.DecimalSI)
 	gpuCount := v1resource.NewQuantity(int64(req.Resources.Gpus), v1resource.DecimalSI)
 	memInBytes := int64(calcMemory(req.Resources) * 1024 * 1024)
 	memCount := v1resource.NewQuantity(memInBytes, v1resource.DecimalSI)
 
-	logr.Info("Entry into constructLearnerContainer()")
-
-	// TODO this should be abstracted out as well
+	//argh!!! this should be abstracted out as well
 	command := "for i in ${!ALERTMANAGER*} ${!DLAAS*} ${!ETCD*} ${!GRAFANA*} ${!HOSTNAME*} ${!KUBERNETES*} ${!MONGO*} ${!PUSHGATEWAY*}; do unset $i; done;"
+	learnerBashCommand := `bash -c 'train.sh >> $JOB_STATE_DIR/latest-log 2>&1 ; exit ${PIPESTATUS[0]}'`
+	image := learner.Image{
+		Framework: req.Framework,
+		Version:   req.Version,
+		Tag:       req.ImageTag,
+	}
+
+	// special settings for custom image
+	if req.ImageLocation != nil {
+		image.Registry = req.ImageLocation.Registry
+		image.Namespace = req.ImageLocation.Namespace
+		learnerBashCommand = `
+			cd "$MODEL_DIR" ;
+			export PYTHONPATH=$PWD ;
+			echo "$(date): Starting training job" > $JOB_STATE_DIR/latest-log ;
+			eval "$TRAINING_COMMAND 2>&1" >> $JOB_STATE_DIR/latest-log 2>&1 ;
+			cmd_exit=$? ;
+			echo "$(date): Training exit with exit code ${cmd_exit}." >> $JOB_STATE_DIR/latest-log`
+	}
 	//FIXME need to have the learner IDs start from 1 rather than 0
 	var cmd string
 	var doCondExitWrite = true
 	if mountResultsStoreInLearner {
-		//this $RESULT_DIR/training-log.txt is a top level log, where logs of train.sh get redirected
-		command = fmt.Sprintf(`
-		function copyLogs() {
-             if [ ! -f "%[2]s/%[4]s.exit" ]; then
-				 echo Wait for start-logs start signal.
-				 # Wait for start-logs start signal.
-				 start_wait=$(date +%%s)
-				 while [ ! -f %[2]s/%[4]s.start ]; do
-					end_wait=$(date +%%s) ;
-					duration_wait=$((end_wait-start_wait)) ;
-					# Make this a pretty long timeout, as we really want the lc to finish
-					if [ ${duration_wait} -gt 120 ]; then
-						echo "time out waiting for %[2]s/%[4]s.start"
-						break
-					fi
-					sleep 2;
-				 done ;
-				 echo Calling copy logs.
-				 mv -f $LOG_DIR/* $RESULT_DIR/learner-$LEARNER_ID ;
-				 ERROR_CODE=$? ;
-				 echo $ERROR_CODE > $RESULT_DIR/learner-$LEARNER_ID/.log-copy-complete ;
-				 echo "Setting status ${ERROR_CODE} > %[2]s/%[4]s.exit"
-				 echo $ERROR_CODE > %[2]s/%[4]s.exit ;
-			 fi
-		}
-		
-		%[1]s export LEARNER_ID=$((${DOWNWARD_API_POD_NAME##*-} + 1)) ;
-		 export RESULT_DIR=$RESULT_DIR/$TRAINING_ID ;
-		 mkdir -p $RESULT_DIR/learner-$LEARNER_ID ;
-		 mkdir -p $CHECKPOINT_DIR ;
-         # Leaving this commmented code as a reminder that trap handling may be part of the answer
-		 # trap "copyLogs" SIGHUP SIGINT SIGTERM
-		 bash -c ' train.sh 2>&1 |  tee -a $RESULT_DIR/learner-$LEARNER_ID/training-log.txt %[2]s/latest-log ; exit ${PIPESTATUS[0]}'
-		 main_cmd_status=$?
-		 echo learner "done, snooze before exit (temporary, to be removed)"
-         echo "Setting status ${main_cmd_status} > %[2]s/%[3]s.exit"
-		 echo $main_cmd_status > %[2]s/%[3]s.exit
-         echo "call copyLogs function"
-         copyLogs
-         echo "learner container exiting"
-         `,
-			command, sharedVolumeMount.MountPath, learnerContainerName,
-			storeLogsContainerName)
+		loadModelComand := `
+			echo "Starting Training $TRAINING_ID"
+			mkdir -p "$MODEL_DIR" ;
+			unzip -nq "$RESULT_DIR/_submitted_code/model.zip" -d "$MODEL_DIR"`
+		learnerCommand := `
+			for i in ${!ALERTMANAGER*} ${!DLAAS*} ${!ETCD*} ${!GRAFANA*} ${!HOSTNAME*} ${!KUBERNETES*} ${!MONGO*} ${!PUSHGATEWAY*}; do unset $i; done;
+			export LEARNER_ID=$((${DOWNWARD_API_POD_NAME##*-} + 1)) ;
+			mkdir -p $RESULT_DIR/learner-$LEARNER_ID ;
+			mkdir -p $CHECKPOINT_DIR ;`
+		learnerCommand += learnerBashCommand
+
+		storeLogsCommand := `
+			echo Calling copy logs.
+			mv -nf $LOG_DIR/* $RESULT_DIR/learner-$LEARNER_ID ;
+			ERROR_CODE=$? ;
+			echo $ERROR_CODE > $RESULT_DIR/learner-$LEARNER_ID/.log-copy-complete ;
+			bash -c 'exit $ERROR_CODE'`
+		cmd = wrapCommands([]containerCommands{
+			{cmd: loadModelComand, container: loadModelContainerName},
+			{cmd: learnerCommand, container: learnerContainerName},
+			{cmd: storeLogsCommand, container: storeLogsContainerName},
+		}, sharedVolumeMount.MountPath)
 	} else {
 		command = fmt.Sprintf(`%s mkdir -p $RESULT_DIR ; bash -c ' train.sh 2>&1 | tee -a %s/latest-log; exit ${PIPESTATUS[0]}'`, command, sharedVolumeMount.MountPath)
 		doCondExitWrite = false
+		cmd = wrapCommand(command, learnerContainerName, sharedVolumeMount.MountPath, doCondExitWrite)
 	}
-	cmd = wrapCommand(command, learnerContainerName, sharedVolumeMount.MountPath, doCondExitWrite)
 
+	//
 	container := learner.Container{
 		Image: learner.Image{Framework: req.Framework, Version: req.Version, Tag: req.EnvVars["DLAAS_LEARNER_IMAGE_TAG"]},
 		Resources: learner.Resources{
@@ -551,6 +551,50 @@ func constructStoreContainer(containerName, command string, sharedVolumeMount v1
 	return container
 }
 
+// Store relationship between a command and the "container" it's associated with.
+// The "container" determines the control files used to communicate with the controller.
+type containerCommands struct {
+	cmd       string
+	container string
+}
+
+// Wrap a sequence of commands with start and exit files.
+func wrapCommands(commands []containerCommands, controlFilesDirectory string) string {
+	var allCommands string
+
+	for _, command := range commands {
+		var buf bytes.Buffer
+		vars := map[string]string{
+			"Name": command.container,
+			"Cmd":  command.cmd,
+			"Dir":  controlFilesDirectory,
+		}
+
+		// Some notes about the command:
+		// - Don't repeat if already executed (i.e., .exit file exists).
+		// - Wait for start signal (i.e., existence of .start file) before doing anything.
+		// - Record the start time in .start file. For learners in distributed mode, this
+		//   file will get overwritten by each learner, which is intentional.
+		// - Write exit code of command to .exit file.
+		tmpl, _ := template.New("wrapped command").Parse(`
+			if [ ! -f {{.Dir}}/{{.Name}}.exit ]; then
+				while [ ! -f {{.Dir}}/{{.Name}}.start ]; do sleep 2; done ;
+				date "+%s%N" | cut -b1-13 > {{.Dir}}/{{.Name}}.start_time ;
+				{{.Cmd}} ;
+				echo $? > {{.Dir}}/{{.Name}}.exit ;
+			fi
+			echo "Done {{.Name}}" ;`)
+		tmpl.Execute(&buf, vars)
+
+		allCommands += buf.String()
+	}
+
+	allCommands += `
+		while true; do sleep 2; done ;`
+
+	return allCommands
+}
+
 // Wrap a single command with start and exit files.
 func wrapCommand(cmd string, containerName string, controlFilesDirectory string, doCondExitWrite bool) string {
 
@@ -592,11 +636,11 @@ func wrapCommand(cmd string, containerName string, controlFilesDirectory string,
 	return buf.String()
 }
 
-func constructVolumeClaim(name string, namespace string, volumeSize int64,
-	labels map[string]string, logr *logger.LocLoggingEntry) *v1core.PersistentVolumeClaim {
-	claim, err := GetVolumeClaim(volumeSize, logr)
+func constructVolumeClaim(name string, namespace string, volumeSize int64, labels map[string]string) *v1core.PersistentVolumeClaim {
+	claim, err := GetVolumeClaim(volumeSize)
 	if err != nil {
-		logr.WithError(err).Debugf("GetVolumeClaim returned error")
+		logr := logger.LocLogger(logger.LogServiceBasic(logger.LogkeyLcmService))
+		logr.Errorf("constructVolumeClaim return nil, volumeSize == %d", volumeSize)
 		return nil
 	}
 	claim.Name = name
@@ -655,4 +699,3 @@ func contains(arr []string, str string) bool {
 	}
 	return false
 }
-

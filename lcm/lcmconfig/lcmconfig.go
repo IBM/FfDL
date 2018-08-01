@@ -58,7 +58,7 @@ func GetKubernetesConfig() *k8srest.Config {
 
 //GetImagePullPolicy image pull policy if set else v1core.PullAlways
 func GetImagePullPolicy() v1core.PullPolicy {
-
+	// FfDL Change: Is this what we want???
 	policy := v1core.PullPolicy(config.GetString( config.ImagePullPolicy))
 	logr := logger.LocLogger(logrus.StandardLogger().WithField("module", "lcm"))
 

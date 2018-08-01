@@ -49,18 +49,20 @@ func PopulateLearnerEnvVariablesAndLabels(existingEnvVars []v1core.EnvVar, train
 	   	})
 	*/
 
-	vars := generateLearnerContainerEnvVars(envVars, mountTrainingDataStoreInLearner, mountResultsStoreInLearner)
+	vars := generateLearnerContainerEnvVars(envVars, trainingID, mountTrainingDataStoreInLearner, mountResultsStoreInLearner)
 	return vars
 
 }
 
-//FIXME For now not changing this much and just whitelisting rather than making the list explicit - need to make this function more testable
-func generateLearnerContainerEnvVars(envVars []v1core.EnvVar, mountTrainingDataStoreInLearner, mountResultsStoreInLearner bool) []v1core.EnvVar {
+//FIXME for now not changing this much and just whitelisting rather than makign the list explicit
+//need to make this function more testable
+func generateLearnerContainerEnvVars(envVars []v1core.EnvVar, trainingID string, mountTrainingDataStoreInLearner, mountResultsStoreInLearner bool) []v1core.EnvVar {
 
 	var whitelisted = map[string]struct{}{
 		"MODEL_DIR":                  {},
 		"DATA_DIR":                   {},
 		"RESULT_DIR":                 {},
+		"RESULT_BUCKET_DIR":          {},
 		"LOG_DIR":                    {},
 		"CHECKPOINT_DIR":             {},
 		"JOB_STATE_DIR":              {},
@@ -82,7 +84,7 @@ func generateLearnerContainerEnvVars(envVars []v1core.EnvVar, mountTrainingDataS
 			if _, exists := whitelisted[ev.Name]; exists {
 				vars = append(vars, ev)
 			} else {
-				// Don't include this var.
+				// don't include this var.
 			}
 		}
 		return vars
@@ -90,28 +92,31 @@ func generateLearnerContainerEnvVars(envVars []v1core.EnvVar, mountTrainingDataS
 
 	filteredVars := getLearnerContainerEnvVars(envVars)
 
-	// This code was already there
+	//argh!! this code was already there
 	vars := make([]v1core.EnvVar, 0, len(filteredVars))
 	var checkpointDir string
+	var resultBucketDir string
 	for _, ev := range filteredVars {
 		if strings.HasSuffix(ev.Name, "_DIR") {
 			var dir string
 			if ev.Name == "DATA_DIR" && mountTrainingDataStoreInLearner {
 				dir = filepath.Join("/mnt/data", ev.Value)
 			} else if ev.Name == "RESULT_DIR" && mountResultsStoreInLearner {
-				dir = filepath.Join("/mnt/results", ev.Value)
-				checkpointDir = filepath.Join(dir, "_wml_checkpoints")
+				resultBucketDir = filepath.Join("/mnt/results", ev.Value)
+				checkpointDir = filepath.Join(resultBucketDir, "_wml_checkpoints")
+				dir = filepath.Join(resultBucketDir, trainingID)
 			} else {
 				dir = path.Join("/job", ev.Value) //FIXME stupid hack to add /job in front of all paths
 			}
-
 			vars = append(vars, v1core.EnvVar{Name: ev.Name, Value: dir})
 		} else {
 			vars = append(vars, ev)
 		}
 	}
 
-	//the value of result_dir here does not has training id applied to it and thus can be used as checkpoint dir
-	vars = append(vars, v1core.EnvVar{Name: "JOB_STATE_DIR", Value: "/job"}, v1core.EnvVar{Name: "CHECKPOINT_DIR", Value: checkpointDir})
+	vars = append(vars,
+		v1core.EnvVar{Name: "JOB_STATE_DIR", Value: "/job"},
+		v1core.EnvVar{Name: "CHECKPOINT_DIR", Value: checkpointDir},
+		v1core.EnvVar{Name: "RESULT_BUCKET_DIR", Value: resultBucketDir})
 	return vars
 }

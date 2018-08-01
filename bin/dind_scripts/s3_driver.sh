@@ -1,6 +1,7 @@
 #!/bin/bash
 
 kubectl create secret docker-registry regcred --docker-server=${DOCKER_REPO} --docker-username=${DOCKER_REPO_USER} --docker-password=${DOCKER_REPO_PASS} --docker-email=unknown@docker.io
+docker pull docker.io/ffdl/ibmcloud-object-storage-plugin
 docker tag ibmcloud-object-storage-plugin ${DOCKER_REPO}/ibmcloud-object-storage-plugin
 docker push ${DOCKER_REPO}/ibmcloud-object-storage-plugin
 

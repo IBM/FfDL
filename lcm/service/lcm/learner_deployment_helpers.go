@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+
 package lcm
 
 import (
 	"fmt"
+	"path"
 	"strconv"
 
 	"github.com/sirupsen/logrus"
@@ -38,12 +40,9 @@ import (
 // PodLevelJobDir represents the place to store the job state indicator files,
 // as well as the $BREAK_FILE and $EXITCODE_FILE.
 const PodLevelJobDir = "/job"
-//const PodLevelJobDir = "/nfs/var/nfs/general/"
 
 // PodLevelLogDir represents the place to store the per-learner logs.
 const PodLevelLogDir = PodLevelJobDir + "/logs"
-
-const doLearnerDeploymentDebuggingDiagnostics = false
 
 //Training ...
 type Training interface {
@@ -73,10 +72,10 @@ type splitTrainingBOM struct {
 }
 
 type nonSplitTrainingBOM struct {
-	secrets     []*v1core.Secret
-	service     *v1core.Service
-	learnerBOM  *v1beta1.StatefulSet
-	numLearners int
+	secrets       []*v1core.Secret
+	service       *v1core.Service
+	learnerBOM    *v1beta1.StatefulSet
+	numLearners   int
 }
 
 type splitTraining struct {
@@ -88,13 +87,13 @@ type nonSplitTraining struct {
 }
 
 type learnerDefinition struct {
-	secrets                                                     []*v1core.Secret
-	volumes                                                     []v1core.Volume
-	volumeMounts                                                []v1core.VolumeMount
-	envVars                                                     []v1core.EnvVar
-	mountTrainingDataStoreInLearner, mountResultsStoreInLearner bool
-	numberOfLearners                                            int
-	name                                                        string
+	secrets                                                                             []*v1core.Secret
+	volumes                                                                             []v1core.Volume
+	volumeMounts                                                                        []v1core.VolumeMount
+	envVars                                                                             []v1core.EnvVar
+	mountTrainingDataStoreInLearner, mountResultsStoreInLearner	 						bool
+	numberOfLearners                                                                    int
+	name                                                                                string
 }
 
 type helperDefinition struct {
@@ -108,14 +107,9 @@ type helperDefinition struct {
 }
 
 //NewTraining ...
-func NewTraining(ctx context.Context, k8sClient kubernetes.Interface, req *service.JobDeploymentRequest,
-	log *logger.LocLoggingEntry) Training {
-
-	log.Debugf("DATA_STORE_TYPE: %s, RESULT_STORE_TYPE: %s, MODEL_STORE_TYPE: %s",
-		req.EnvVars["DATA_STORE_TYPE"],
-		req.EnvVars["RESULT_STORE_TYPE"],
-		req.EnvVars["MODEL_STORE_TYPE"])
-
+func NewTraining(ctx context.Context, k8sClient kubernetes.Interface, req *service.JobDeploymentRequest, log *logger.LocLoggingEntry) Training {
+	const cosMountDriverName = "ibm/ibmc-s3fs"
+	const cosMountType = "mount_cos"
 	learnerName := fmt.Sprintf("learner-%s", req.Name)
 	helperName := fmt.Sprintf("lhelper-%s", req.Name)
 	numLearners := int(req.GetResources().Learners)
@@ -163,23 +157,14 @@ func NewTraining(ctx context.Context, k8sClient kubernetes.Interface, req *servi
 		sharedVolumeClaim: helperVolumes.DynamicPVCReference(),
 		name:              helperName,
 	}
-	logr.Debugf("sharedVolume: %v+", helperDefn.sharedVolume)
-	logr.Debugf("sharedVolumeMount: %v+", helperDefn.sharedVolumeMount)
-	logr.Debugf("sharedVolumeClaim: %v+", helperDefn.sharedVolumeClaim)
-
-	logr.Debugf("sharedVolume: %v+", helperDefn.sharedVolume)
-	logr.Debugf("sharedVolumeMount: %v+", helperDefn.sharedVolumeMount)
-	logr.Debugf("sharedVolumeClaim: %v+", helperDefn.sharedVolumeClaim)
 
 	if helperVolumes.SharedNonSplitLearnerHelperVolume != nil {
 		//this should not be the default case, we should be running in split mode by default
 		logr.Warnf("starting deploying learner infra for non split learning, this is not expected")
-		return nonSplitTraining{&training{ctx, k8sClient, req, req.TrainingId,
-			learnerDefn, helperDefn, logr}}
+		return nonSplitTraining{&training{ctx, k8sClient, req, req.TrainingId, learnerDefn, helperDefn, logr}}
 	}
 	logr.Infof("starting deploying learner infra for split learning")
-	return splitTraining{&training{ctx, k8sClient, req, req.TrainingId,
-		learnerDefn, helperDefn, logr}}
+	return splitTraining{&training{ctx, k8sClient, req, req.TrainingId, learnerDefn, helperDefn, logr}}
 }
 
 ///-------
@@ -198,36 +183,21 @@ func secretsForDeployingLearner(req *service.JobDeploymentRequest, mountTraining
 		resultsMountSecretName := "cossecretresults-" + req.Name
 		secretsStruct.ResultsDirSecret = &learner.COSVolumeSecret{ID: resultsMountSecretName, TrainingID: req.TrainingId, Username: req.EnvVars["RESULT_STORE_USERNAME"], APIKey: req.EnvVars["RESULT_STORE_APIKEY"]}
 	}
+
 	secretSpecs := learner.CreateVolumeSecretsSpec(secretsStruct)
 
 	return secretSpecs
 }
 
-func dumpValues(label string, envVars []v1core.EnvVar) {
-	for i, ev := range envVars {
-		fmt.Printf("%s[%d]: %s: %s\n", label, i, ev.Name, ev.Value)
-	}
-}
-
-func volumesForLearner(req *service.JobDeploymentRequest, learnerEnvVars []v1core.EnvVar,
-	mountTrainingDataStoreInLearner, mountResultsStoreInLearner bool, logr *logger.LocLoggingEntry) learner.Volumes {
+func volumesForLearner(req *service.JobDeploymentRequest, learnerEnvVars []v1core.EnvVar, mountTrainingDataStoreInLearner, mountResultsStoreInLearner bool, logr *logger.LocLoggingEntry) learner.Volumes {
 
 	volumesStruct := learner.Volumes{}
-
-	if doLearnerDeploymentDebuggingDiagnostics {
-		dumpValues("learnerEnvVars", learnerEnvVars)
-		for k, v := range req.EnvVars {
-			fmt.Printf("req.EnvVars: key[%s] value[%s]\n", k, v)
-		}
-	}
-
-	var region = "us-standard"
 
 	if mountTrainingDataStoreInLearner {
 		dataStoreType := req.EnvVars["DATA_STORE_TYPE"]
 		logr.Debugf("dataStoreType: %s", dataStoreType)
 		if dataStoreType == learner.DataStoreTypeMountCOSS3 {
-			region = req.EnvVars["DATA_STORE_REGION"]
+			region := req.EnvVars["DATA_STORE_REGION"]
 			if region == "" {
 				region = "us-standard"
 			}
@@ -235,8 +205,7 @@ func volumesForLearner(req *service.JobDeploymentRequest, learnerEnvVars []v1cor
 			cacheSize, err := strconv.Atoi(configValStr)
 			if err != nil {
 				cacheSize = 6
-				logr.Warnf("DLAAS_MOUNTCOS_GB_CACHE_PER_GPU value %s is not an integer.  Defaulting to %dGB/GPU",
-					configValStr, cacheSize)
+				logr.Warnf("DLAAS_MOUNTCOS_GB_CACHE_PER_GPU value %s is not an integer.  Defaulting to %dGB/GPU", configValStr, cacheSize)
 			}
 			cacheSize = cacheSize * int(req.Resources.Gpus)
 			// reserve 1/3 of cache for prefetching, up to a limit (diskFree is specified in MB, cache in GB)
@@ -284,23 +253,22 @@ func volumesForLearner(req *service.JobDeploymentRequest, learnerEnvVars []v1cor
 		resultStoreType := req.EnvVars["RESULT_STORE_TYPE"]
 		logr.Debugf("resultStoreType: %s", resultStoreType)
 		if resultStoreType == learner.DataStoreTypeMountCOSS3 {
-			region = req.EnvVars["RESULT_STORE_REGION"]
+			region := req.EnvVars["RESULT_STORE_REGION"]
 			if region == "" {
 				region = "us-standard"
 			}
-			// RESULT_STORE_OBJECTID has the trainingId appended to the end of it.
-			// We just want the bucket name.  Cut off "/TrainingId"
-			resultStoreBucket :=
-				req.EnvVars["RESULT_STORE_OBJECTID"][0: len(req.EnvVars["RESULT_STORE_OBJECTID"])-len(req.TrainingId)-1]
+			resultBucketDir := getValue(learnerEnvVars, "RESULT_BUCKET_DIR")
+			// drop the "/mnt/results" part of the path and only keep the bucket name
+			_, resultBucketName := path.Split(resultBucketDir)
 			volumesStruct.ResultsDir = &learner.COSVolume{
 				VolumeType: resultStoreType,
 				ID:        "cosoutputmount-" + req.Name,
 				Region:    region,
-				Bucket:    resultStoreBucket,
+				Bucket:    resultBucketName,
 				Endpoint:  req.EnvVars["RESULT_STORE_AUTHURL"],
 				SecretRef: "cossecretresults-" + req.Name,
 				MountSpec: learner.VolumeMountSpec{
-					MountPath: getValue(learnerEnvVars, "RESULT_DIR"),
+					MountPath: resultBucketDir,
 					SubPath:   "",
 				},
 				CacheSize: "0",
@@ -342,12 +310,10 @@ func volumesForHelper(req *service.JobDeploymentRequest, logr *logger.LocLogging
 	useDynamicExternalVolume := volumeSize > 0
 
 	staticVolumeName := getStaticVolume(logr)
-	logr.Debugf("Static volume for job is %s", staticVolumeName)
+	logr.Debugf("Static volume for job: %s", staticVolumeName)
 	useStaticExternalVolume := len(staticVolumeName) > 0
 
 	useSplitLearner := useDynamicExternalVolume || useStaticExternalVolume
-
-	logr.Debugf("useSplitLearner is %t", useSplitLearner)
 
 	if !useSplitLearner {
 		logr.Infof("Starting training %s with NON SPLIT MODE %d", req.TrainingId, volumeSize)
@@ -357,29 +323,18 @@ func volumesForHelper(req *service.JobDeploymentRequest, logr *logger.LocLogging
 
 	if useStaticExternalVolume {
 		logr.Infof("Using static external volume for training %s with name %s", req.TrainingId, staticVolumeName)
-		volumesStruct.SharedSplitLearnerHelperVolume = &helper.SharedNFSVolume{
-			Name: "jobdata",
-			PVCClaimName: staticVolumeName,
-			PVC: nil,
-			MountSpec: helper.VolumeMountSpec{
-				MountPath: PodLevelJobDir,
-				SubPath: req.TrainingId,
-			},
-		}
+		volumesStruct.SharedSplitLearnerHelperVolume = &helper.SharedNFSVolume{Name: "jobdata", PVCClaimName: staticVolumeName, PVC: nil,
+			MountSpec: helper.VolumeMountSpec{MountPath: PodLevelJobDir, SubPath: req.TrainingId}}
 
 	} else if useDynamicExternalVolume {
-		sharedVolumeClaim := constructVolumeClaim(req.Name, config.GetLearnerNamespace(),
-			volumeSize, map[string]string{"training_id": req.TrainingId}, logr)
-		logr.Infof("Using dynamic external volume for Training %s with name %s",
-			req.TrainingId, sharedVolumeClaim.Name)
-		volumesStruct.SharedSplitLearnerHelperVolume = &helper.SharedNFSVolume{
-			Name: "jobdata",
-			PVCClaimName: sharedVolumeClaim.Name,
-			PVC: sharedVolumeClaim,
-			MountSpec: helper.VolumeMountSpec{
-				MountPath: PodLevelJobDir,
-				SubPath: req.TrainingId,
-			},
+		sharedVolumeClaim := constructVolumeClaim(req.Name, config.GetLearnerNamespace(), volumeSize, map[string]string{"training_id": req.TrainingId})
+		if sharedVolumeClaim != nil {
+			logr.Infof("Using dynamic external volume for Training %s with name %s", req.TrainingId, sharedVolumeClaim.Name)
+			volumesStruct.SharedSplitLearnerHelperVolume = &helper.SharedNFSVolume{Name: "jobdata", PVCClaimName: sharedVolumeClaim.Name, PVC: sharedVolumeClaim,
+				MountSpec: helper.VolumeMountSpec{MountPath: PodLevelJobDir, SubPath: req.TrainingId}}
+		} else {
+			logr.Errorf("Can't construct volume claim for Training %s with name %s", req.TrainingId, req.Name)
+
 		}
 	}
 	return volumesStruct
@@ -409,16 +364,20 @@ func (t *training) constructAuxillaryContainers() []v1core.Container {
 	helperDefn := t.helper
 	helperContainers := []v1core.Container{
 		constructControllerContainer(t.req.TrainingId, helperDefn.etcdVolumeMount, helperDefn.sharedVolumeMount, learnerDefn.mountTrainingDataStoreInLearner, learnerDefn.mountResultsStoreInLearner),
-		constructLoadModelContainer(helperDefn.sharedVolumeMount, helperDefn.sharedEnvVars),
 		constructLogCollector(helperDefn.sharedVolumeMount, t.k8sClient, t.req, helperDefn.sharedEnvVars, t.logr),
 	}
 
 	if !learnerDefn.mountTrainingDataStoreInLearner {
 		helperContainers = append(helperContainers, constructLoadTrainingDataContainer(helperDefn.sharedVolumeMount, helperDefn.sharedEnvVars))
 	}
+	logr := logger.LocLogger(logger.LogServiceBasic(logger.LogkeyLcmService))
 	if !learnerDefn.mountResultsStoreInLearner {
+		logr.Info("learnerDefn.mountResultsStoreInLearner is false, creating extra helper containers")
+		helperContainers = append(helperContainers, constructLoadModelContainer(helperDefn.sharedVolumeMount, helperDefn.sharedEnvVars))
 		helperContainers = append(helperContainers, constructStoreResultsContainer(helperDefn.sharedVolumeMount, helperDefn.sharedEnvVars))
 		helperContainers = append(helperContainers, constructStoreLogsContainer(helperDefn.sharedVolumeMount, helperDefn.sharedEnvVars))
+	} else {
+		logr.Info("learnerDefn.mountResultsStoreInLearner is true")
 	}
 	return helperContainers
 }
