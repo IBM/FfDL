@@ -31,9 +31,9 @@ CONFIGMAP_NAME2=static-volumes-v2
 # Create new configmap
 echo
 echo "Using volumes with label type=$volumeType"
-kubectl get pvc --selector type=${volumeType}
+kubectl get pvc --selector type=${volumeType} -n ${Namespace}
 echo
 
-kubectl get pvc --selector type="dlaas-static-volume" -o jsonpath='{"static-volumes-v2:"}{range .items[*]}{"\n  - name: "}{.metadata.name}{"\n    zlabel: "}{.metadata.name}{"\n    status: active\n"}' > PVCs-v2.yaml
+kubectl get pvc --selector type="dlaas-static-volume" -n ${Namespace} -o jsonpath='{"static-volumes-v2:"}{range .items[*]}{"\n  - name: "}{.metadata.name}{"\n    zlabel: "}{.metadata.name}{"\n    status: active\n"}' > PVCs-v2.yaml
 
-kubectl create configmap ${CONFIGMAP_NAME2} --from-file=PVCs-v2.yaml
+kubectl create configmap ${CONFIGMAP_NAME2} -n ${Namespace} --from-file=PVCs-v2.yaml
