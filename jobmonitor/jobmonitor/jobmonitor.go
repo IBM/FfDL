@@ -30,14 +30,12 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/IBM/FfDL/commons/config"
+	"github.com/IBM/FfDL/lcm/coord"
 	"github.com/IBM/FfDL/lcm/lcmconfig"
 
 	"github.com/IBM/FfDL/commons/logger"
 	"github.com/IBM/FfDL/commons/service"
-	"github.com/IBM/FfDL/lcm/coord"
 
-	v1core "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
 	lcmClient "github.com/IBM/FfDL/commons/service/client"
@@ -56,10 +54,9 @@ const (
 )
 
 const (
-	// numRetries             = 10
+	numRetries             = 10
 	insuffResourcesRetries = 40
-	// ctxTimeout             = 10 * time.Second
-	pollingInterval        = 60 * time.Second
+	ctxTimeout             = 10 * time.Second
 )
 
 type jobMonitorMetrics struct {
@@ -76,9 +73,9 @@ type JobMonitor struct {
 	JobName               string
 	NumLearners           int
 	trMap                 map[string]([]string)
-	etcdClient            coord.Coordinator
 	numTerminalLearners   uint64
 	metrics               *jobMonitorMetrics
+	EtcdClient            coord.Coordinator
 }
 
 var failedTrainerConnectivityCounter metrics.Counter
@@ -105,32 +102,6 @@ func NewJobMonitor(trainingID string, userID string, numLearners int, jobName st
 		failedETCDWatchCounter:               statsdClient.NewCounter("jobmonitor.etcd.watch.failed", 1),
 	}
 
-	defaultBackoff := backoff.NewExponentialBackOff()
-	defaultBackoff.MaxElapsedTime = 1 * time.Minute
-
-	var coordinator coord.Coordinator
-	var err error
-	err = backoff.RetryNotify(func() error {
-		coordinator, err = coord.NewCoordinator(coord.Config{Endpoints: config.GetEtcdEndpoints(), Prefix: config.GetEtcdPrefix(),
-			Cert: config.GetEtcdCertLocation(), Username: config.GetEtcdUsername(), Password: config.GetEtcdPassword()}, logr)
-		return err
-	}, defaultBackoff, func(err error, t time.Duration) {
-		jmMetrics.failedETCDConnectivityCounter.Add(1)
-	})
-
-	//FIXME no defer close is being called here, so the etcdclient never closes
-	if err != nil {
-		logr.WithError(err).Errorf("Failed to connect to etcd while creating new lcm service for training %s", trainingID)
-
-		if err := updateJobStatusOnError(trainingID, userID, client.ErrCodeEtcdConnection, service.StatusMessages_INTERNAL_ERROR.String(), logr); err != nil {
-			logr.WithError(err).Errorf("Failed to write the status %s for training %s to trainer", grpc_trainer_v2.Status_FAILED, trainingID)
-		}
-		if err := KillDeployedJob(trainingID, userID, jobName, logr); err != nil {
-			logr.WithError(err).Errorf("Failed to kill the deployed job %s", trainingID)
-		}
-		return nil, err
-	}
-
 	k8sClient, err := kubernetes.NewForConfig(lcmconfig.GetKubernetesConfig())
 	if err != nil {
 		jmMetrics.failedK8sConnectivityCounter.Add(1)
@@ -145,6 +116,12 @@ func NewJobMonitor(trainingID string, userID string, numLearners int, jobName st
 		return nil, fmt.Errorf("Failed to connect to k8s")
 	}
 
+	client, connectivityErr := coordinator(logr)
+	if connectivityErr != nil {
+		shutdownTrainingOnETCDFailure(trainingID, userID, jobName, connectivityErr, logr)
+		return nil, connectivityErr
+	}
+
 	jm := &JobMonitor{
 		k8sClient:             k8sClient,
 		UseNativeDistribution: useNativeDistribution,
@@ -153,8 +130,8 @@ func NewJobMonitor(trainingID string, userID string, numLearners int, jobName st
 		JobName:               jobName,
 		NumLearners:           numLearners,
 		trMap:                 initTransitionMap(),
-		etcdClient:            coordinator,
 		metrics:               &jmMetrics,
+		EtcdClient:            client,
 	}
 
 	return jm, nil
@@ -206,7 +183,6 @@ func updateJobStatusOnError(trainingID string, userID string, errorCode string, 
 //ManageDistributedJob ...manages a DLaaS training job
 func (jm *JobMonitor) ManageDistributedJob(logr *logger.LocLoggingEntry) {
 	go jm.checkIfJobStarted(logr)
-	go jm.monitorLearnerForFailedImagePull(logr)
 	go jm.monitorJob(logr)
 }
 
@@ -215,19 +191,14 @@ func (jm *JobMonitor) ManageDistributedJob(logr *logger.LocLoggingEntry) {
 //the trailing slash on status/ on learner is important as it distinguishes the regex from status_summary_metrics
 func (jm *JobMonitor) monitorJob(logr *logger.LocLoggingEntry) {
 
-	defaultBackoff := backoff.NewExponentialBackOff()
-	defaultBackoff.MaxElapsedTime = 1 * time.Minute
-	defaultBackoff.MaxInterval = 5 * time.Second
-
 	err := backoff.RetryNotify(func() error {
-		_, err := jm.etcdClient.PutIfKeyMissing(overallJobStatusPath(jm.TrainingID), grpc_trainer_v2.Status_NOT_STARTED.String(), logr)
+		_, err := jm.EtcdClient.PutIfKeyMissing(overallJobStatusPath(jm.TrainingID), grpc_trainer_v2.Status_NOT_STARTED.String(), logr)
 		return err
-	}, defaultBackoff, func(err error, t time.Duration) { jm.metrics.failedETCDConnectivityCounter.Add(1) })
+	}, etdInteractionBackoff(1*time.Minute, 10*time.Second), func(err error, t time.Duration) { jm.metrics.failedETCDConnectivityCounter.Add(1) })
 
-	//FIXME should we kill the job here
+	//not doing anything here, since this is probably a job monitor restarting
 	if err != nil {
-		logr.WithError(err).Errorf("(monitorLearner)  Failed to set up the job status %s for the path %s :",
-			grpc_trainer_v2.Status_NOT_STARTED.String(), overallJobStatusPath(jm.TrainingID))
+		logr.WithError(err).Warnf("job monitor possibly restarted and that's why the status %s for the path %s :", grpc_trainer_v2.Status_NOT_STARTED.String(), overallJobStatusPath(jm.TrainingID))
 	}
 
 	//processed[1], for example, stores the number of status updates of learner 1 that have been processed
@@ -238,10 +209,12 @@ func (jm *JobMonitor) monitorJob(logr *logger.LocLoggingEntry) {
 		processed[i] = 0
 	}
 
-	for {
+	ticker := time.NewTicker(1 * time.Minute)
+	for _ = range ticker.C {
+
 		for i := 1; i <= jm.NumLearners; i++ {
 			seqName := indvidualJobStatusPath(jm.TrainingID, i)
-			seq := jm.etcdClient.NewValueSequence(seqName, logr)
+			seq := jm.EtcdClient.NewValueSequence(seqName, logr)
 			statuses, err := seq.GetAll(logr)
 
 			if err != nil {
@@ -255,7 +228,6 @@ func (jm *JobMonitor) monitorJob(logr *logger.LocLoggingEntry) {
 				processed[i]++
 			}
 		}
-		time.Sleep(pollingInterval)
 	}
 
 }
@@ -309,29 +281,27 @@ func (jm *JobMonitor) processUpdateJobStatus(currStatus string, logr *logger.Loc
 }
 
 //This function processes an update to learner status, i.e. it updates the overall job status
-//This function should return true only if the learner needs no further status monitoring
-func (jm *JobMonitor) processUpdateLearnerStatus(learnerStatusPath string, learnerStatusValue string, logr *logger.LocLoggingEntry) (bool, error) {
-	statusUpdate := client.GetStatus(learnerStatusValue, logr)
-	learnerStatus := statusUpdate.Status
-	logr.Infof("(processUpdateLearnerStatus) got triggered with the current path %s and value %s (status %s)", learnerStatusPath, learnerStatusValue, learnerStatus)
-	//Variable to notify whether the learner needs further status monitoring
-	markComplete := false
+func (jm *JobMonitor) processUpdateLearnerStatus(learnerStatusPath string, learnerStatusValue string, logr *logger.LocLoggingEntry) error {
 
-	response, err := jm.etcdClient.Get(overallJobStatusPath(jm.TrainingID), logr)
+	learnerStatus := client.GetStatus(learnerStatusValue, logr).Status
+	logr.Infof("got triggered with the current path %s and value %s (status %s)", learnerStatusPath, learnerStatusValue, learnerStatus)
+
+	response, err := jm.EtcdClient.Get(overallJobStatusPath(jm.TrainingID), logr)
 	if err != nil {
-		//FIXME not sure if we should be returning false or true here, since false means stop the watch
-		return markComplete, err
+		return err
 	}
+
 	if response == nil || len(response) == 0 {
-		return markComplete, fmt.Errorf("(processUpdateLearnerStatus) while processing update from learner, the value at overall job status path %s was empty, the default value is NOT_STARTED", overallJobStatusPath(jm.TrainingID))
+		return fmt.Errorf(" while processing update from learner, the value at overall job status path %s was empty, the default value is NOT_STARTED", overallJobStatusPath(jm.TrainingID))
 	}
+
 	currentOverallJobStatus := response[0].Value
 	// currentOverallJobStatus may be a JSON value -> parse and convert to TrainingStatusUpdate struct
 	currentOverallJobStatusObj := client.GetStatus(currentOverallJobStatus, logr)
 	jobStatus := currentOverallJobStatusObj.Status
 	if jm.isTransitionAllowed(jobStatus.String(), learnerStatus.String()) {
 		logr.Infof("Transition was allowed, changing overall status of job from %s to learners status %s", jobStatus, learnerStatus)
-		jm.etcdClient.CompareAndSwap(overallJobStatusPath(jm.TrainingID), learnerStatusValue, currentOverallJobStatus, logr)
+		jm.EtcdClient.CompareAndSwap(overallJobStatusPath(jm.TrainingID), learnerStatusValue, currentOverallJobStatus, logr)
 		jm.processUpdateJobStatus(learnerStatusValue, logr)
 	} else {
 		logr.Warnf("Transition not allowed job from overall job status %s to learner status %s", jobStatus, learnerStatus)
@@ -339,9 +309,8 @@ func (jm *JobMonitor) processUpdateLearnerStatus(learnerStatusPath string, learn
 	//keep an eye on idividual learners as well, if they terminate then check if all of them are done then check if job can be terminated
 	if learnerStatus == grpc_trainer_v2.Status_COMPLETED || learnerStatus == grpc_trainer_v2.Status_FAILED || learnerStatus == grpc_trainer_v2.Status_HALTED {
 		atomic.AddUint64(&jm.numTerminalLearners, 1)
-		markComplete = true
 	}
-	return markComplete, err
+	return err
 }
 
 func overallJobStatusPath(trainingID string) string {
@@ -354,48 +323,6 @@ func indvidualJobStatusPath(trainingID string, learnerNum int) string {
 
 func jobBasePath(trainingID string) string {
 	return trainingID + "/"
-}
-
-//Set the Job status to FAILED when the container can't find the image
-func (jm *JobMonitor) monitorLearnerForFailedImagePull(logr *logger.LocLoggingEntry) {
-	for {
-		logr.Debugf("(monitorLearnerForFailedImagePull) Checking Learners for failed image pull")
-
-		selector := "training_id==" + jm.TrainingID
-		defaultBackoff := backoff.NewExponentialBackOff()
-		defaultBackoff.MaxElapsedTime = 0 //will keep infinitely retrying
-		defaultBackoff.MaxInterval = 30 * time.Second
-
-		var pods *v1core.PodList
-		var err error
-		backoff.RetryNotify(func() error {
-			pods, err = jm.k8sClient.Core().Pods(config.GetLearnerNamespace()).List(metav1.ListOptions{LabelSelector: selector})
-			return err
-		}, defaultBackoff, func(err error, t time.Duration) { jm.metrics.failedK8sConnectivityCounter.Add(1) })
-
-		atleastSingleContainerWaiting := false
-		if len(pods.Items) > 0 {
-			containerStatuses := pods.Items[0].Status.ContainerStatuses
-			for _, containerStatus := range containerStatuses {
-				if containerStatus.State.Waiting != nil {
-					atleastSingleContainerWaiting = true
-					reason := containerStatus.State.Waiting.Reason
-					if reason == "ErrImagePull" {
-						logr.Errorf("(monitorLearnerForFailedImagePull) Failed to start container %s: %s", containerStatus.Name, containerStatus.State.Waiting.Message)
-						jm.metrics.failedImagePullK8sErrorCounter.Add(1)
-
-						updateJobStatusOnError(jm.TrainingID, jm.UserID, client.ErrCodeImagePull, service.StatusMessages_INTERNAL_ERROR.String(), logr)
-						return
-					}
-				}
-			}
-
-		}
-		if !atleastSingleContainerWaiting {
-			break
-		}
-	}
-
 }
 
 //KillDeployedJob ... Contact the LCM and kill training job
@@ -460,4 +387,39 @@ func (jm *JobMonitor) isTransitionAllowed(fromStatus string, toStatus string) bo
 		}
 	}
 	return false
+}
+
+func etdInteractionBackoff(maxElapsedTime, maxInterval time.Duration) *backoff.ExponentialBackOff {
+	back := backoff.NewExponentialBackOff()
+	back.MaxElapsedTime = maxElapsedTime
+	back.MaxInterval = maxInterval
+	return back
+}
+
+//onError function on how to deal with the scenario if connecting to coordinator failed. the error is still returned in case
+func coordinator(logr *logger.LocLoggingEntry) (coord.Coordinator, error) {
+
+	var instance coord.Coordinator
+	var err error
+	err = backoff.
+		RetryNotify(func() error {
+			instance, err = coord.NewCoordinator(coord.Config{Endpoints: config.GetEtcdEndpoints(), Prefix: config.GetEtcdPrefix(),
+				Cert: config.GetEtcdCertLocation(), Username: config.GetEtcdUsername(), Password: config.GetEtcdPassword()}, logr)
+			return err
+		}, etdInteractionBackoff(1*time.Minute, 30*time.Second), func(err error, t time.Duration) {
+			logr.WithError(err).Errorf("failed to establish connection with etcd")
+		})
+
+	return instance, err
+}
+
+func shutdownTrainingOnETCDFailure(trainingID, userID, jobName string, err error, logr *logger.LocLoggingEntry) {
+
+	logr.WithError(err).Error("failed to connect to etcd while monitoring training and shutting down the job")
+	if err := updateJobStatusOnError(trainingID, userID, client.ErrCodeEtcdConnection, service.StatusMessages_INTERNAL_ERROR.String(), logr); err != nil {
+		logr.WithError(err).Errorf("Failed to write the status %s for training %s to trainer", grpc_trainer_v2.Status_FAILED, trainingID)
+	}
+	if err := KillDeployedJob(trainingID, userID, jobName, logr); err != nil {
+		logr.WithError(err).Errorf("Failed to kill the deployed job %s", trainingID)
+	}
 }

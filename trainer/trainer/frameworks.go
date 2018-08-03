@@ -19,10 +19,9 @@ package trainer
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"strings"
 
-	"github.com/IBM/FfDL/commons/config"
+	"github.com/IBM/FfDL/commons/framework"
 	"github.com/IBM/FfDL/trainer/trainer/grpc_trainer_v2"
 )
 
@@ -40,11 +39,12 @@ func validateFrameworks(fw *grpc_trainer_v2.Framework) (bool, string) {
 		return false, "framework version is required"
 	}
 
-	loc := config.GetCurrentLearnerConfigLocation(fwName, fwVersion)
-	if loc == "" {
-		return false, fmt.Sprintf("%s version %s not supported", fwName, fwVersion)
+	exists, err := framework.CheckIfFrameworkExists(fwName, fwVersion, learnerConfigPath)
+	if err != nil {
+		return false, fmt.Sprintf("Framework Versions could not be validated: %s", err.Error())
 	}
-	return true, ""
+
+	return exists, ""
 }
 
 func normalizedFrameworkName(fw *grpc_trainer_v2.Framework) string {
@@ -52,35 +52,31 @@ func normalizedFrameworkName(fw *grpc_trainer_v2.Framework) string {
 }
 
 func getExternalVersions() (grpc_trainer_v2.Frameworks, error) {
-	frameworks, err := getFrameworks()
+	frameworks, err := framework.GetFrameworks(learnerConfigPath)
 	if err != nil {
 		return grpc_trainer_v2.Frameworks{}, err
 	}
-	return frameworks, nil
+
+	userFrameworks, err := convertToUserFramework(frameworks)
+	removeInternalFrameworks(userFrameworks)
+
+	return userFrameworks, nil
 }
 
-func getFrameworks() (grpc_trainer_v2.Frameworks, error) {
+func convertToUserFramework(internalFramework framework.Frameworks) (grpc_trainer_v2.Frameworks, error) {
 	var frameworks grpc_trainer_v2.Frameworks
-	fileData, err := readFile(learnerConfigPath)
-	if err != nil {
-		return grpc_trainer_v2.Frameworks{}, err
-	}
-	err = json.Unmarshal(fileData, &frameworks)
-	if err != nil {
-		return grpc_trainer_v2.Frameworks{}, err
-	}
 
-	removeInternalFrameworks(frameworks)
+	//Switch from internal framework struct to user struct
+	data, err := json.Marshal(internalFramework)
+	if err != nil {
+		return grpc_trainer_v2.Frameworks{}, err
+	}
+	err = json.Unmarshal(data, &frameworks)
+	if err != nil {
+		return grpc_trainer_v2.Frameworks{}, err
+	}
 
 	return frameworks, nil
-}
-
-func readFile(location string) ([]byte, error) {
-	fileData, err := ioutil.ReadFile(location)
-	if err != nil {
-		return []byte(""), err
-	}
-	return fileData, nil
 }
 
 func removeInternalFrameworks(frameworks grpc_trainer_v2.Frameworks) {

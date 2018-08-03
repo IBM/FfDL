@@ -38,8 +38,14 @@ func (t nonSplitTraining) Start() error {
 	learnerContainer := constructLearnerContainer(t.req, learnerDefn.envVars, learnerDefn.volumeMounts, helperDefn.sharedVolumeMount, learnerDefn.mountTrainingDataStoreInLearner, learnerDefn.mountResultsStoreInLearner, t.logr)
 	helperContainers = append(helperContainers, learnerContainer)
 
+	imagePullSecret, err := learner.GenerateImagePullSecret(t.k8sClient, t.req)
+	if err != nil {
+		t.logr.WithError(err).Errorf("Could not create pull secret for %s", t.learner.name)
+		return err
+	}
+
 	//create pod, service, statefuleset spec
-	nonSplitLearnerPodSpec := learner.CreatePodSpec(helperContainers, helperAndLearnerVolumes, map[string]string{"training_id": t.req.TrainingId, "user_id": t.req.UserId}, gpus)
+	nonSplitLearnerPodSpec := learner.CreatePodSpec(helperContainers, helperAndLearnerVolumes, map[string]string{"training_id": t.req.TrainingId, "user_id": t.req.UserId}, gpus, imagePullSecret)
 	serviceSpec := learner.CreateServiceSpec(learnerDefn.name, t.req.TrainingId)
 	statefulSetSpec := learner.CreateStatefulSetSpecForLearner(learnerDefn.name, serviceSpec.Name, learnerDefn.numberOfLearners, nonSplitLearnerPodSpec)
 

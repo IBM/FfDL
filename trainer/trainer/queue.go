@@ -113,6 +113,8 @@ func (q *TrainingJobQueue) Enqueue(id string) error {
 	sess := q.session.Clone()
 	defer sess.Close()
 
+	logr.Debugf("enqueue using database: %s collection: %s live servers: %s", q.database, q.queueCollection, sess.LiveServers())
+
 	entry := &Entry{
 		ID:         bson.NewObjectId(),
 		TrainingID: id,
@@ -133,6 +135,8 @@ func (q *TrainingJobQueue) Dequeue() (string, error) {
 
 	sess := q.session.Clone()
 	defer sess.Close()
+
+	logr.Debugf("dequeue using database: %s collection: %s live servers: %s", q.database, q.queueCollection, sess.LiveServers())
 
 	// find the earliest entry
 	entry := &Entry{}
@@ -159,6 +163,8 @@ func (q *TrainingJobQueue) Peek() (string, error) {
 	sess := q.session.Clone()
 	defer sess.Close()
 
+	logr.Debugf("peek using database: %s collection: %s live servers: %s", q.database, q.queueCollection, sess.LiveServers())
+
 	// find the earliest entry
 	entry := &Entry{}
 	err := sess.DB(q.database).C(q.queueCollection).Find(nil).Sort("submitted").One(&entry)
@@ -178,6 +184,8 @@ func (q *TrainingJobQueue) Delete(id string) (bool, error) {
 
 	sess := q.session.Clone()
 	defer sess.Close()
+
+	logr.Debugf("delete using database: %s collection: %s live servers: %s", q.database, q.queueCollection, sess.LiveServers())
 
 	entry := &Entry{}
 	err := sess.DB(q.database).C(q.queueCollection).Find(bson.M{"training_id": id}).One(&entry)
@@ -202,6 +210,8 @@ func (q *TrainingJobQueue) Size() (int, error) {
 
 	sess := q.session.Clone()
 	defer sess.Close()
+
+	logr.Debugf("size query using database: %s collection: %s live servers: %s", q.database, q.queueCollection, sess.LiveServers())
 
 	count, err := sess.DB(q.database).C(q.queueCollection).Count()
 	if err != nil {

@@ -339,18 +339,25 @@ while true; do
             fi
             ;;
         (COMPLETED)
+            echo "Calling cleanup (COMPLETED)"
             cleanup
+            echo "Setting state to final (COMPLETED)"
             setState FINAL
             ;;
         (FAILED)
+            echo "Calling cleanup (FAILED)"
             cleanup
+            echo "Setting state to final (FAILED)"
             setState FINAL
             ;;
         (HALTED)
+            echo "Calling cleanup (HALTED)"
             cleanup
+            echo "Setting state to final (HALTED)"
             setState FINAL
             ;;
         (FINAL)
+            echo "In controller FINAL"
             ;;
         (*)
             echo ERROR: In unexpected state: $current_state

@@ -26,8 +26,8 @@ import (
 	"github.com/IBM/FfDL/commons/logger"
 	"github.com/IBM/FfDL/commons/metricsmon"
 	"github.com/IBM/FfDL/commons/service/client"
-	"github.com/IBM/FfDL/lcm/service/lcm"
 	"github.com/IBM/FfDL/commons/util"
+	"github.com/IBM/FfDL/lcm/service/lcm"
 )
 
 func main() {
@@ -50,7 +50,7 @@ func main() {
 	}
 
 	util.HandleOSSignals(func() {
-		service.Stop()
+		service.StopLCM()
 		if config.CheckPushGatewayEnabled() {
 			stopSendingMetricsChannel <- struct{}{}
 		}

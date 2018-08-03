@@ -104,24 +104,19 @@ func newJobHistoryRepository(mongoURI string, database string, username string, 
 	cert string, collection string) (jobHistoryRepository, error) {
 	log := logger.LocLogger(log.StandardLogger().WithField("module", "jobHistoryRepository"))
 	log.Debugf("Creating mongo repository for %s, collection %s:", mongoURI, collection)
-	repo, _, err := createMongoRepository(mongoURI, database, username, password, cert, collection)
-	return repo, err
-}
 
-// createMongoRepository creates a new struct for a MongoDB collection
-func createMongoRepository(mongoURI string, database string, username string, password string,
-	cert string, collection string) (*trainingsRepository, *mgo.Collection, error) {
-	repo := &trainingsRepository{}
 	session, err := ConnectMongo(mongoURI, database, username, password, cert)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	collectionObj := session.DB(database).C(collection)
 
-	repo.session = session
-	repo.collection = collection
-	repo.database = collectionObj.Database.Name
-	return repo, collectionObj, nil
+	repo := &trainingsRepository{
+		session:    session,
+		database:   collectionObj.Database.Name,
+		collection: collection,
+	}
+	return repo, err
 }
 
 func (r *trainingsRepository) Store(t *TrainingRecord) error {
@@ -289,8 +284,12 @@ func (r *trainingsRepository) queryDatabase(selector *bson.M, sess *mgo.Session)
 }
 
 func (r *trainingsRepository) FindCurrentlyRunningTrainings(limit int) ([]*TrainingRecord, error) {
+	logr := logger.LocLogger(log.StandardLogger().WithField("module", "trainingRepository"))
 	sess := r.session.Clone()
 	defer sess.Close()
+
+	logr.Debugf("find currently running trainings using database: %s collection: %s live servers: %s", r.database, r.collection, sess.LiveServers())
+
 	var tr []*TrainingRecord
 	//sorting by id in descending fashion(hence the - before id), assumption being records in mongo are being created with auto generated id which has a notion of timestamp built into it
 	err := r.queryDatabase(nil, sess).Sort("-_id").Limit(limit).Select(bson.M{"training_status": 1, "training.resources": 2, "training_id": 3}).All(&tr)
