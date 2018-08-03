@@ -573,8 +573,8 @@ test-submit:      ## Submit test training job
 		restapi_url=http://$$node_ip:$$restapi_port; \
 		echo S3 URL: $$s3_url  REST URL: $$restapi_url; \
 		export DLAAS_URL=http://$$node_ip:$$restapi_port; export DLAAS_USERNAME=$(TEST_USER); export DLAAS_PASSWORD=test; \
-		echo Executing in etc/examples/$(TEST_SAMPLE): DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$$DLAAS_USERNAME DLAAS_PASSWORD=test $(CLI_CMD) train manifest.yml . ; \
-		cp etc/examples/tf-model/manifest.yml etc/examples/tf-model/manifest_testrun.yml ; \
+		echo Executing in etc/examples/$(TEST_SAMPLE): DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$$DLAAS_USERNAME DLAAS_PASSWORD=test $(CLI_CMD) train manifest-for-test.yml . ; \
+		cp etc/examples/tf-model/manifest-for-test.yml etc/examples/tf-model/manifest_testrun.yml ; \
 		sed -i -e "s/user_name: test/user_name: ${AWS_ACCESS_KEY_ID}/g" etc/examples/tf-model/manifest_testrun.yml ; \
 		sed -i -e "s/password: test/password: ${AWS_SECRET_ACCESS_KEY}/g" etc/examples/tf-model/manifest_testrun.yml ; \
 		sed -i "s/auth_url:\stest/auth_url: $${s3_url}/g" etc/examples/tf-model/manifest_testrun.yml ; \
