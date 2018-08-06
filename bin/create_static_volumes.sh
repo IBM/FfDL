@@ -13,6 +13,7 @@
 SHARED_VOLUME_STORAGE_CLASS="${SHARED_VOLUME_STORAGE_CLASS:-""}"
 
 volumeNum=${1:-1}
+Namespace=${Namespace:-default}
 
 echo "Creating persistent volume claim $volumeNum"
 (kubectl apply -f - <<EOF
@@ -20,6 +21,7 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: static-volume-$volumeNum
+  namespace: $Namespace
   annotations:
     volume.beta.kubernetes.io/storage-class: "$SHARED_VOLUME_STORAGE_CLASS"
   labels:

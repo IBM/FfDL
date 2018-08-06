@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: statsd-exporter-configmap
+  namespace: {{.Values.namespace}}
 data:
   mapping.conf: |-
     mappings:
@@ -34,7 +35,7 @@ data:
       labels:
         reason: "$1"
         job: "jobmonitor"
-    
+
     - match: jobmonitor.jobmonitor.k8s.*.failed
       help: "Total number of k8s related failures in jobmonitor"
       name: "jobmonitor_k8s_failures"

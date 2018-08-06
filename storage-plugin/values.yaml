@@ -7,3 +7,4 @@ image:
   pullPolicy: IfNotPresent
 dind: false
 cloud: true
+namespace: default

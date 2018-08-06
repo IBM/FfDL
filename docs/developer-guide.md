@@ -32,6 +32,7 @@ export DOCKER_NAMESPACE=<NAMESPACE_ON_IBM_CLOUD> # Container Registry Namespace
 export DOCKER_PULL_POLICY=Always # Keep IfNotPresent if not pushing to registry, e.g. for Minikube
 export VM_TYPE=none
 export HAS_STATIC_VOLUMES=True
+export NAMESPACE=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $NAMESPACE` before proceeding to the next step
 ```
 
 Compile the code, generate certificates, and build the Docker images via:
@@ -50,6 +51,7 @@ make docker-push # Push built Docker images to registry, not used for Minikube
 Make sure `kubectl` points to the right target context/namespace, then deploy the services to your Kubernetes
 environment (using `helm`):
 ```shell
+kubectl config set-context $(kubectl config current-context) --namespace=$NAMESPACE # Set your current-context to the FfDL namespace
 make create-volumes # Create static volumes for sharing across pods
 make deploy-plugin # Deploy S3 storage plugin
 make deploy # Deploy FfDL
