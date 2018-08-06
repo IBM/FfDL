@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: prometheus-alertmanager
+  namespace: {{.Values.namespace}}
 data:
   alertmanager.yml: |-
     global:
