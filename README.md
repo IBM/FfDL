@@ -84,7 +84,7 @@ If you have [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-clust
 export VM_TYPE=dind
 export PUBLIC_IP=localhost
 export SHARED_VOLUME_STORAGE_CLASS="";
-export Namespace=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $Namespace` before running the make commands below
+export NAMESPACE=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $NAMESPACE` before running the make commands below
 
 make deploy-plugin
 make quickstart-deploy
@@ -99,7 +99,7 @@ then deploy the platform services:
 ``` shell
 export VM_TYPE=none
 export PUBLIC_IP=<Cluster Public IP>
-export Namespace=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $Namespace` before running the make commands below
+export NAMESPACE=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $NAMESPACE` before running the make commands below
 
 # Change the storage class to what's available on your Cloud Kubernetes Cluster.
 export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold";
@@ -152,7 +152,7 @@ kubectl get pods --all-namespaces | grep tiller-deploy
   export SHARED_VOLUME_STORAGE_CLASS=""
   export VM_TYPE=dind
   export PUBLIC_IP=localhost
-  export Namespace=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $Namespace` before proceeding to the next step
+  export NAMESPACE=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $NAMESPACE` before proceeding to the next step
   ```
 
   * 2.b. For Cloud Kubernetes Cluster
@@ -163,19 +163,19 @@ kubectl get pods --all-namespaces | grep tiller-deploy
   export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold"
   export VM_TYPE=none
   export PUBLIC_IP=<Cluster Public IP>
-  export Namespace=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $Namespace` before proceeding to the next step
+  export NAMESPACE=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $NAMESPACE` before proceeding to the next step
   ```
 
 3. Install the Object Storage driver using helm install.
   * 3.a. For Kubeadm-DIND Cluster only
   ```shell
   ./bin/s3_driver.sh
-  helm install storage-plugin --set dind=true,cloud=false,namespace=$Namespace
+  helm install storage-plugin --set dind=true,cloud=false,namespace=$NAMESPACE
   ```
 
   * 3.b. For Cloud Kubernetes Cluster
   ```shell
-  helm install storage-plugin --set namespace=$Namespace
+  helm install storage-plugin --set namespace=$NAMESPACE
   ```
 
 4. Create a static volume to store any metadata from FfDL.
@@ -191,14 +191,14 @@ popd
 5. Now let's install all the necessary FfDL components using helm install.
 
 ``` shell
-helm install . --set lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS,namespace=$Namespace
+helm install . --set lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS,namespace=$NAMESPACE
 ```
 > Note: If you want to upgrade an older version of FfDL, run
 > `helm upgrade $(helm list | grep ffdl | awk '{print $1}' | head -n 1) .`
 
 Make sure all the FfDL components are installed and running before moving to the next step.
 ``` shell
-kubectl config set-context $(kubectl config current-context) --namespace=$Namespace
+kubectl config set-context $(kubectl config current-context) --namespace=$NAMESPACE
 kubectl get pods
 # NAME                                 READY     STATUS    RESTARTS   AGE
 # alertmanager-7cf6b988b9-h9q6q        1/1       Running   0          5h
