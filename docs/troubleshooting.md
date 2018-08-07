@@ -37,7 +37,7 @@ Need to adapt tensorflow version in manifest to what is specified on https://git
 
 # DIND
 ## Deploy
-* ffdl-lcm, ffdl-restapi, ffdl-trainer, ffdl-trainingdata and ffdl-ui pods show ImagePullBackOff: See if Kubernetes secret regcred exists via `kubectl get secret | grep regcred`. If it does not (output empty), create it with `kubectl create secret docker-registry regcred --docker-server=${DOCKER_REPO} --docker-username=${DOCKER_REPO_USER} --docker-password=${DOCKER_REPO_PASS} --docker-email=unknown@docker.io`.
+* ffdl-lcm, ffdl-restapi, ffdl-trainer, ffdl-trainingdata and ffdl-ui pods show ImagePullBackOff: See if Kubernetes secret regcred exists via `kubectl get secret | grep regcred`. If it does not (output empty), create it with `kubectl create secret docker-registry regcred --docker-server=${DOCKER_REPO} --docker-username=${DOCKER_REPO_USER} --docker-password=${DOCKER_REPO_PASS} --docker-email=unknown@docker.io -n ${NAMESPACE}`.
 
 ## Training
 * If you start a job and `lhelper` and `jobmonitor` pods get to `Running` state, but the corresponding `learner` remains stuck in `ContainerCreating`, please take a look at `kubectl describe pod <learner-pod>`. It is possible that your storage configuration in your manifest is invalid and if so, you should see events that point out the issues.

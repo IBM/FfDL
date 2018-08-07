@@ -3,6 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: pushgateway
+  namespace: {{.Values.namespace}}
 spec:
   replicas: 1
   selector:
