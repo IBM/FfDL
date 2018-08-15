@@ -424,11 +424,12 @@ func constructLearnerContainer(req *service.JobDeploymentRequest, envVars []v1co
 	//FIXME need to have the learner IDs start from 1 rather than 0
 	var cmd string
 	var doCondExitWrite = true
+	//FIXME we assume all images has python installed to unzip the model.zip
 	if mountResultsStoreInLearner {
 		loadModelComand := `
 			echo "Starting Training $TRAINING_ID"
 			mkdir -p "$MODEL_DIR" ;
-			unzip -nq "$RESULT_DIR/_submitted_code/model.zip" -d "$MODEL_DIR"`
+			python -m zipfile -e $RESULT_DIR/_submitted_code/model.zip $MODEL_DIR `
 		learnerCommand := `
 			for i in ${!ALERTMANAGER*} ${!DLAAS*} ${!ETCD*} ${!GRAFANA*} ${!HOSTNAME*} ${!KUBERNETES*} ${!MONGO*} ${!PUSHGATEWAY*}; do unset $i; done;
 			export LEARNER_ID=$((${DOWNWARD_API_POD_NAME##*-} + 1)) ;
