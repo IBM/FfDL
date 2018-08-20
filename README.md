@@ -26,10 +26,8 @@ To know more about the architectural details, please read the [design document](
 
 * `S3 CLI`: The [command-line interface](https://aws.amazon.com/cli/) to configure your Object Storage
 
-* An existing Kubernetes cluster (e.g., [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) for local testing).
+* An existing Kubernetes cluster (e.g., [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) for local testing or follow the appropriate instructions for standing up your Kubernetes cluster using [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) or [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)).
   <!-- For Minikube, use the command `make minikube` to start Minikube and set up local network routes. Minikube **v0.25.1** is tested with Travis CI. -->
-
-* Follow the appropriate instructions for standing up your Kubernetes cluster using [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) or [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)
 
 * The minimum capacity requirement for FfDL is 4GB Memory and 3 CPUs.
 
@@ -268,8 +266,6 @@ export AWS_ACCESS_KEY_ID=test; export AWS_SECRET_ACCESS_KEY=test; export AWS_DEF
 s3cmd="aws --endpoint-url=$s3_url s3"
 $s3cmd mb s3://tf_training_data
 $s3cmd mb s3://tf_trained_model
-$s3cmd mb s3://mnist_lmdb_data
-$s3cmd mb s3://dlaas-trained-models
 ```
 
 3. Now, create a temporary repository, download the necessary images for training and labeling our TensorFlow model, and upload those images
@@ -293,8 +289,9 @@ restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nod
 export DLAAS_URL=http://$node_ip:$restapi_port; export DLAAS_USERNAME=test-user; export DLAAS_PASSWORD=test;
 ```
 
-Replace the default object storage path with your s3_url. You can skip this step if your already modified the object storage path with your s3_url.
+Create a temporary manifest file and replace the default object storage path with your s3_url. You can skip this step if your already modified the object storage path with your s3_url.
 ```shell
+cp etc/examples/tf-model/manifest.yml etc/examples/tf-model/manifest-temp.yml
 if [ "$(uname)" = "Darwin" ]; then
   sed -i '' s/s3.default.svc.cluster.local/$node_ip:$s3_port/ etc/examples/tf-model/manifest.yml
 else
@@ -302,32 +299,34 @@ else
 fi
 ```
 
+Now, put all your model definition files into a zip file.
+```shell
+# Replace tf-model with the model you want to zip
+pushd etc/examples/tf-model && zip ../tf-model.zip * && popd
+```
+
 Define the FfDL command line interface and run the training job with our default TensorFlow model
 ```shell
 CLI_CMD=$(pwd)/cli/bin/ffdl-$(if [ "$(uname)" = "Darwin" ]; then echo 'osx'; else echo 'linux'; fi)
-$CLI_CMD train etc/examples/tf-model/manifest.yml etc/examples/tf-model
+$CLI_CMD train etc/examples/tf-model/manifest-temp.yml etc/examples/tf-model.zip
 ```
 
 Congratulations, you had submitted your first job on FfDL. You can check your FfDL status either from the FfDL UI or simply run `$CLI_CMD list`
 
 > You can learn about how to create your own model definition files and `manifest.yaml` at [user guild](docs/user-guide.md#2-create-new-models-with-ffdl).
 
-5. If you want to run your job via the FfDL UI, simply run the below command to create your model zip file.
+5. If you want to run your job via the FfDL UI, simply upload `tf-model.zip` and `manifest.yml` (The default TensorFlow model) in the `etc/examples/` repository as shown below.
 
-```shell
-# Replace tf-model with the model you want to zip
-pushd etc/examples/tf-model && zip ../tf-model.zip * && popd
-```
-
-Then, upload `tf-model.zip` and `manifest.yml` (The default TensorFlow model) in the `etc/examples/` repository as shown below.
 Then, click `Submit Training Job` to run your job.
 
 ![ui-example](docs/images/ui-example.png)
 
 6. (Optional) Since it's simple and straightforward to submit jobs with different deep learning framework on FfDL, let's try to run a Caffe Job. Download all the necessary training and testing images in [LMDB format](https://en.wikipedia.org/wiki/Lightning_Memory-Mapped_Database) for our Caffe model
-and upload those images to your mnist_lmdb_data bucket.
+and upload those images to your mnist_lmdb_data bucket. Then replace the object storage endpoint and package the model definition files into zip.
 
 ```shell
+$s3cmd mb s3://mnist_lmdb_data
+$s3cmd mb s3://dlaas-trained-models
 for phase in train test;
 do
   for file in data.mdb lock.mdb;
@@ -337,12 +336,19 @@ do
     $s3cmd cp $tmpfile s3://mnist_lmdb_data/$phase/$file
   done
 done
+
+cp etc/examples/caffe-model/manifest.yml etc/caffe-model/tf-model/manifest-temp.yml
+if [ "$(uname)" = "Darwin" ]; then
+  sed -i '' s/s3.default.svc.cluster.local/$node_ip:$s3_port/ etc/caffe-model/tf-model/manifest-temp.yml
+else
+  sed -i s/s3.default.svc.cluster.local/$node_ip:$s3_port/ etc/caffe-model/tf-model/manifest-temp.yml
+fi
 ```
 
 7. Now train your Caffe Job.
 
 ```shell
-$CLI_CMD train etc/examples/caffe-model/manifest.yml etc/examples/caffe-model
+$CLI_CMD train etc/examples/caffe-model/manifest-temp.yml etc/examples/caffe-model/zip
 ```
 
 Congratulations, now you know how to deploy jobs with different deep learning framework. To learn more about your job execution results,
@@ -406,16 +412,23 @@ fi
 ```
 
 6. Now you should have all the necessary training data set in your training data bucket. Let's go ahead to set up your restapi endpoint
-and default credentials for Deep Learning as a Service. Once you done that, you can start running jobs using the FfDL CLI (executable
-binary).
+and default credentials for Deep Learning as a Service. Once you done that, put all your model definition files into a zip file and
+you can start running jobs using the FfDL CLI (executable binary).
 
+Put all your model definition files into a zip file.
+```shell
+# Replace tf-model with the model you want to zip
+pushd etc/examples/tf-model && zip ../tf-model.zip * && popd
+```
+
+Define the necessary environment variables and execute the training job.
 ```shell
 restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nodePort}')
 export DLAAS_URL=http://$PUBLIC_IP:$restapi_port; export DLAAS_USERNAME=test-user; export DLAAS_PASSWORD=test;
 
 # Obtain the correct CLI for your machine and run the training job with our default TensorFlow model
 CLI_CMD=cli/bin/ffdl-$(if [ "$(uname)" = "Darwin" ]; then echo 'osx'; else echo 'linux'; fi)
-$CLI_CMD train etc/examples/tf-model/manifest.yml etc/examples/tf-model
+$CLI_CMD train etc/examples/tf-model/manifest.yml etc/examples/tf-model.zip
 ```
 
 ## 7. Clean Up

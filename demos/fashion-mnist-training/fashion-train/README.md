@@ -64,9 +64,8 @@ Create a .yml file with the necessary information. manifest.yml has further inst
 We will now go back to this directory and deploy our training job to FfDL using the path to the .yml and path to the folder containing the experiment.py
 ```bash
 cd <path to this demo repo>/fashion-train
-# Replace manifest.yml with the path to your .yml file
-# Replace Image with the path to the folder containing your file created in step 6
-$CLI_CMD train manifest.yml fashion-training
+pushd fashion-training && zip ../fashion-training.zip * && popd # Put all your model definition files into a zip file.
+$CLI_CMD train manifest.yml fashion-training.zip # Replace manifest.yml and fashion-training.zip with the path to your .yml and .zip files
 ```
 ## Step 3b - Deploying the training job to FfDL using the FfDL UI
 
@@ -74,7 +73,7 @@ Alternatively, the FfDL UI can be used to deploy jobs. First zip your model.
 ```bash
 # Replace fashion-training with the path to your training file folder
 # Replace fashion-training.zip with the path where you want the .zip file stored
-pushd fashion-training && zip fashion-training * && popd
+pushd fashion-training && zip ../fashion-training * && popd
 ```
 
 Go to FfDL web UI. Upload the .zip to "Choose model definition zip to upload". Upload the .yml to "Choose manifest to upload". Then click Submit Training Job.
