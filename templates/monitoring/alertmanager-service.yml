@@ -5,6 +5,7 @@ metadata:
   labels:
     name: alertmanager
   name: alertmanager
+  namespace: {{.Values.namespace}}
 spec:
   selector:
     app: alertmanager

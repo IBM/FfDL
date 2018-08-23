@@ -17,6 +17,8 @@
 package learner
 
 import (
+	"github.com/spf13/viper"
+	"github.com/IBM/FfDL/commons/config"
 	v1core "k8s.io/api/core/v1"
 	v1resource "k8s.io/apimachinery/pkg/api/resource"
 )
@@ -26,7 +28,9 @@ func createPodSpecForTesting() v1core.PodTemplateSpec {
 	learnerContainer := createNonSplitSinglerLearnerContainer()
 	volumes := []v1core.Volume{} //no volumes since non split
 
-	return CreatePodSpec([]v1core.Container{learnerContainer}, volumes, map[string]string{"training_id": prefix + "trainingID"}, map[string]string{})
+	imagePullSecret := viper.GetString(config.LearnerImagePullSecretKey)
+
+	return CreatePodSpec([]v1core.Container{learnerContainer}, volumes, map[string]string{"training_id": prefix + "trainingID"}, map[string]string{}, imagePullSecret)
 
 }
 

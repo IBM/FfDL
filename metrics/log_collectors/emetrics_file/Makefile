@@ -25,7 +25,7 @@ IMAGE_NAME?=${DOCKER_REPO}/${DOCKER_NAMESPACE}/emetrics_file_extractor:${IMAGE_T
 
 DOCKER_OPTIONS ?=
 
-all: build
+all: build push
 
 build:
 	echo "Building ${IMAGE_NAME}"
@@ -33,6 +33,10 @@ build:
 	docker build -q ${DOCKER_OPTIONS} -t ${IMAGE_NAME} -f Dockerfile .
 	rm -r training_data_service_client
 	echo "Success building ${IMAGE_NAME}"
+
+push:
+	echo "Pushing ${IMAGE_NAME}"
+	docker push ${IMAGE_NAME}
 
 imagename:
 	echo $(IMAGE_NAME)

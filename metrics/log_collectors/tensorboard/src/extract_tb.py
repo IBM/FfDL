@@ -469,7 +469,8 @@ def extract(log_dir: str, should_connect: bool=True):
                     run_tracker.start()
 
         time.sleep(.5)
-
+        if states.is_learner_done() and states.global_scanner_count == 0:
+                    break
 
 # class NoEvilDirectoryWatcherMessages(logging.Filter):
 #     def filter(self, record):

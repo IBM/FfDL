@@ -66,11 +66,4 @@ def signal_lc_done(exit_code=0, logger=logging.getLogger()):
     logger.info("signal_lc_done, global_scanner_count (after release): %d", global_scanner_count)
     with global_state_lock:
         global_scanner_count -= 1
-        if global_scanner_count <= 0:
-            lc_exit_file_path = os.path.join(os.environ["JOB_STATE_DIR"], "lc.exit")
-            with open(lc_exit_file_path, "w") as lc_exit_file_stream:
-                try:
-                    logger.info("Writing exit code %d to %s", exit_code, lc_exit_file_path)
-                    lc_exit_file_stream.write(str(exit_code))
-                except Exception as inst:
-                    logger.warning("Could not log-collector exit file (%s): %r", lc_exit_file_path, str(inst))
+    pass

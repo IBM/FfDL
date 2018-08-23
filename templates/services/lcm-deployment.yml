@@ -2,6 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: ffdl-lcm
+  namespace: {{.Values.namespace}}
   labels:
     service: ffdl-lcm
     environment: {{.Values.env}}
@@ -31,6 +32,9 @@ spec:
         - name: static-volumes-config-volume
           configMap:
             name: static-volumes
+        - name: static-volumes-config-volume-v2
+          configMap:
+            name: static-volumes-v2
 {{ end }}
         - name: etcd-ssl-cert
           secret:
@@ -61,6 +65,8 @@ spec:
 {{ if (eq .Values.has_static_volumes true) }}
         - mountPath: /etc/static-volumes
           name: static-volumes-config-volume
+        - mountPath: /etc/static-volumes-v2
+          name: static-volumes-config-volume-v2
 {{ end }}
         - mountPath: /etc/certs/
           name: etcd-ssl-cert
@@ -71,6 +77,10 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         - name: DLAAS_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: DLAAS_LEARNER_KUBE_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace

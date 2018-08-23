@@ -27,12 +27,3 @@ before_script:
   # install aws CLI
   - (sudo pip install -q awscli; which aws > /dev/null) &
 
-jobs:
-  include:
-    - stage: test
-      script: ./bin/travis_scripts/test-local-built-images.sh
-    - if: type IN (push, api, cron)
-      script: ./bin/travis_scripts/test-prebuilt-images.sh
-
-notifications:
-  email: false

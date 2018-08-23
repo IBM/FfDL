@@ -2,6 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: ffdl-ui
+  namespace: {{.Values.namespace}}
   labels:
     service: ffdl-ui
 spec:
@@ -36,6 +37,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ffdl-ui
+  namespace: {{.Values.namespace}}
   labels:
     service: ffdl-ui
     environment: {{.Values.env}}
