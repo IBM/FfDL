@@ -1,0 +1,33 @@
+{
+  "os": "linux",
+  "env": "CHANGE_MINIKUBE_NONE_USER=true",
+  "dist": "trusty",
+  "sudo": "required",
+  "group": "stable",
+  "script": [
+    "set -e",
+    "export MAKE_ARGS=--no-print-directory",
+    "glide -q install",
+    "make $MAKE_ARGS docker-build-base",
+    "make $MAKE_ARGS gen-certs",
+    "make $MAKE_ARGS build",
+    "make $MAKE_ARGS docker-build",
+    "make $MAKE_ARGS create-volumes",
+    "make $MAKE_ARGS deploy",
+    "make $MAKE_ARGS test-submit-minikube-ci"
+  ],
+  "language": "ruby",
+  "services": [
+    "docker"
+  ],
+  "before_script": [
+    "(sudo add-apt-repository -y ppa:gophers/archive; sudo apt-get -y update; sudo apt-get -y install golang-1.9-go) > /dev/null 2>&1",
+    "export PATH=/usr/lib/go-1.9/bin:$PATH; export GOROOT=/usr/lib/go-1.9/",
+    "echo \"GOPATH is $GOPATH\"; mkdir -p $GOPATH/src/github.com/IBM/; mv `pwd` $GOPATH/src/github.com/IBM/; cd $GOPATH/src/github.com/IBM/*",
+    "curl https://glide.sh/get | bash > /dev/null",
+    "docker run --rm jpetazzo/nsenter cat /nsenter > /tmp/nsenter 2> /dev/null; sudo cp /tmp/nsenter /usr/local/bin/; sudo chmod +x /usr/local/bin/nsenter; which nsenter",
+    "make install-minikube-in-ci > /dev/null &",
+    "curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash > /dev/null &",
+    "(sudo pip install -q awscli; which aws > /dev/null) &"
+  ]
+}
