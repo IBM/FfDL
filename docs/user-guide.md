@@ -94,9 +94,8 @@ Here are the [example manifest files](../etc/examples/tf-model/manifest.yml) for
       --test_images_file ${DATA_DIR}/t10k-images-idx3-ubyte.gz
 
 ### 2.5. Creating Model zip file
-**Note** that FfDL CLI can take both zip or unzip files.
 
-You need to zip all the model definition files and create a model zip file for jobs submitting on FfDL UI. At present, FfDL UI only supports zip format for model files, other compression formats like gzip, bzip, tar etc., are not supported. **Note** that all model definition files has to be in the first level of the zip file and there are no nested directories in the zip file.
+You need to zip all the model definition files and create a model zip file for jobs submitting on FfDL. At present, FfDL only supports zip format for model files, other compression formats like gzip, bzip, tar etc., are not supported. **Note** that all model definition files has to be in the first level of the zip file and there are no nested directories in the zip file.
 
 ### 2.6. Model Deployment and Training
 After creating the manifest file and model definition file, you can either use the FfDL CLI or FfDL UI to deploy your model.

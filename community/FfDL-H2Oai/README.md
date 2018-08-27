@@ -64,19 +64,26 @@ restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nod
 export DLAAS_URL=http://$node_ip:$restapi_port; export DLAAS_USERNAME=test-user; export DLAAS_PASSWORD=test;
 ```
 
-Replace the default object storage path with your s3_url. You can skip this step if your already modified the object storage path with your s3_url.
+Create a temporary manifest file and replace the default object storage path with your s3_url. You can skip this step if your already modified the object storage path with your s3_url.
 ```shell
+cp community/FfDL-H2Oai/h2o-model/manifest-h2o.yml community/FfDL-H2Oai/h2o-model/manifest-h2o-temp.yml
 if [ "$(uname)" = "Darwin" ]; then
-  sed -i '' s/s3.default.svc.cluster.local/$node_ip:$s3_port/ community/FfDL-H2Oai/h2o-model/manifest-h2o.yml
+  sed -i '' s/s3.default.svc.cluster.local/$node_ip:$s3_port/ community/FfDL-H2Oai/h2o-model/manifest-h2o-temp.yml
 else
-  sed -i s/s3.default.svc.cluster.local/$node_ip:$s3_port/ community/FfDL-H2Oai/h2o-model/manifest-h2o.yml
+  sed -i s/s3.default.svc.cluster.local/$node_ip:$s3_port/ community/FfDL-H2Oai/h2o-model/manifest-h2o-temp.yml
 fi
+```
+
+Now, put all your model definition files into a zip file.
+```shell
+# Replace tf-model with the model you want to zip
+pushd community/FfDL-H2Oai/h2o-model && zip ../h2o-model.zip * && popd
 ```
 
 Obtain the correct CLI for your machine and run the training job with our default H2O model
 ```shell
 CLI_CMD=$(pwd)/cli/bin/ffdl-$(if [ "$(uname)" = "Darwin" ]; then echo 'osx'; else echo 'linux'; fi)
-$CLI_CMD train community/FfDL-H2Oai/h2o-model/manifest-h2o.yml community/FfDL-H2Oai/h2o-model
+$CLI_CMD train community/FfDL-H2Oai/h2o-model/manifest-h2o-temp.yml community/FfDL-H2Oai/h2o-model.zip
 ```
 
 Congratulations, you had submitted your first H2O job on FfDL. You can check your FfDL status either from the FfDL UI or simply run `$CLI_CMD list`
