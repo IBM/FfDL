@@ -1,0 +1,117 @@
+/*
+ * Copyright 2018 IBM Corp. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* Style sheet for MAX Image Caption Generator Web App */
+
+body {
+    font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.container-fluid {
+    padding: 1% 2%;
+}
+
+#codait-logo {
+    min-width: 162px;
+    min-height: 150px;
+}
+
+#codait-logo img {
+    width: 162px;
+    height: 150px;
+}
+
+.title-section h1 {
+    margin-top: 10px;
+}
+
+.panel-title {
+    font-size: 18px;
+}
+
+#word-cloud {
+    text-align: center;
+}
+
+#thumbnails .select-buttons button {
+    margin: 0px 12px 12px 0px;
+}
+
+.thumbnails li {
+    width: 30%;
+}
+
+#thumbnails .image-scroller {
+    max-height: 65vh;
+    width: 100%;
+    overflow: auto;
+}
+
+.ibm-code .btn-primary {
+    background-color: #26A8A2;
+    border-color: #32A8A3;
+    white-space: normal;
+}
+
+.ibm-code .btn-primary:hover {
+    background-color: #1E8B87;
+    border-color: #24D8B89;
+}
+
+.ibm-code ul.thumbnails.image_picker_selector li {
+    float: none;
+    display:inline-block;
+    vertical-align: top;
+}
+
+.ibm-code  ul.thumbnails.image_picker_selector li .thumbnail.selected {
+    background: #5FBFBB;
+}
+
+.ibm-code .thumbnail {
+    display: inline-block;
+    position: relative;
+}
+
+.thumbnails .more-info-icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 6px;
+    background: #FFFFFF;
+    border-radius: 4px;
+    font-size: 1.2em;
+}
+
+a.more-info-icon {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+.thumbnails .selected .more-info-icon {
+    background: #5FBFBB;
+}
+
+.featherlight .featherlight-content {
+    border-radius: 4px;
+    background: #5FBFBB;
+    border-bottom: 0;
+    max-width: 100vh;
+}
+
+.featherlight .featherlight-close-icon {
+    background: #5FBFBB;
+}

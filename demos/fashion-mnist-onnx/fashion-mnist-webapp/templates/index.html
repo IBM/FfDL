@@ -1,0 +1,132 @@
+<!--
+Copyright 2018 IBM Corp. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <title>FfDL Fashion MNIST</title>
+
+    <link rel="shortcut icon" type="image/x-icon" href="static/img/ffdl-blue.png"/>
+
+    <link rel="stylesheet" href="static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/css/image-picker.css">
+    <link rel="stylesheet" href="static/css/featherlight.min.css">
+    <link rel="stylesheet" href="static/css/webapp.css">
+
+    <script src="static/js/jquery-3.3.1.min.js"></script>
+    <script src="static/js/d3.min.js"></script>
+    <script src="static/js/d3.layout.cloud.js"></script>
+    <script src="static/js/image-picker.min.js"></script>
+    <script src="static/js/featherlight.min.js"></script>
+    <script src="static/js/webapp.js"></script>
+
+</head>
+
+<body>
+
+    <div class="container-fluid ibm-code">
+
+        <div class="row">
+
+            <div class="col-md-7">
+
+                <div id="codait-logo" class="col-md-3">
+                    <img src="static/img/ffdl-blue.png"/>
+                </div>
+
+                <div class="col-md-4 title-section">
+                    <h1>FfDL Fashion MNIST</h1>
+                </div>
+
+
+                <div class="col-md-5">
+
+                    <div id="file-upload" class="panel panel-default">
+
+                        <div class="panel-heading">
+                            <div class="panel-title">Upload A New Image</div>
+                        </div>
+
+                        <div class="panel-body">
+                            <form id="img-upload" enctype="multipart/form-data">
+                                <div class="form-group">
+                                    <input id="file-input"
+                                           type="file"
+                                           name="file"
+                                           accept=".png, .jpg, .jpeg, .gif"
+                                           multiple />
+                                </div>
+                                <button id="file-submit" type="submit" class="btn btn-primary">Submit</button>
+                            </form>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="row">
+
+            <div class="col-md-7">
+
+                <div id="thumbnails" class="well">
+
+                    <div class="select-buttons">
+                        <button onclick="select_all(false)" class="btn btn-primary">Deselect All</button>
+                        <button onclick="select_all(true)" class="btn btn-primary">Select All</button>
+                    </div>
+
+                    <div class="image-scroller">
+                        <select multiple="multiple" class="image-picker">
+                        {% for key, value in reversed(image_captions.items()) %}
+                            <option data-img-src="{{ escape(key) }}"
+                                    data-img-label="{{ escape(value[0]['caption']) }}"
+                                    data-img-alt="{{ escape(value[0]['caption']) }}"
+                                    value="{{ escape(key) }}">
+                                {{ escape(value[0]['caption']) }}
+                            </option>
+                        {% end %}
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-md-5">
+
+                <div>
+                    <div id="word-cloud" class="col-md-6"></div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <footer class="footer">
+            <hr/>
+            <p>Created at the IBM Center for Open-Source Data & AI Technologies</p>
+        </footer>
+
+    </div>
+
+</body>
+
+</html>

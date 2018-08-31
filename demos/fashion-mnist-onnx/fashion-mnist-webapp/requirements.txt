@@ -1,0 +1,5 @@
+numpy
+requests
+tornado
+flake8
+Pillow
