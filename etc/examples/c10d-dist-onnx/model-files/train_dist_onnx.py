@@ -118,7 +118,7 @@ def average_gradients(model):
     """ Gradient averaging. """
     size = float(dist.get_world_size())
     for param in model.parameters():
-        dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
+        dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=dist.group.WORLD)
         param.grad.data /= size
 
 
@@ -129,8 +129,8 @@ def run(rank, size, batch_size, is_gpu):
     result_dir = os.environ.get("RESULT_DIR") + '/saved_model'
     # For GPU use
     if is_gpu:
-        device = torch.device("cuda:{}".format(rank))
-        model = Net().to(device)
+        # device = torch.device("cuda:{}".format(rank))
+        model = Net().cuda()
     else:
         model = Net()
         model = model
@@ -145,7 +145,7 @@ def run(rank, size, batch_size, is_gpu):
         for data, target in train_set:
             # For GPU use
             if is_gpu:
-                data, target = data.to(device), target.to(device)
+                data, target = data.cuda(), target.cuda()
             else:
                 data, target = Variable(data), Variable(target)
 #            data, target = Variable(data.cuda(rank)), Variable(target.cuda(rank))
