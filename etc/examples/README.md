@@ -13,3 +13,9 @@
 * `caffe-model`: Sample Caffe training job using MNIST.
 
 * `horovod`: Sample TensorFlow and PyTorch training job with [Horovod](https://github.com/uber/horovod)'s MPI distributed training approach.
+
+* `pytorch-distributed` : Sample PyTorch job with native distributed training using all reduce.
+
+* `pytorch-launch-dist`: Sample PyTorch distributed training job activated with native launch function.
+
+* `pytorch-dist-onnx`: PyTorch native distributed training with model exported in ONNX format. (Fashion MNIST model using 2 Convolutional Layers)
