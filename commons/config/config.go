@@ -18,7 +18,6 @@ package config
 
 import (
 	"fmt"
-	"runtime"
 	"io/ioutil"
 	"os"
 	"path"
@@ -30,9 +29,9 @@ import (
 	"google.golang.org/grpc/grpclog"
 
 	log "github.com/sirupsen/logrus"
-
 	"github.com/spf13/viper"
 	v1core "k8s.io/api/core/v1"
+	"runtime"
 )
 
 const (
@@ -150,6 +149,7 @@ const (
 	DlaasResourceLimit          = "resource.limit"
 	DlaasResourceLimitQuerySize = "resource.limit.query.size"
 
+	// FfDL Change: next 5 lines
 	ImagePullPolicy = "image_pull_policy"
 
 	SharedVolumeStorageClassKey = "shared_volume_storage_class"
@@ -171,12 +171,13 @@ func InitViper() {
 
 	viperInitOnce.Do(func() {
 
-		viper.SetEnvPrefix(envPrefix) // will be capitalized automatically
+		viper.SetEnvPrefix(envPrefix) // will be uppercased automatically
 		viper.SetConfigType("yaml")
 
+		// FfDL Change: make image pull policy default
 		viper.SetDefault(ImagePullPolicy, v1core.PullIfNotPresent)
 
-		// Most likely be "standard" in Minikube and "ibmc-s3fs-standard" in DIND, (other value is "default" or "")
+		// FfDL Change:Most likely be "standard" in Minikube and "ibmc-s3fs-standard" in DIND, (other value is "default" or "")
 		viper.SetDefault(SharedVolumeStorageClassKey, "")
 
 		// enable ENV vars and defaults
@@ -192,7 +193,10 @@ func InitViper() {
 		viper.SetDefault(LearnerTagKey, "prod")
 		viper.SetDefault(DataBrokerTagKey, "prod")
 		viper.SetDefault(LearnerRegistryKey, "docker.io/ffdl")
+
+		// FfDL Change: FIXME in DLaaS, this will need to be overridden with "bluemix-cr-ng"
 		viper.SetDefault(LearnerImagePullSecretKey, "regcred")
+		// viper.SetDefault(LearnerImagePullSecretKey, "bluemix-cr-ng")
 
 		// TLS defaults for microservices
 		viper.SetDefault(TLSKey, true)
@@ -288,7 +292,7 @@ func GetFileContents(filename string) string {
 	return contents
 }
 
-// IsTLSEnabled is true if the microservices should all use TLS for communication, otherwise
+// IsTLSEnabled is true if the microservices should all use TLS for communiction, otherwise
 // it is false.
 func IsTLSEnabled() bool {
 	return viper.GetBool(TLSKey)
@@ -427,10 +431,16 @@ func GetDataStoreConfig() map[string]string {
 	if val != "" {
 		m[DomainKey] = val
 	}
-	val = viper.GetString("objectstore." + UsernameKey)
+	val = viper.GetString("objectstore." + RegionKey)
 	if val != "" {
-		m[UsernameKey] = val
+		m[RegionKey] = val
 	}
+	// FfDL Change: This was in the older PR, supposing not needed?
+	//val = viper.GetString("objectstore." + UsernameKey)
+	//if val != "" {
+	//	m[UsernameKey] = val
+	//}
+
 	val = viper.GetString("objectstore." + ProjectKey)
 	if val != "" {
 		m[ProjectKey] = val
@@ -479,7 +489,7 @@ func configKey2EnvVar(key string) string {
 
 // setLogLevel sets the logging level based on the environment
 func setLogLevel() {
-	viper.SetDefault(LogLevelKey, "debug")  // FIXME Should be warn
+	viper.SetDefault(LogLevelKey, "warn")
 
 	env := viper.GetString(EnvKey)
 	if env == "dev" || env == "test" {
@@ -547,32 +557,32 @@ func GetMongoCertLocation() string {
 	return getFileAtLocation("/etc/certs/mongo/mongo.cert") //the file should have been mounted at this path as a part of secrets
 }
 
-//Get LearnerKubeURLKey...
+//GetLearnerKubeURL ...
 func GetLearnerKubeURL() string {
 	return viper.GetString(learnerKubeURLKey)
 }
 
-//Get LearnerKubeCAFileKey...
+//GetLearnerKubeCAFile ...
 func GetLearnerKubeCAFile() string {
 	return viper.GetString(learnerKubeCAFileKey)
 }
 
-//Get LearnerKubetokenKey...
+//GetLearnerKubeToken ...
 func GetLearnerKubeToken() string {
 	return viper.GetString(learnerKubeTokenKey)
 }
 
-//Get LearnerKubeTokenFileKey
+//GetLearnerKubeTokenFile ...
 func GetLearnerKubeTokenFile() string {
 	return viper.GetString(learnerKubeTokenFileKey)
 }
 
-//Get LearnerKubeKeyFileKey
+//GetLearnerKubeKeyFile ...
 func GetLearnerKubeKeyFile() string {
 	return viper.GetString(learnerKubeKeyFileKey)
 }
 
-//Get LearnerKubeCertFileKey
+//GetLearnerKubeCertFile ...
 func GetLearnerKubeCertFile() string {
 	return viper.GetString(learnerKubeCertFileKey)
 }
@@ -626,9 +636,7 @@ func getFileAtLocation(location string) string {
 		log.Debugf("file was found at location %s", location)
 		return location
 	}
-	//log.Debugf("file certificate was missing at location %s", location)
-	//LogStackTrace()
-
+	log.Debugf("file certificate was missing at location %s", location)
 	return "" //empty location means that cert is not required
 }
 

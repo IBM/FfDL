@@ -2,6 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: ffdl-trainer
+  namespace: {{.Values.namespace}}
   labels:
     environment: {{.Values.env}}
     service: ffdl-trainer

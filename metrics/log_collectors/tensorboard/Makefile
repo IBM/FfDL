@@ -31,7 +31,7 @@ build:
 	rm -r training_data_service_client
 
 push:
-	docker push ${DOCKER_REPO}/${DOCKER_NAMESPACE}/tensorboard_extract:${IMAGE_TAG}
+	docker push ${REPO}/tensorboard_extract:${IMAGE_TAG}
 
 imagename:
 	echo ${IMAGE_NAME}

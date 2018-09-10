@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 package lcm
 
 import (
@@ -26,7 +27,7 @@ import (
 	"github.com/IBM/FfDL/commons/service"
 
 	"github.com/spf13/viper"
-	v1beta1 "k8s.io/api/apps/v1beta1"
+	"k8s.io/api/apps/v1beta1"
 	v1core "k8s.io/api/core/v1"
 	v1resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,7 +74,7 @@ func populateJobMonitorEnvVariablesAndLabels(req *service.JobDeploymentRequest, 
 		},
 		v1core.EnvVar{
 			Name:  "DLAAS_PUSH_METRICS_ENABLED",
-			Value: strconv.FormatBool(false),
+			Value: strconv.FormatBool(true),
 		},
 
 		getEnvVarFromLCMSecret("DLAAS_ETCD_ADDRESS"),
@@ -123,8 +124,6 @@ func defineJobMonitorDeployment(req *service.JobDeploymentRequest, envVars []v1c
 
 	jmImage := jobmonitorImageNameExtended(dockerRegistry, jmTag)
 	imagePullSecret := viper.GetString(config.LearnerImagePullSecretKey)
-	logr.Debugf("jmImage: %s, imagePullSecret: %s, imagePullPolicy: %s",
-		jmImage, imagePullSecret, lcmconfig.GetImagePullPolicy())
 
 	cpuCount := v1resource.NewMilliQuantity(int64(float64(0.5)*1000.0), v1resource.DecimalSI)
 	memInBytes := int64(512 * 1024 * 1024)
@@ -201,6 +200,13 @@ func defineJobMonitorDeployment(req *service.JobDeploymentRequest, envVars []v1c
 									v1core.ResourceMemory: *memCount,
 								},
 							},
+							Lifecycle: &v1core.Lifecycle{
+								PreStop: &v1core.Handler{ //pkill in livleness to make sure that we send SIGTERM to the main service process to stop and cleanup
+									Exec: &v1core.ExecAction{
+										Command: []string{"pkill", "main"},
+									},
+								},
+							},
 							ImagePullPolicy: lcmconfig.GetImagePullPolicy(),
 						},
 					},
@@ -215,8 +221,6 @@ func defineJobMonitorDeployment(req *service.JobDeploymentRequest, envVars []v1c
 			},
 		},
 	}
-
-	logr.Debug("defineJobMonitorDeployment() Pull Secret: %v", imagePullSecret)
 
 	return deploySpec
 }

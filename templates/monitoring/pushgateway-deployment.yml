@@ -3,6 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: pushgateway
+  namespace: {{.Values.namespace}}
 spec:
   replicas: 1
   selector:
@@ -28,7 +29,7 @@ spec:
         - containerPort: 9125
           protocol: UDP
         args:
-         - '-statsd.mapping-config=/etc/statsd/mapping.conf'
+         - '--statsd.mapping-config=/etc/statsd/mapping.conf'
         volumeMounts:
         - name: statsd-volume
           mountPath: /etc/statsd

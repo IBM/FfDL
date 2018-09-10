@@ -43,6 +43,7 @@ script:
   - make $MAKE_ARGS gen-certs
   - make $MAKE_ARGS build
   - make $MAKE_ARGS docker-build
+  - make $MAKE_ARGS create-volumes
   # deploy services
   - make $MAKE_ARGS deploy
   # submit a test job
