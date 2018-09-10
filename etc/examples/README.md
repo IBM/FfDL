@@ -19,3 +19,5 @@
 * `pytorch-launch-dist`: Sample PyTorch distributed training job activated with native launch function.
 
 * `pytorch-dist-onnx`: PyTorch native distributed training with model exported in ONNX format. (Fashion MNIST model using 2 Convolutional Layers)
+
+* `c10d-dist-onnx`: (Experimental) PyTorch 1.0 native distributed training with model exported in ONNX format. Will merge with `pytorch-dist-onnx` once PyTorch 1.0 is released.
