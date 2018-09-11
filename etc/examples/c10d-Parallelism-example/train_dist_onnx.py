@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.onnx
+import copy
 
 from math import ceil
 from random import Random
@@ -76,8 +77,31 @@ class Net(nn.Module):
 
 def partition_dataset(batch_size, is_distributed):
     """ Partitioning MNIST """
+    trainset, testset = get_dataset()
+    if is_distributed:
+        size = dist.get_world_size()
+    else:
+        size = 1
+    bsz = int(batch_size / float(size))
+    partition_sizes = [1.0 / size for _ in range(size)]
+    partition = DataPartitioner(trainset, partition_sizes)
+    partition_testset = DataPartitioner(testset, partition_sizes)
+    if is_distributed:
+        partition = partition.use(dist.get_rank())
+        partition_testset = partition_testset.use(dist.get_rank())
+    else:
+        partition = partition.use(0)
+        partition_testset = partition_testset.use(0)
+    train_set = torch.utils.data.DataLoader(
+        partition, batch_size=bsz, shuffle=True)
+    test_set = torch.utils.data.DataLoader(
+        testset, batch_size=batch_size, shuffle=True)
+    return train_set, test_set, bsz
+
+def get_dataset():
+    """ Get FashionMNIST dataset """
     data_path = os.environ.get("DATA_DIR") + '/data'
-    dataset = datasets.FashionMNIST(
+    trainset = datasets.FashionMNIST(
         data_path,
         train=True,
         download=False,
@@ -93,25 +117,7 @@ def partition_dataset(batch_size, is_distributed):
             transforms.ToTensor(),
             transforms.Normalize((0.1307, ), (0.3081, ))
         ]))
-    if is_distributed:
-        size = dist.get_world_size()
-    else:
-        size = 1
-    bsz = int(batch_size / float(size))
-    partition_sizes = [1.0 / size for _ in range(size)]
-    partition = DataPartitioner(dataset, partition_sizes)
-    partition_testset = DataPartitioner(testset, partition_sizes)
-    if is_distributed:
-        partition = partition.use(dist.get_rank())
-        partition_testset = partition_testset.use(dist.get_rank())
-    else:
-        partition = partition.use(0)
-        partition_testset = partition_testset.use(0)
-    train_set = torch.utils.data.DataLoader(
-        partition, batch_size=bsz, shuffle=True)
-    test_set = torch.utils.data.DataLoader(
-        testset, batch_size=batch_size, shuffle=True)
-    return train_set, test_set, bsz
+    return trainset, testset
 
 
 def average_gradients(model):
@@ -122,30 +128,39 @@ def average_gradients(model):
         param.grad.data /= size
 
 
-def run(rank, size, batch_size, is_gpu):
+def run(rank, size, batch_size, is_gpu, is_distributed):
     """ Distributed Synchronous SGD Example """
     torch.manual_seed(1234)
-    train_set, test_set, bsz = partition_dataset(batch_size, (not (size == 1)))
+    train_set, test_set = get_dataset()
     result_dir = os.environ.get("RESULT_DIR") + '/saved_model'
     # For GPU use
     if is_gpu:
         model = Net().cuda()
     else:
         model = Net()
-        model = model
+    if is_distributed:
+        model = torch.nn.parallel.DistributedDataParallel(model)
+        train_sampler = torch.utils.data.distributed.DistributedSampler(train_set)
+    train_set = torch.utils.data.DataLoader(
+        train_set, batch_size=batch_size, shuffle=True, sampler=train_sampler,
+        pin_memory=True)
+    test_set = torch.utils.data.DataLoader(
+        test_set, batch_size=batch_size, shuffle=True, pin_memory=True)
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 
-    num_batches = ceil(len(train_set.dataset) / float(bsz))
     # To train model
     model.train()
     for epoch in range(100):
         epoch_loss = 0.0
+        if is_distributed:
+            train_sampler.set_epoch(epoch)
         for data, target in train_set:
             # For GPU use
             if is_gpu:
                 data, target = data.cuda(), target.cuda()
             else:
                 data, target = Variable(data), Variable(target)
+#            data, target = Variable(data.cuda(rank)), Variable(target.cuda(rank))
             optimizer.zero_grad()
             output = model(data)
             loss = F.nll_loss(output, target)
@@ -198,7 +213,7 @@ def init_processes(rank, size, fn, path_to_file, batch_size, is_gpu, backend):
                             world_size=size, group_name="train_dist",
                             rank=rank)
     print("FOUND SHARED FILE")
-    fn(rank, size, batch_size, is_gpu)
+    fn(rank, size, batch_size, is_gpu, True)
 
 def local_process(target, args):
     return Process(target=target, args=args)
@@ -228,7 +243,7 @@ if __name__ == "__main__":
     print("data_dir is " + data_dir)
 
     if world_size == 1:
-        run(0, 1, batch_size, (num_gpus == 1))
+        run(0, 1, batch_size, (num_gpus == 1), False)
         print("COMPLETION TIME: ", time.time() - start_time)
     else:
         if num_gpus == 0:
