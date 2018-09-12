@@ -142,7 +142,7 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
         model = torch.nn.parallel.DistributedDataParallel(model)
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_set)
     train_set = torch.utils.data.DataLoader(
-        train_set, batch_size=batch_size, shuffle=True, sampler=train_sampler,
+        train_set, batch_size=batch_size, shuffle=(train_sampler is None), sampler=train_sampler,
         pin_memory=True)
     test_set = torch.utils.data.DataLoader(
         test_set, batch_size=batch_size, shuffle=True, pin_memory=True)
@@ -160,14 +160,14 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
                 data, target = data.cuda(), target.cuda()
             else:
                 data, target = Variable(data), Variable(target)
-#            data, target = Variable(data.cuda(rank)), Variable(target.cuda(rank))
             optimizer.zero_grad()
             output = model(data)
             loss = F.nll_loss(output, target)
             epoch_loss += loss.item()
             loss.backward()
-            if not (size == 1):
-                average_gradients(model)
+            # NOTE: Scatter method was used in DistributedDataParallel
+            # if not (size == 1):
+            #     average_gradients(model)
             optimizer.step()
         print('Process ', os.environ.get("LEARNER_ID"),
               ', epoch ', epoch, '. avg_loss: ',
@@ -182,11 +182,11 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
             for data, target in test_set:
                 # For GPU use
                 if is_gpu:
-                    data, target = data.to(device), target.to(device)
+                    data, target = data.cuda(), target.cuda()
                 else:
                     data, target = Variable(data), Variable(target)
                 output = model(data)
-                test_loss += F.nll_loss(output, target, size_average=False).item()
+                test_loss += F.nll_loss(output, target, reduction="sum").item()
                 pred = output.data.max(1, keepdim=True)[1]
                 correct += pred.eq(target.data.view_as(pred)).sum().item()
             print('Test_set:  avg_loss: ', test_loss / len(test_set.dataset),
@@ -194,14 +194,15 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
 
     # Save model
     if int(os.environ.get("LEARNER_ID")) == 1:
-        torch.save(model, result_dir)
-        dummy_input = ""
-        if is_gpu:
-            dummy_input = Variable(torch.randn(1, 1, 28, 28)).cuda()
-        else:
-            dummy_input = Variable(torch.randn(1, 1, 28, 28))
-        model_path = os.environ.get("RESULT_DIR") + "/pytorch-dist.onnx"
-        torch.onnx.export(model, dummy_input, model_path)
+        torch.save(model.state_dict(), result_dir)
+        # NOTE: ONNX doesn't support scatter operation yet.
+        # dummy_input = ""
+        # if is_gpu:
+        #     dummy_input = Variable(torch.randn(1, 1, 28, 28)).cuda()
+        # else:
+        #     dummy_input = Variable(torch.randn(1, 1, 28, 28))
+        # model_path = os.environ.get("RESULT_DIR") + "/pytorch-dist.onnx"
+        # torch.onnx.export(model, dummy_input, model_path)
 
 
 # Change 'backend' to appropriate backend identifier

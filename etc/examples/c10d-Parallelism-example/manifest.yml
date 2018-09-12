@@ -48,4 +48,4 @@ data_stores:
 framework:
   name: custom
   version: "tomcli/pytorch:0911"
-  command: python -u train_dist_onnx.py --batch_size 1024
+  command: python -u train_dist_parallel.py --batch_size 1024
