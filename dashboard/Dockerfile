@@ -1,8 +1,20 @@
 FROM node:8-alpine
 
-# install chromium for headless browser tests
-ENV CHROME_BIN=/usr/bin/chromium-browser
-RUN apk add --no-cache chromium udev ttf-freefont
+ARG ARCH=x86_64
+
+# install chromium/firefox for headless browser tests
+ENV CHROME_BIN=/usr/bin/browser
+
+RUN case "${ARCH}" in                                      \
+        amd64)                                             \
+          apk add --no-cache chromium udev ttf-freefont;   \
+          ln -s /usr/bin/chromium-browser /usr/bin/browser \
+          ;;                                               \
+        ppc64le)                                           \
+          apk add --no-cache firefox-esr udev ttf-freefont python build-base; \
+          ln -s /usr/bin/firefox /usr/bin/browser          \
+          ;;                                               \
+    esac
 
 # set workdir
 WORKDIR /ffdl/ffdl-dashboard

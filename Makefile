@@ -58,6 +58,10 @@ ifeq ($(IMAGE_NAME),databroker_s3)
     IMAGE_DIR := databroker/s3
 endif
 
+TARGET ?= $(shell uname -m)
+ARCHS ?= x86_64 ppc64le
+
+IMAGE_NAME_TARGET = -$(TARGET)
 
 # Main targets
 
@@ -75,10 +79,32 @@ build: $(addprefix build-, $(SERVICES))
 docker-build-images: $(addprefix docker-build-, $(IMAGES))
 
 docker-build:     ## Build the Docker images for all services
-docker-build: docker-build-images docker-build-ui docker-build-logcollectors
+docker-build: docker-build-base docker-build-images docker-build-ui docker-build-logcollectors
+
+docker-create-manifest:
+	@docker login --username="${DOCKER_REPO_USER}" --password="${DOCKER_REPO_PASS}" https://${DOCKER_REPO}; \
+	for image in $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep ${DOCKER_REPO}/${DOCKER_NAMESPACE} | grep :${IMAGE_TAG} | grep -v '<none>'); do \
+		echo "Creating manifest for $$image"; \
+                image_name=`echo $$image | sed -e "s/\(.*\)-.*\(:.*\)$$/\1\2/g"`; \
+		AMEND=""; \
+		docker manifest inspect $$image_name > /dev/null 2>&1; \
+		if [ $$? -eq 0 ]; then \
+			AMEND="--amend"; \
+		fi; \
+		# lookup for other architectures \
+		other_arch_images=""; \
+		for arch in ${ARCHS}; do \
+			if [ "$$arch" != "${TARGET}" ]; then \
+				arch_image=`echo $$image | sed -e "s/\(.*\)\-${TARGET}\(:.*\)$$/\1\-$$arch\2/g"`; \
+				other_arch_images="$$other_arch_image $$arch_image"; \
+			fi; \
+		done; \
+		docker manifest create $$AMEND $$image_name $$image $$other_arch_images ${DOCKER_CREATE_MANIFEST_OPTS}; \
+		docker manifest push $$image_name ${DOCKER_CREATE_MANIFEST_OPTS}; \
+	done
 
 docker-push:
-	@if [[ -z "${DOCKER_REPO_USER}" ]] || [[ -z "${DOCKER_REPO_PASS}" ]] ; then \
+	@if [ -z "${DOCKER_REPO_USER}" ] || [ -z "${DOCKER_REPO_PASS}" ] ; then \
 		echo "Please define DOCKER_REPO_USER and DOCKER_REPO_PASS."; \
 		exit 1; \
 	else \
@@ -435,14 +461,15 @@ $(addprefix docker-build-, $(IMAGES)): docker-build-%: %
 docker-build-ui:
 	mkdir -p build; test -e dashboard || (git clone $(UI_REPO) build/ffdl-ui; ln -s build/ffdl-ui dashboard)
 	(cd dashboard && (if [ "$(VM_TYPE)" = "minikube" ]; then eval $$(minikube docker-env); fi; \
-		docker build -q -t $(DOCKER_REPO)/$(DOCKER_NAMESPACE)/$(IMAGE_NAME_PREFIX)ui:$(IMAGE_TAG) .; \
-		(test ! `which docker-squash` || docker-squash -t $(DOCKER_REPO)/$(DOCKER_NAMESPACE)/$(IMAGE_NAME_PREFIX)ui $(DOCKER_REPO)/$(DOCKER_NAMESPACE)/$(IMAGE_NAME_PREFIX)ui)))
+		UI_IMAGE_NAME=$(DOCKER_REPO)/$(DOCKER_NAMESPACE)/$(IMAGE_NAME_PREFIX)ui$(IMAGE_NAME_TARGET); \
+		docker build -q --build-arg ARCH=$(TARGET) -t $$UI_IMAGE_NAME:$(IMAGE_TAG) .; \
+		(test ! `which docker-squash` || docker-squash -t $$UI_IMAGE_NAME:$(IMAGE_TAG) $$UI_IMAGE_NAME)))
 
 docker-build-base:
 	if [ "$(VM_TYPE)" = "minikube" ]; then \
 		eval $$(minikube docker-env); \
 	fi; \
-	(cd etc/dlaas-service-base; make build)
+	(cd etc/dlaas-service-base; REPO=${DOCKER_REPO}/ffdl make build)
 
 docker-build-logcollectors:
 	if [ "$(VM_TYPE)" = "minikube" ]; then \
@@ -646,12 +673,12 @@ test-s3:
 	(cd ./$(SERVICE_NAME)/ && (test ! -e main.go || CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w" -a -installsuffix cgo -o bin/$(BINARY_NAME)))
 
 .docker-build:
-	(full_img_name=$(IMAGE_NAME_PREFIX)$(IMAGE_NAME); \
+	(full_img_name=$(IMAGE_NAME_PREFIX)$(IMAGE_NAME)$(IMAGE_NAME_TARGET); \
 		cd ./$(IMAGE_DIR)/ && ( \
 		if [ "$(VM_TYPE)" = "minikube" ]; then \
 			eval $$(minikube docker-env); \
 		fi; \
-		docker build -q -t $(DOCKER_REPO)/$(DOCKER_NAMESPACE)/$$full_img_name:$(IMAGE_TAG) .))
+		docker build -q --build-arg ARCH=$(TARGET) -t $(DOCKER_REPO)/$(DOCKER_NAMESPACE)/$$full_img_name:$(IMAGE_TAG) .))
 
 kubernetes-ip:
 	@if [ "$$CI" = "true" ]; then kubectl get nodes -o jsonpath='{ .items[0].status.addresses[?(@.type=="InternalIP")].address }'; \

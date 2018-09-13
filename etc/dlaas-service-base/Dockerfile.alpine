@@ -15,7 +15,9 @@
 #
 
 
-FROM gliderlabs/alpine:3.3
+FROM alpine:3.7
+
+ARG ARCH=x86_64
 
 RUN apk add --update ca-certificates curl drill
 

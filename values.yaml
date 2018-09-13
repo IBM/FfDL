@@ -2,10 +2,12 @@ namespace: default
 env: dev
 k8s_1dot8_or_above: true
 has_static_volumes: true
+arch: x86_64
 services:
   expose_node_port: true
 docker:
-  registry: docker.io
+  registry: ffdl.ibm.com
+  registry_ppc64le: smonov
   namespace: ffdl
   image_prefix: ffdl-
   pullPolicy: IfNotPresent

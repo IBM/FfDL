@@ -16,6 +16,8 @@
 
 FROM ubuntu:16.04
 
+ARG ARCH=x86_64
+
 # TODO: Just use community Python 3.6 image per conversation with Atin.
 
 RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common
@@ -30,6 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		mlocate \
 		wget \
 		gcc \
+                g++ \
 	&& rm -rf /var/lib/apt/lists/*
 
 ENV PYTHON_VERSION 3.6.3
@@ -37,10 +40,12 @@ ENV PYTHON_VERSION 3.6.3
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     make \
-    musl-dev \
     "python3.6" \
     python3-pip \
-	cron
+    python3-dev \
+    "python3.6-dev" \
+    python3-setuptools \
+    cron
 
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.5 1
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 3

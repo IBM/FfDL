@@ -17,14 +17,17 @@
 
 FROM dlaas-service-base:ubuntu16.04
 
+ARG ARCH=x86_64
+
 # Set environment variables.
 ENV ETCD_VERSION=3.3.3
 
 # Install etcdctl from repository.
-RUN apt-get install curl && \
-    curl -LOks https://github.com/coreos/etcd/releases/download/v${ETCD_VERSION}/etcd-v${ETCD_VERSION}-linux-amd64.tar.gz && \
-    tar zxvf etcd-v${ETCD_VERSION}-linux-amd64.tar.gz && \
-    cp etcd-v${ETCD_VERSION}-linux-amd64/etcdctl /usr/bin/etcdctl && \
+RUN if [ "${ARCH}" = "x86_64" ]; then TARGET="amd64"; else TARGET=${ARCH}; fi;  \
+    apt-get install curl && \
+    curl -LOks https://github.com/coreos/etcd/releases/download/v${ETCD_VERSION}/etcd-v${ETCD_VERSION}-linux-${TARGET}.tar.gz && \
+    tar zxvf etcd-v${ETCD_VERSION}-linux-${TARGET}.tar.gz && \
+    cp etcd-v${ETCD_VERSION}-linux-${TARGET}/etcdctl /usr/bin/etcdctl && \
     rm -rf etcd-v* && \
     chmod +x /usr/bin/etcdctl
 

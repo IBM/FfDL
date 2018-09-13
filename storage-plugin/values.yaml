@@ -1,7 +1,10 @@
 replicaCount: 1
+arch: x86_64
 image:
   repository: ffdl/ibmcloud-object-storage-plugin
   pluginrepository: ffdl/ibmcloud-object-storage-deployer
+  repository_ppc64le: smonov/ibmcloud-object-storage-plugin
+  pluginrepository_ppc64le: smonov/ibmcloud-object-storage-deployer
   Build: v0.1
   pluginBuild: v0.1
   pullPolicy: IfNotPresent

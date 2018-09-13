@@ -18,12 +18,20 @@ spec:
     spec:
       containers:
       - name: prometheus-pushgateway
+{{ if eq .Values.arch "ppc64le" }}
+        image: {{.Values.docker.registry_ppc64le}}/pushgateway
+{{ else }}
         image: prom/pushgateway
+{{ end }}
         ports:
         - name: push
           containerPort: 9091
       - name: statsd-to-prometheus
+{{ if eq .Values.arch "ppc64le" }}
+        image: ibmcom/statsd-exporter-ppc64le:latest
+{{ else }}
         image: prom/statsd-exporter:master
+{{ end }}
         ports:
         - containerPort: 9102
         - containerPort: 9125

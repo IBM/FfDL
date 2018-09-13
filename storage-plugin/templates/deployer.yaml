@@ -19,7 +19,11 @@ spec:
       hostNetwork: true
       containers:
         - name: "ibmcloud-object-storage-deployer-container"
+{{ if eq .Values.arch "ppc64le" }}
+          image: "{{ .Values.image.pluginrepository_ppc64le }}:{{ .Values.image.pluginBuild }}"
+{{ else }}
           image: "{{ .Values.image.pluginrepository }}:{{ .Values.image.pluginBuild }}"
+{{ end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           volumeMounts:
              - mountPath: /host

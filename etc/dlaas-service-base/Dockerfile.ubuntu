@@ -17,6 +17,8 @@
 
 FROM ubuntu:16.04
 
+ARG ARCH=x86_64
+
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install -qq -y ca-certificates curl ldnsutils
 

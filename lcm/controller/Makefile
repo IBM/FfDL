@@ -22,14 +22,21 @@ IMAGE_TAG ?= user-$(WHOAMI)
 
 STATE_MACHINE_PDF=docs/state-machine.pdf
 
+TARGET ?= $(shell uname -m)
+ARCHS ?= x86_64 ppc64le
+
+IMAGE_NAME_TARGET = -$(TARGET)
+
+IMAGE_NAME ?= ${CONTROLLER_IMAGE_NAME}${IMAGE_NAME_TARGET}:${IMAGE_TAG}
+
 all: build push
 
 build: clean
-	docker build --label git-commit=$(shell git rev-list -1 HEAD) -t ${CONTROLLER_IMAGE_NAME}:${IMAGE_TAG} -f Dockerfile .
-	docker tag ${CONTROLLER_IMAGE_NAME}:${IMAGE_TAG} ${REPO}/${CONTROLLER_IMAGE_NAME}:${IMAGE_TAG}
+	docker build --label git-commit=$(shell git rev-list -1 HEAD) --build-arg ARCH=$(TARGET) -t ${IMAGE_NAME} -f Dockerfile .
+	docker tag ${IMAGE_NAME} ${REPO}/${IMAGE_NAME}
 
 push:
-	docker push ${REPO}/${CONTROLLER_IMAGE_NAME}:${IMAGE_TAG}
+	docker push ${REPO}/${IMAGE_NAME}
 
 docs:
 	cat docs/state-machine.dot |docker run -i --entrypoint /usr/bin/dot andrewshawcare/graphviz -T pdf > ${STATE_MACHINE_PDF}
