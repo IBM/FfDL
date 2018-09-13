@@ -13,7 +13,7 @@ FfDL is a collaboration platform for:
 
 ![ffdl-architecture](docs/images/ffdl-architecture.png)
 
-To know more about the architectural details, please read the [design document](design/design_docs.md).
+To know more about the architectural details, please read the [design document](design/design_docs.md). If you are looking for demos, slides, collaterals, blogs, webinars and other materials related to FfDL, please [find them here](demos)
 
 ## Prerequisites
 
@@ -35,7 +35,6 @@ To know more about the architectural details, please read the [design document](
 * If you have used FfDL to train your models, and want to use a GPU enabled public cloud hosted service for further training and serving, please follow instructions [here](etc/converter/ffdl-wml.md) to train and serve your models using [Watson Studio Deep Learning](https://www.ibm.com/cloud/deep-learning) service.
 * To invoke [Adversarial Robustness Toolbox](https://github.com/IBM/adversarial-robustness-toolbox) to find vulnerabilities in your models, follow the [instructions here](etc/notebooks/art)
 * To deploy your trained models, follow [the integration guide with Seldon](community/FfDL-Seldon)
-* If you are looking for related collateral, slides, webinars, blogs and other materials related to FfDL, please [find them here](demos)
 
 ## Steps
 
