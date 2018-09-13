@@ -45,17 +45,13 @@ To know more about the architectural details, please read the [design document](
 2. [Test](#2-test)
 3. [Monitoring](#3-monitoring)
 4. [Development](#4-development)
-5. [Detailed Installation Instructions](#5-detailed-installation-instructions)
-6. [Detailed Testing Instructions](#6-detailed-testing-instructions)
-  - 6.1 [Using FfDL Local S3 Based Object Storage](#61-using-ffdl-local-s3-based-object-storage)
-  - 6.2 [Using Cloud Object Storage](#62-using-cloud-object-storage)
-7. [Clean Up](#7-clean-up)
-8. [Troubleshooting](#8-troubleshooting)
-9. [References](#9-references)
+5. [Clean Up](#7-clean-up)
+6. [Troubleshooting](#8-troubleshooting)
+7. [References](#9-references)
 
 ## 1. Quick Start
 
-There are multiple installation paths for installing FfDL locally ("1-click-install") or into an existing Kubernetes cluster. You can visit [Step 5](#5-detailed-installation-instructions) for more details on the deployment instructions.
+There are multiple installation paths for installing FfDL into an existing Kubernetes cluster. Bwlow are the steps for quick install. If you want to follow more detailed step by stepn instructions , please visit the detailed installation guide (docs/detailed-installation-instructions.md) 
 
 > If you are using bash shell, you can modify the necessary environment variables in `env.txt` and export all of them using the following commands
 >  ```shell
@@ -111,9 +107,7 @@ The platform ships with a simple Grafana monitoring dashboard. The URL is printe
 
 Please refer to the [developer guide](docs/developer-guide.md) for more details.
 
-
-
-## 7. Clean Up
+## 5. Clean Up
 If you want to remove FfDL from your cluster, simply use the following commands.
 ```shell
 helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
@@ -130,7 +124,7 @@ For Kubeadm-DIND, you need to kill your forwarded ports. Note that the below com
 kill $(lsof -i | grep kubectl | awk '{printf $2 " " }')
 ```
 
-## 8. Troubleshooting
+## 6. Troubleshooting
 
 * FfDL has only been tested under Mac OS and Linux
 
@@ -154,7 +148,7 @@ kill $(lsof -i | grep kubectl | awk '{printf $2 " " }')
 
 * If your job is stuck in pending stage, you can try to redeploy the plugin with `helm install storage-plugin --set dind=true,cloud=false` for Kubeadm-DIND and `helm install storage-plugin` for general Kubernetes Cluster. Also, double check your training job manifest file to make sure you have the correct object storage credentials.
 
-## 9. References
+## 7. References
 
 Based on IBM Research work in Deep Learning.
 
