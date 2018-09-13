@@ -2,7 +2,10 @@
 
 
 
-
+1. [Detailed Installation Instructions](#5-detailed-installation-instructions)
+2. [Detailed Testing Instructions](#6-detailed-testing-instructions)
+  - 2.1 [Using FfDL Local S3 Based Object Storage](#61-using-ffdl-local-s3-based-object-storage)
+  - 2.2 [Using Cloud Object Storage](#62-using-cloud-object-storage)
 
 ## 1. Detailed Installation Instructions
 
@@ -131,7 +134,7 @@ Congratulation, FfDL is now running on your Cluster. Now you can go to [Step 6](
 In this example, we will run some simple jobs to train a convolutional network model using TensorFlow and Caffe. We will download a set of
 MNIST handwritten digit images, store them with Object Storage, and use the FfDL CLI to train a handwritten digit classification model.
 
-### 6.1. Using FfDL Local S3 Based Object Storage
+### 2.1. Using FfDL Local S3 Based Object Storage
 
 1. Run the following commands to obtain the object storage endpoint from your cluster.
 ```shell
@@ -229,7 +232,7 @@ you can simply run `$CLI_CMD logs <MODEL_ID>`
 
 > If you no longer need any of the MNIST dataset we used in this example, you can simply delete the `tmp` repository.
 
-### 6.2. Using Cloud Object Storage
+### 2.2. Using Cloud Object Storage
 
 In this section we will demonstrate how to run a TensorFlow job with training data stored in Cloud Object Storage.
 
