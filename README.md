@@ -136,7 +136,7 @@ kill $(lsof -i | grep kubectl | awk '{printf $2 " " }')
   as the single nameserver. Using multiple nameservers can result in problems, in particular under Mac OS. -->
 
 * If `glide install` fails with an error complaining about non-existing paths (e.g., "Without src, cannot continue"),
-  make sure to follow the standard Go directory layout (see [Prerequisites section](#Prerequisites)).
+  make sure to follow the standard Go directory layout (see [Prerequisites section](#prerequisites)).
 
 * To remove FfDL on your Cluster, simply run `make undeploy`
 
