@@ -9,7 +9,6 @@ This repository contains the core services of the *FfDL* (Fabric for Deep Learni
 FfDL is a collaboration platform for:
 - Framework-independent training of Deep Learning models on distributed hardware
 - Open Deep Learning APIs  
-- Common instrumentation
 - Running Deep Learning hosting in user's private or public cloud
 
 ![ffdl-architecture](docs/images/ffdl-architecture.png)
@@ -19,18 +18,12 @@ To know more about the architectural details, please read the [design document](
 ## Prerequisites
 
 * `kubectl`: The Kubernetes command line interface (https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-
 * `helm`: The Kubernetes package manager (https://helm.sh)
-
 * `docker`: The Docker command-line interface (https://www.docker.com/)
-
 * `S3 CLI`: The [command-line interface](https://aws.amazon.com/cli/) to configure your Object Storage
-
 * An existing Kubernetes cluster (e.g., [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) for local testing).
   <!-- For Minikube, use the command `make minikube` to start Minikube and set up local network routes. Minikube **v0.25.1** is tested with Travis CI. -->
-
 * Follow the appropriate instructions for standing up your Kubernetes cluster using [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) or [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)
-
 * The minimum capacity requirement for FfDL is 4GB Memory and 3 CPUs.
 
 ## Usage Scenarios
