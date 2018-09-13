@@ -4,9 +4,7 @@
 
 # Fabric for Deep Learning (FfDL)
 
-This repository contains the core services of the *FfDL* (Fabric for Deep Learning) platform. FfDL is an operating system "fabric" for Deep Learning
-
-FfDL is a collaboration platform for:
+This repository contains the core services of the *FfDL* (Fabric for Deep Learning) platform. FfDL is an operating system "fabric" for Deep Learning. It is a collaboration platform for:
 - Framework-independent training of Deep Learning models on distributed hardware
 - Open Deep Learning APIs  
 - Running Deep Learning hosting in user's private or public cloud
