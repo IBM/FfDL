@@ -51,7 +51,7 @@ To know more about the architectural details, please read the [design document](
 
 ## 1. Quick Start
 
-There are multiple installation paths for installing FfDL into an existing Kubernetes cluster. Bwlow are the steps for quick install. If you want to follow more detailed step by stepn instructions , please visit the detailed installation guide (docs/detailed-installation-instructions.md) 
+There are multiple installation paths for installing FfDL into an existing Kubernetes cluster. Bwlow are the steps for quick install. If you want to follow more detailed step by stepn instructions , please visit [the detailed installation guide](docs/detailed-installation-guide.md) 
 
 > If you are using bash shell, you can modify the necessary environment variables in `env.txt` and export all of them using the following commands
 >  ```shell
@@ -112,13 +112,11 @@ If you want to remove FfDL from your cluster, simply use the following commands.
 ```shell
 helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 ```
-
 If you want to remove the storage driver and pvc from your cluster, run:
 ```shell
 kubectl delete pvc static-volume-1
 helm delete $(helm list | grep ibmcloud-object-storage-plugin | awk '{print $1}' | head -n 1)
 ```
-
 For Kubeadm-DIND, you need to kill your forwarded ports. Note that the below command will kill all the ports that are created with `kubectl`.
 ```shell
 kill $(lsof -i | grep kubectl | awk '{printf $2 " " }')
@@ -127,12 +125,10 @@ kill $(lsof -i | grep kubectl | awk '{printf $2 " " }')
 ## 6. Troubleshooting
 
 * FfDL has only been tested under Mac OS and Linux
-
 <!-- * The default Minikube driver under Mac OS is VirtualBox, which is known for having issues with networking.
   We generally recommend Mac OS users to install Minikube using the xhyve driver.
 
 * Also, when testing locally with Minikube, make sure to point the `docker` CLI to Minikube's Docker daemon:
-
    ```
    eval $(minikube docker-env)
    ```
