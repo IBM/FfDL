@@ -6,7 +6,7 @@ arch: x86_64
 services:
   expose_node_port: true
 docker:
-  registry: ffdl.ibm.com
+  registry: docker.io
   registry_ppc64le: smonov
   namespace: ffdl
   image_prefix: ffdl-

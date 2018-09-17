@@ -82,12 +82,16 @@ docker-build:     ## Build the Docker images for all services
 docker-build: docker-build-base docker-build-images docker-build-ui docker-build-logcollectors
 
 docker-create-manifest:
-	@docker login --username="${DOCKER_REPO_USER}" --password="${DOCKER_REPO_PASS}" https://${DOCKER_REPO}; \
-	for image in $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep ${DOCKER_REPO}/${DOCKER_NAMESPACE} | grep :${IMAGE_TAG} | grep -v '<none>'); do \
-		echo "Creating manifest for $$image"; \
-                image_name=`echo $$image | sed -e "s/\(.*\)-.*\(:.*\)$$/\1\2/g"`; \
+	@if [ "${DOCKER_REPO}" = "docker.io" ]; then \
+		docker login --username="${DOCKER_REPO_USER}" --password="${DOCKER_REPO_PASS}"; \
+	else \
+		docker login --username="${DOCKER_REPO_USER}" --password="${DOCKER_REPO_PASS}" https://${DOCKER_REPO}; \
+	fi \
+	for image in $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep -e '${DOCKER_REPO}\/${DOCKER_NAMESPACE}.*-${TARGET}:${IMAGE_TAG}' | grep -v '<none>'); do \
+                manifest_list=`echo $$image | sed -e "s/\(.*\)-${TARGET}\(:.*\)$$/\1\2/g"`; \
+		echo "Creating manifest for $manifest_list"; \
 		AMEND=""; \
-		docker manifest inspect $$image_name > /dev/null 2>&1; \
+		docker manifest inspect $$manifest_list > /dev/null 2>&1; \
 		if [ $$? -eq 0 ]; then \
 			AMEND="--amend"; \
 		fi; \
@@ -95,13 +99,23 @@ docker-create-manifest:
 		other_arch_images=""; \
 		for arch in ${ARCHS}; do \
 			if [ "$$arch" != "${TARGET}" ]; then \
-				arch_image=`echo $$image | sed -e "s/\(.*\)\-${TARGET}\(:.*\)$$/\1\-$$arch\2/g"`; \
+				arch_image=`echo $$image | sed -e "s/\(.*\)-${TARGET}\(:.*\)$$/\1\-$$arch\2/g"`; \
 				other_arch_images="$$other_arch_image $$arch_image"; \
 			fi; \
 		done; \
-		docker manifest create $$AMEND $$image_name $$image $$other_arch_images ${DOCKER_CREATE_MANIFEST_OPTS}; \
-		docker manifest push $$image_name ${DOCKER_CREATE_MANIFEST_OPTS}; \
+		docker manifest create $$AMEND $$manifest_list $$image $$other_arch_images ${DOCKER_CREATE_MANIFEST_OPTS}; \
+		docker manifest push $$manifest_list ${DOCKER_CREATE_MANIFEST_OPTS}; \
 	done
+
+docker-tag-local:
+	if [ "$(VM_TYPE)" = "minikube" ]; then \
+                        eval $(minikube docker-env); \
+	fi; \
+	for image in $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep -e '${DOCKER_NAMESPACE}.*\-${TARGET}:${IMAGE_TAG}' | grep -v '<none>'); do \
+		image_name=`echo $$image | sed -e "s/\(.*\)-${TARGET}\(:.*\)$$/\1\2/g"`; \
+		echo "docker tag $$image $$image_name"; \
+		docker tag $$image $$image_name; \
+	done \
 
 docker-push:
 	@if [ -z "${DOCKER_REPO_USER}" ] || [ -z "${DOCKER_REPO_PASS}" ] ; then \
@@ -110,18 +124,14 @@ docker-push:
 	else \
 		if [ "${DOCKER_REPO}" = "docker.io" ]; then \
 			docker login --username="${DOCKER_REPO_USER}" --password="${DOCKER_REPO_PASS}"; \
-			for i in $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep ${DOCKER_NAMESPACE} | grep :${IMAGE_TAG} | grep -v '<none>'); do \
-				echo "docker push $$i"; \
-				docker push $$i; \
-			done; \
 		else \
 			docker login --username="${DOCKER_REPO_USER}" --password="${DOCKER_REPO_PASS}" https://${DOCKER_REPO}; \
-			for i in $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep ${DOCKER_REPO}/${DOCKER_NAMESPACE} | grep :${IMAGE_TAG} | grep -v '<none>'); do \
-				echo "docker push $$i"; \
-				docker push $$i; \
-			done; \
 		fi; \
-	fi;
+		for i in $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep -e '${DOCKER_REPO}\/${DOCKER_NAMESPACE}.*\-${TARGET}:${IMAGE_TAG}' | grep -v '<none>'); do \
+			echo "docker push $$i"; \
+			docker push $$i; \
+		done; \
+	fi
 
 # TODO: setup-registry
 
