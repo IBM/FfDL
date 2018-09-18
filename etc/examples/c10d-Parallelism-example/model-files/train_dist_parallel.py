@@ -18,42 +18,6 @@ from torch.autograd import Variable
 from torchvision import datasets, transforms
 
 
-class Partition(object):
-    """ Dataset-like object, but only access a subset of it. """
-
-    def __init__(self, data, index):
-        self.data = data
-        self.index = index
-
-    def __len__(self):
-        return len(self.index)
-
-    def __getitem__(self, index):
-        data_idx = self.index[index]
-        return self.data[data_idx]
-
-
-class DataPartitioner(object):
-    """ Partitions a dataset into different chuncks. """
-
-    def __init__(self, data, sizes=[0.7, 0.2, 0.1], seed=1234):
-        self.data = data
-        self.partitions = []
-        rng = Random()
-        rng.seed(seed)
-        data_len = len(data)
-        indexes = [x for x in range(0, data_len)]
-        rng.shuffle(indexes)
-
-        for frac in sizes:
-            part_len = int(frac * data_len)
-            self.partitions.append(indexes[0:part_len])
-            indexes = indexes[part_len:]
-
-    def use(self, partition):
-        return Partition(self.data, self.partitions[partition])
-
-
 class Net(nn.Module):
     """ Network architecture. """
 
@@ -74,29 +38,6 @@ class Net(nn.Module):
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
 
-
-def partition_dataset(batch_size, is_distributed):
-    """ Partitioning MNIST """
-    trainset, testset = get_dataset()
-    if is_distributed:
-        size = dist.get_world_size()
-    else:
-        size = 1
-    bsz = int(batch_size / float(size))
-    partition_sizes = [1.0 / size for _ in range(size)]
-    partition = DataPartitioner(trainset, partition_sizes)
-    partition_testset = DataPartitioner(testset, partition_sizes)
-    if is_distributed:
-        partition = partition.use(dist.get_rank())
-        partition_testset = partition_testset.use(dist.get_rank())
-    else:
-        partition = partition.use(0)
-        partition_testset = partition_testset.use(0)
-    train_set = torch.utils.data.DataLoader(
-        partition, batch_size=bsz, shuffle=True)
-    test_set = torch.utils.data.DataLoader(
-        testset, batch_size=batch_size, shuffle=True)
-    return train_set, test_set, bsz
 
 def get_dataset():
     """ Get FashionMNIST dataset """
@@ -127,14 +68,25 @@ def average_gradients(model):
         dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=dist.group.WORLD)
         param.grad.data /= size
 
+# def multigpu_average_gradients(model):
+#     """ Gradient averaging. """
+#     size = float(dist.get_world_size())
+#     tensor_list = []
+#     for dev_idx in range(torch.cuda.device_count()):
+#         tensor_list.append(torch.FloatTensor([1]).cuda(dev_idx))
+#     dist.all_reduce_multigpu(tensor_list, op=dist.reduce_op.SUM, group=dist.group.WORLD)
+#     for tensor in tensor_list:
+#         tensor /= size*len(tensor_list)
 
-def run(rank, size, batch_size, is_gpu, is_distributed):
+
+def run(local_device, rank, size, batch_size, is_gpu, is_distributed):
     """ Distributed Synchronous SGD Example """
     torch.manual_seed(1234)
     train_set, test_set = get_dataset()
     result_dir = os.environ.get("RESULT_DIR") + '/saved_model'
     # For GPU use
     if is_gpu:
+        #torch.cuda.set_device(local_device)
         model = Net().cuda()
     else:
         model = Net()
@@ -169,7 +121,7 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
             # if not (size == 1):
             #     average_gradients(model)
             optimizer.step()
-        print('Process ', os.environ.get("LEARNER_ID"),
+        print('Process ', rank,
               ', epoch ', epoch, '. avg_loss: ',
               epoch_loss / len(train_set))
 
@@ -182,7 +134,7 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
             for data, target in test_set:
                 # For GPU use
                 if is_gpu:
-                    data, target = data.cuda(), target.cuda()
+                    data, target = data.cuda(local_device), target.cuda(local_device)
                 else:
                     data, target = Variable(data), Variable(target)
                 output = model(data)
@@ -206,15 +158,15 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
 
 
 # Change 'backend' to appropriate backend identifier
-def init_processes(rank, size, fn, path_to_file, batch_size, is_gpu, backend):
+def init_processes(local_device, rank, size, fn, path_to_file, batch_size, is_gpu, backend):
     """ Initialize the distributed environment. """
-    print("Process " + os.environ.get("LEARNER_ID") + " connected")
+    print("Process ", rank, " connected")
     dist.init_process_group(backend,
                             init_method=path_to_file,
                             world_size=size, group_name="train_dist",
                             rank=rank)
     print("FOUND SHARED FILE")
-    fn(rank, size, batch_size, is_gpu, True)
+    fn(local_device, rank, size, batch_size, is_gpu, True)
 
 def local_process(target, args):
     return Process(target=target, args=args)
@@ -248,17 +200,14 @@ if __name__ == "__main__":
         print("COMPLETION TIME: ", time.time() - start_time)
     else:
         if num_gpus == 0:
-            p = local_process(init_processes, (int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, False, 'gloo'))
+            p = local_process(init_processes, (0, int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, False, 'nccl'))
             p.start()
             processes.append(p)
 
         for process_num in range(0, num_gpus):
-            p = local_process(init_processes, ((process_num*int(os.environ.get("NUM_LEARNERS"))) + int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'gloo'))
+            p = local_process(init_processes, (process_num, (process_num*int(os.environ.get("NUM_LEARNERS"))) + int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'nccl'))
             p.start()
             processes.append(p)
-
-        for p in processes:
-            p.join()
 
         print("COMPLETION TIME: ", time.time() - start_time)
 

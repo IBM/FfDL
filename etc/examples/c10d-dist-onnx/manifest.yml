@@ -46,5 +46,5 @@ data_stores:
 # command: The command to initiate training
 framework:
   name: custom
-  version: "tomcli/pytorch:0911"
+  version: "tomcli/pytorch:0917"
   command: python -u train_dist_onnx.py --batch_size 1024
