@@ -92,7 +92,8 @@ def run(local_device, rank, size, batch_size, is_gpu, is_distributed):
         model = Net()
     if is_distributed:
         model = torch.nn.parallel.DistributedDataParallel(model)
-        train_sampler = torch.utils.data.distributed.DistributedSampler(train_set)
+        train_sampler = torch.utils.data.distributed.DistributedSampler(train_set,
+            num_replicas=dist.get_world_size() , rank=dist.get_rank())
     train_set = torch.utils.data.DataLoader(
         train_set, batch_size=batch_size, shuffle=(train_sampler is None), sampler=train_sampler,
         pin_memory=True)
@@ -134,7 +135,7 @@ def run(local_device, rank, size, batch_size, is_gpu, is_distributed):
             for data, target in test_set:
                 # For GPU use
                 if is_gpu:
-                    data, target = data.cuda(local_device), target.cuda(local_device)
+                    data, target = data.cuda(), target.cuda()
                 else:
                     data, target = Variable(data), Variable(target)
                 output = model(data)
