@@ -25,3 +25,5 @@
 * `c10d-Parallelism-example`: (Experimental) PyTorch 1.0 Distributed Data Parallelism example with NCCL communication backend. (SEP 17 build)
 
 * `c10d-Parallelism-mpi`: (Experimental) PyTorch 1.0 Distributed Data Parallelism example with MPI communication backend. (SEP 17 build)
+
+* `c10d-onnx-mpi`: (Experimental) PyTorch 1.0 Distributed example with MPI communication backend and exported in ONNX. (SEP 17 build)

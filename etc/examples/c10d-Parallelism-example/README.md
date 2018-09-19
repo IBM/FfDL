@@ -2,7 +2,7 @@
 
 This is a 2 convolutional layers model using native pytorch method **dist.init_process_group** to sync and join all the worker nodes.
 - Tested with Syncing using **Shared File System** where worker processes will share their location/group name information on a shared file. (currently using it on shared pvc among the ffdl learners)
-- Tested with both CPU and GPU with **Gloo** Backend.
+- Tested with GPU with both **Gloo** and **NCCL** Backend.
 - For more details on PyTorch distributed package, please refer to https://pytorch.org/tutorials/intermediate/dist_tuto.html
 
 ## Step 1 - Upload Fashion MNIST dataset and setup FfDL client
