@@ -60,14 +60,6 @@ def get_dataset():
     return trainset, testset
 
 
-def average_gradients(model):
-    """ Gradient averaging. """
-    size = float(dist.get_world_size())
-    for param in model.parameters():
-        dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=dist.group.WORLD)
-        param.grad.data /= size
-
-
 def run(rank, size, batch_size, is_gpu, is_distributed):
     """ Distributed Synchronous SGD Example """
     torch.manual_seed(1234)
@@ -106,9 +98,6 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
             loss = F.nll_loss(output, target)
             epoch_loss += loss.item()
             loss.backward()
-            # NOTE: Scatter method was used in DistributedDataParallel
-            # if not (size == 1):
-            #     average_gradients(model)
             optimizer.step()
         print('Process ', dist.get_rank(),
               ', epoch ', epoch, '. avg_loss: ',
@@ -177,7 +166,6 @@ if __name__ == "__main__":
 
     start_time = time.time()
     data_dir = "file:///job/"
-    # processes = []
     datadir = args.data_dir
     resultdir = args.result_dir
 

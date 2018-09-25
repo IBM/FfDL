@@ -17,42 +17,6 @@ from torch.autograd import Variable
 from torchvision import datasets, transforms
 
 
-class Partition(object):
-    """ Dataset-like object, but only access a subset of it. """
-
-    def __init__(self, data, index):
-        self.data = data
-        self.index = index
-
-    def __len__(self):
-        return len(self.index)
-
-    def __getitem__(self, index):
-        data_idx = self.index[index]
-        return self.data[data_idx]
-
-
-class DataPartitioner(object):
-    """ Partitions a dataset into different chuncks. """
-
-    def __init__(self, data, sizes=[0.7, 0.2, 0.1], seed=1234):
-        self.data = data
-        self.partitions = []
-        rng = Random()
-        rng.seed(seed)
-        data_len = len(data)
-        indexes = [x for x in range(0, data_len)]
-        rng.shuffle(indexes)
-
-        for frac in sizes:
-            part_len = int(frac * data_len)
-            self.partitions.append(indexes[0:part_len])
-            indexes = indexes[part_len:]
-
-    def use(self, partition):
-        return Partition(self.data, self.partitions[partition])
-
-
 class Net(nn.Module):
     """ Network architecture. """
 
@@ -74,10 +38,10 @@ class Net(nn.Module):
         return F.log_softmax(x, dim=1)
 
 
-def partition_dataset(batch_size, is_distributed):
-    """ Partitioning MNIST """
+def get_dataset():
+    """ Get FashionMNIST dataset """
     data_path = os.environ.get("DATA_DIR") + '/data'
-    dataset = datasets.FashionMNIST(
+    trainset = datasets.FashionMNIST(
         data_path,
         train=True,
         download=False,
@@ -93,25 +57,7 @@ def partition_dataset(batch_size, is_distributed):
             transforms.ToTensor(),
             transforms.Normalize((0.1307, ), (0.3081, ))
         ]))
-    if is_distributed:
-        size = dist.get_world_size()
-    else:
-        size = 1
-    bsz = int(batch_size / float(size))
-    partition_sizes = [1.0 / size for _ in range(size)]
-    partition = DataPartitioner(dataset, partition_sizes)
-    partition_testset = DataPartitioner(testset, partition_sizes)
-    if is_distributed:
-        partition = partition.use(dist.get_rank())
-        partition_testset = partition_testset.use(dist.get_rank())
-    else:
-        partition = partition.use(0)
-        partition_testset = partition_testset.use(0)
-    train_set = torch.utils.data.DataLoader(
-        partition, batch_size=bsz, shuffle=True)
-    test_set = torch.utils.data.DataLoader(
-        testset, batch_size=batch_size, shuffle=True)
-    return train_set, test_set, bsz
+    return trainset, testset
 
 
 def average_gradients(model):
@@ -122,20 +68,37 @@ def average_gradients(model):
         param.grad.data /= size
 
 
+def multigpu_average_gradients(model):
+    """ Gradient averaging. """
+    size = float(dist.get_world_size())
+    tensor_list = []
+    for dev_idx in range(torch.cuda.device_count()):
+        tensor_list.append(torch.FloatTensor([1]).cuda(dev_idx))
+    dist.all_reduce_multigpu(tensor_list, op=dist.reduce_op.SUM, group=dist.group.WORLD)
+    for tensor in tensor_list:
+        tensor /= size*len(tensor_list)
+
 def run(rank, size, batch_size, is_gpu):
     """ Distributed Synchronous SGD Example """
     torch.manual_seed(1234)
-    train_set, test_set, bsz = partition_dataset(batch_size, (not (size == 1)))
+    train_set, test_set = get_dataset()
     result_dir = os.environ.get("RESULT_DIR") + '/saved_model'
     # For GPU use
     if is_gpu:
+        #torch.cuda.set_device(local_device)
         model = Net().cuda()
     else:
         model = Net()
-        model = model
+    if not (size == 1):
+        model = torch.nn.parallel.DistributedDataParallel(model)
+        train_sampler = torch.utils.data.distributed.DistributedSampler(train_set,
+            num_replicas=dist.get_world_size(), rank=dist.get_rank())
+    train_set = torch.utils.data.DataLoader(
+        train_set, batch_size=batch_size, shuffle=(train_sampler is None), sampler=train_sampler,
+        pin_memory=True)
+    test_set = torch.utils.data.DataLoader(
+        test_set, batch_size=batch_size, shuffle=True, pin_memory=True)
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
-
-    num_batches = ceil(len(train_set.dataset) / float(bsz))
     # To train model
     model.train()
     for epoch in range(100):
@@ -154,7 +117,7 @@ def run(rank, size, batch_size, is_gpu):
             if not (size == 1):
                 average_gradients(model)
             optimizer.step()
-        print('Process ', rank,
+        print('Process ', rank=dist.get_rank(),
               ', epoch ', epoch, '. avg_loss: ',
               epoch_loss / len(train_set))
 
@@ -228,14 +191,14 @@ if __name__ == "__main__":
         print("COMPLETION TIME: ", time.time() - start_time)
     else:
         if num_gpus == 0:
-            p = local_process(init_processes, (int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, False, 'gloo'))
+            p = local_process(init_processes, (0 , world_size, run, data_dir, batch_size, False, 'gloo'))
             p.start()
             processes.append(p)
-
-        for process_num in range(0, num_gpus):
-            p = local_process(init_processes, ((process_num*int(os.environ.get("NUM_LEARNERS"))) + int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'gloo'))
-            p.start()
-            processes.append(p)
+        else:
+            for process_num in range(0, num_gpus):
+                p = local_process(init_processes, (process_num*int(os.environ.get("NUM_LEARNERS")) + int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'gloo'))
+                p.start()
+                processes.append(p)
 
         for p in processes:
             p.join()

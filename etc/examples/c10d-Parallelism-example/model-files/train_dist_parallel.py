@@ -201,14 +201,14 @@ if __name__ == "__main__":
         print("COMPLETION TIME: ", time.time() - start_time)
     else:
         if num_gpus == 0:
-            p = local_process(init_processes, (0, int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, False, 'nccl'))
+            p = local_process(init_processes, (0, int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, False, 'gloo'))
             p.start()
             processes.append(p)
-
-        for process_num in range(0, num_gpus):
-            p = local_process(init_processes, (process_num, (process_num*int(os.environ.get("NUM_LEARNERS"))) + int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'nccl'))
-            p.start()
-            processes.append(p)
+        else:
+            for process_num in range(0, num_gpus):
+                p = local_process(init_processes, (process_num, (process_num*int(os.environ.get("NUM_LEARNERS")) + int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'nccl'))
+                p.start()
+                processes.append(p)
 
         print("COMPLETION TIME: ", time.time() - start_time)
 
