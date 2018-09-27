@@ -125,7 +125,7 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
             if not (size == 1):
                 # print("ready")
                 #average_gradients(model)
-
+                #
                 # For multi-gpu per rank use case
                 multigpu_average_gradients(model)
             optimizer.step()
@@ -218,7 +218,7 @@ if __name__ == "__main__":
             #     p = local_process(init_processes, (process_num * int(os.environ.get("NUM_LEARNERS")) + int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'nccl'))
             #     p.start()
             #     processes.append(p)
-
+            #
             # For multi-gpu per rank use case
             p = local_process(init_processes, (int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'nccl'))
             p.start()
