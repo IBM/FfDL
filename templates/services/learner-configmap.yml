@@ -69,6 +69,8 @@ data:
     ls -la $MODEL_DIR
     echo 'Contents of $DATA_DIR'
     ls -la $DATA_DIR
+    export LEARNER_ID=$((${DOWNWARD_API_POD_NAME##*-} + 1))
+    echo "export LEARNER_ID=$((${DOWNWARD_API_POD_NAME##*-} + 1))" >> ~/.bashrc
     # Switch to model dir
     cd $MODEL_DIR
     export PYTHONPATH=$PYTHONPATH:$PWD

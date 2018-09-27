@@ -68,18 +68,19 @@ def average_gradients(model):
         dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=dist.group.WORLD)
         param.grad.data /= size
 
-# def multigpu_average_gradients(model):
-#     """ Gradient averaging. """
-#     size = float(dist.get_world_size())
-#     tensor_list = []
-#     for dev_idx in range(torch.cuda.device_count()):
-#         tensor_list.append(torch.FloatTensor([1]).cuda(dev_idx))
-#     dist.all_reduce_multigpu(tensor_list, op=dist.reduce_op.SUM, group=dist.group.WORLD)
-#     for tensor in tensor_list:
-#         tensor /= size*len(tensor_list)
+def multigpu_average_gradients(model):
+    """ Gradient averaging. """
+    size = float(dist.get_world_size())
+    tensor_list = []
+    print(model.parameters())
+    for dev_idx in range(torch.cuda.device_count()):
+        tensor_list.append(torch.FloatTensor([1]).cuda(dev_idx))
+    dist.all_reduce_multigpu(tensor_list, op=dist.reduce_op.SUM, group=dist.group.WORLD)
+    for tensor in tensor_list:
+        tensor /= (size*len(tensor_list))
 
 
-def run(local_device, rank, size, batch_size, is_gpu, is_distributed):
+def run(rank, size, batch_size, is_gpu, is_distributed):
     """ Distributed Synchronous SGD Example """
     torch.manual_seed(1234)
     train_set, test_set = get_dataset()
@@ -90,8 +91,12 @@ def run(local_device, rank, size, batch_size, is_gpu, is_distributed):
         model = Net().cuda()
     else:
         model = Net()
+    # print("prepare")
     if is_distributed:
-        model = torch.nn.parallel.DistributedDataParallel(model)
+        if is_gpu:
+            model = torch.nn.parallel.DistributedDataParallel(model)
+        else:
+            model = torch.nn.parallel.DistributedDataParallelCPU(model)
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_set,
             num_replicas=dist.get_world_size() , rank=dist.get_rank())
     train_set = torch.utils.data.DataLoader(
@@ -100,17 +105,16 @@ def run(local_device, rank, size, batch_size, is_gpu, is_distributed):
     test_set = torch.utils.data.DataLoader(
         test_set, batch_size=batch_size, shuffle=True, pin_memory=True)
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
-
     # To train model
     model.train()
-    for epoch in range(100):
+    for epoch in range(10):
         epoch_loss = 0.0
         if is_distributed:
             train_sampler.set_epoch(epoch)
         for data, target in train_set:
             # For GPU use
             if is_gpu:
-                data, target = data.cuda(), target.cuda()
+                data, target = Variable(data).cuda(), Variable(target).cuda()
             else:
                 data, target = Variable(data), Variable(target)
             optimizer.zero_grad()
@@ -119,15 +123,18 @@ def run(local_device, rank, size, batch_size, is_gpu, is_distributed):
             epoch_loss += loss.item()
             loss.backward()
             # NOTE: Scatter method was used in DistributedDataParallel
-            # if not (size == 1):
-            #     average_gradients(model)
+            if not (size == 1):
+                # print("ready")
+                average_gradients(model)
+                #multigpu_average_gradients(model)
             optimizer.step()
         print('Process ', rank,
               ', epoch ', epoch, '. avg_loss: ',
               epoch_loss / len(train_set))
 
+    print("Done training and the id is ", str(int(os.environ.get("LEARNER_ID"))))
     # Test model
-    if int(os.environ.get("LEARNER_ID")) == 1:
+    if dist.get_rank() == 0:
         model.eval()
         test_loss = 0.0
         correct = 0
@@ -135,7 +142,7 @@ def run(local_device, rank, size, batch_size, is_gpu, is_distributed):
             for data, target in test_set:
                 # For GPU use
                 if is_gpu:
-                    data, target = data.cuda(), target.cuda()
+                    data, target = Variable(data).cuda(), Variable(target).cuda()
                 else:
                     data, target = Variable(data), Variable(target)
                 output = model(data)
@@ -145,8 +152,9 @@ def run(local_device, rank, size, batch_size, is_gpu, is_distributed):
             print('Test_set:  avg_loss: ', test_loss / len(test_set.dataset),
                   ', accuracy: ', 100. * correct / len(test_set.dataset), '%')
 
+
     # Save model
-    if int(os.environ.get("LEARNER_ID")) == 1:
+    if dist.get_rank() == 0:
         torch.save(model.state_dict(), result_dir)
         # NOTE: ONNX doesn't support scatter operation yet.
         # dummy_input = ""
@@ -159,7 +167,7 @@ def run(local_device, rank, size, batch_size, is_gpu, is_distributed):
 
 
 # Change 'backend' to appropriate backend identifier
-def init_processes(local_device, rank, size, fn, path_to_file, batch_size, is_gpu, backend):
+def init_processes(rank, size, fn, path_to_file, batch_size, is_gpu, backend):
     """ Initialize the distributed environment. """
     print("Process ", rank, " connected")
     dist.init_process_group(backend,
@@ -167,7 +175,7 @@ def init_processes(local_device, rank, size, fn, path_to_file, batch_size, is_gp
                             world_size=size, group_name="train_dist",
                             rank=rank)
     print("FOUND SHARED FILE")
-    fn(local_device, rank, size, batch_size, is_gpu, True)
+    fn(rank, size, batch_size, is_gpu, True)
 
 def local_process(target, args):
     return Process(target=target, args=args)
@@ -201,14 +209,20 @@ if __name__ == "__main__":
         print("COMPLETION TIME: ", time.time() - start_time)
     else:
         if num_gpus == 0:
-            p = local_process(init_processes, (0, int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, False, 'gloo'))
+            p = local_process(init_processes, (int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, False, 'gloo'))
             p.start()
             processes.append(p)
         else:
             for process_num in range(0, num_gpus):
-                p = local_process(init_processes, (process_num, (process_num*int(os.environ.get("NUM_LEARNERS")) + int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'nccl'))
+                p = local_process(init_processes, (process_num * int(os.environ.get("NUM_LEARNERS")) + int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'nccl'))
                 p.start()
                 processes.append(p)
+            # p = local_process(init_processes, (int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'nccl'))
+            # p.start()
+            # processes.append(p)
+
+        for p in processes:
+            p.join()
 
         print("COMPLETION TIME: ", time.time() - start_time)
 
