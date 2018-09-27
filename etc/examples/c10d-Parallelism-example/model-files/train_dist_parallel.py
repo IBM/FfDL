@@ -72,7 +72,6 @@ def multigpu_average_gradients(model):
     """ Gradient averaging. """
     size = float(dist.get_world_size())
     tensor_list = []
-    print(model.parameters())
     for dev_idx in range(torch.cuda.device_count()):
         tensor_list.append(torch.FloatTensor([1]).cuda(dev_idx))
     dist.all_reduce_multigpu(tensor_list, op=dist.reduce_op.SUM, group=dist.group.WORLD)
@@ -125,8 +124,10 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
             # NOTE: Scatter method was used in DistributedDataParallel
             if not (size == 1):
                 # print("ready")
-                average_gradients(model)
-                #multigpu_average_gradients(model)
+                #average_gradients(model)
+
+                # For multi-gpu per rank use case
+                multigpu_average_gradients(model)
             optimizer.step()
         print('Process ', rank,
               ', epoch ', epoch, '. avg_loss: ',
@@ -213,13 +214,15 @@ if __name__ == "__main__":
             p.start()
             processes.append(p)
         else:
-            for process_num in range(0, num_gpus):
-                p = local_process(init_processes, (process_num * int(os.environ.get("NUM_LEARNERS")) + int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'nccl'))
-                p.start()
-                processes.append(p)
-            # p = local_process(init_processes, (int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'nccl'))
-            # p.start()
-            # processes.append(p)
+            # for process_num in range(0, num_gpus):
+            #     p = local_process(init_processes, (process_num * int(os.environ.get("NUM_LEARNERS")) + int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'nccl'))
+            #     p.start()
+            #     processes.append(p)
+
+            # For multi-gpu per rank use case
+            p = local_process(init_processes, (int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'nccl'))
+            p.start()
+            processes.append(p)
 
         for p in processes:
             p.join()
