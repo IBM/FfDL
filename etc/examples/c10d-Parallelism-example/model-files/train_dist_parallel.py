@@ -197,10 +197,12 @@ if __name__ == "__main__":
 
     start_time = time.time()
     num_gpus = int(float(os.environ.get("GPU_COUNT")))
-    if num_gpus == 0:
-        world_size = int(os.environ.get("NUM_LEARNERS"))
-    else:
-        world_size = num_gpus * int(os.environ.get("NUM_LEARNERS"))
+    world_size = int(os.environ.get("NUM_LEARNERS"))
+    # For multi-process use case
+    # if num_gpus == 0:
+    #     world_size = int(os.environ.get("NUM_LEARNERS"))
+    # else:
+    #     world_size = num_gpus * int(os.environ.get("NUM_LEARNERS"))
     data_dir = "file:///job/" + os.environ.get("TRAINING_ID")
     processes = []
     print("data_dir is " + data_dir)
