@@ -1,0 +1,106 @@
+{
+  "apiVersion": "machinelearning.seldon.io/v1alpha2",
+  "kind": "SeldonDeployment",
+  "metadata": {
+    "labels": {
+      "app": "seldon"
+    },
+    "name": "fashion-mnist-onnx"
+  },
+  "spec": {
+    "annotations": {
+      "project_name": "FfDL fashion-mnist-onnx",
+      "deployment_version": "v1"
+    },
+    "name": "fashion-mnist-onnx",
+    "oauth_key": "oauth-key",
+    "oauth_secret": "oauth-secret",
+    "predictors": [
+      {
+        "componentSpecs": [
+          {
+            "spec": {
+              "containers": [
+                {
+                  "image": "tomcli/ngraph-onnx:0.1",
+                  "imagePullPolicy": "IfNotPresent",
+                  "name": "classifier",
+                  "volumeMounts": [
+                    {
+                      "mountPath": "/mnt/results/mnist-trained-model",
+                      "name": "result-bucket"
+                    }
+                  ],
+                  "resources": {
+                    "requests": {
+                      "memory": "1Mi"
+                    }
+                  },
+                  "env": [
+                    {
+                      "name": "TRAINING_ID",
+                      "value": "<TRAINING_ID>"
+                    },
+                    {
+                      "name": "MODEL_FILE_NAME",
+                      "value": "pytorch-dist.onnx"
+                    },
+                    {
+                      "name": "MOUNT_PATH",
+                      "value": "/mnt/results/mnist-trained-model"
+                    }
+                  ]
+                }
+              ],
+              "terminationGracePeriodSeconds": 20,
+              "volumes": [
+                {
+                  "volumeSource": {
+                    "flexVolume": {
+                      "driver": "ibm/ibmc-s3fs",
+                      "options": {
+                        "bucket": "<BUCKER_NAME>",
+                        "cache-size-gb": "0",
+                        "chunk-size-mb": "52",
+                        "curl-debug": "false",
+                        "debug-level": "warn",
+                        "endpoint": "<Object storage endpoint>",
+                        "ensure-disk-free": "2048",
+                        "kernel-cache": "false",
+                        "multireq-max": "20",
+                        "parallel-count": "2",
+                        "region": "us-standard",
+                        "s3fs-fuse-retry-count": "30",
+                        "stat-cache-size": "100000",
+                        "tls-cipher-suite": "DEFAULT"
+                      },
+                      "secretRef": {
+                        "name": "bucket-credentials"
+                      }
+                    }
+                  },
+                  "name": "result-bucket"
+                }
+              ]
+            }
+          }
+        ],
+        "graph": {
+          "children": [
+
+          ],
+          "name": "classifier",
+          "endpoint": {
+            "type": "REST"
+          },
+          "type": "MODEL"
+        },
+        "name": "single-model",
+        "replicas": 1,
+        "annotations": {
+          "predictor_version": "v1"
+        }
+      }
+    ]
+  }
+}

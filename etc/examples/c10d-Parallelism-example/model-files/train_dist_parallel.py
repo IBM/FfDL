@@ -30,6 +30,8 @@ class Net(nn.Module):
         self.fc2 = nn.Linear(50, 10)
 
     def forward(self, x):
+        # Check input size during forward propagation
+        # print("\tIn Model: input size", x.size())
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
         x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
         x = x.view(-1, 320)
@@ -107,6 +109,7 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
     test_set = torch.utils.data.DataLoader(
         test_set, batch_size=batch_size, shuffle=True, pin_memory=True)
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # To train model
     model.train()
     for epoch in range(100):
@@ -120,46 +123,47 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
             else:
                 data, target = Variable(data), Variable(target)
             optimizer.zero_grad()
-            output = model(data)
+            input = data.to(device)
+            output = model(input)
+            # print("Outside: input size", input.size(),
+            #       "output_size", output.size())
             loss = F.nll_loss(output, target)
             epoch_loss += loss.item()
             loss.backward()
             # NOTE: Scatter method was used in DistributedDataParallel
             if not (size == 1):
                 # print("ready")
-                average_gradients(model)
+                #average_gradients(model)
                 #
                 # For multi-gpu per rank use case
-                #multigpu_average_gradients(model)
+                multigpu_average_gradients(model)
             optimizer.step()
         print('Process ', rank,
-              ', epoch ', epoch, '. avg_loss: ',
+              ', epoch ', epoch + 1, '. avg_loss: ',
               epoch_loss / len(train_set))
 
-
+    print("done training")
     # Test model
-    if dist.get_rank() == 0:
-        model.eval()
-        test_loss = 0.0
-        correct = 0
-        with torch.no_grad():
-            for data, target in test_set:
-                # For GPU use
-                if is_gpu:
-                    data, target = Variable(data).cuda(), Variable(target).cuda()
-                else:
-                    data, target = Variable(data), Variable(target)
-                output = model(data)
-                test_loss += F.nll_loss(output, target, reduction="sum").item()
-                pred = output.data.max(1, keepdim=True)[1]
-                correct += pred.eq(target.data.view_as(pred)).sum().item()
-            print('Test_set:  avg_loss: ', test_loss / len(test_set.dataset),
-                  ', accuracy: ', 100. * correct / len(test_set.dataset), '%')
+    model.eval()
+    test_loss = 0.0
+    correct = 0
+    with torch.no_grad():
+        for data, target in test_set:
+            # For GPU use
+            if is_gpu:
+                data, target = Variable(data).cuda(), Variable(target).cuda()
+            else:
+                data, target = Variable(data), Variable(target)
+            output = model(data)
+            test_loss += F.nll_loss(output, target, reduction="sum").item()
+            pred = output.data.max(1, keepdim=True)[1]
+            correct += pred.eq(target.data.view_as(pred)).sum().item()
+        print('Test_set:  avg_loss: ', test_loss / len(test_set.dataset),
+              ', accuracy: ', 100. * correct / len(test_set.dataset), '%')
 
 
     # Save model
-    if dist.get_rank() == 0:
-        torch.save(model.state_dict(), result_dir)
+    torch.save(model.state_dict(), result_dir)
         # NOTE: ONNX doesn't support scatter operation yet.
         # dummy_input = ""
         # if is_gpu:
@@ -187,16 +191,12 @@ def local_process(target, args):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', help='Specify the batch size to be used in training')
+    parser.add_argument('--batch_size', type=int, default=1024, help='Specify the batch size to be used in training')
     args = parser.parse_args()
 
-    batch_size = args.batch_size
     # Default batch size is set to 1024. When using a large numbers of learners,
     # a larger batch size is sometimes necessary to see speed improvements.
-    if batch_size is None:
-        batch_size = 1024
-    else:
-        batch_size = int(batch_size)
+    batch_size = args.batch_size
 
     start_time = time.time()
     num_gpus = int(float(os.environ.get("GPU_COUNT")))
@@ -236,6 +236,6 @@ if __name__ == "__main__":
 
         # FfDL assume only the master learner job will terminate and store all
         # the logging file.
-        if int(os.environ.get("LEARNER_ID")) != 1:
-            while True:
-                time.sleep(1000000)
+        # if int(os.environ.get("LEARNER_ID")) != 1:
+        #     while True:
+        #         time.sleep(1000000)
