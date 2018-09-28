@@ -71,6 +71,7 @@ data:
     ls -la $DATA_DIR
     export LEARNER_ID=$((${DOWNWARD_API_POD_NAME##*-} + 1))
     echo "export LEARNER_ID=$((${DOWNWARD_API_POD_NAME##*-} + 1))" >> ~/.bashrc
+    touch /job/$TRAINING_ID
     # Switch to model dir
     cd $MODEL_DIR
     export PYTHONPATH=$PYTHONPATH:$PWD

@@ -91,11 +91,9 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
     result_dir = os.environ.get("RESULT_DIR") + '/saved_model'
     # For GPU use
     if is_gpu:
-        #torch.cuda.set_device(local_device)
         model = Net().cuda()
     else:
         model = Net()
-    # print("prepare")
     if is_distributed:
         if is_gpu:
             model = torch.nn.parallel.DistributedDataParallel(model)
@@ -109,7 +107,6 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
     test_set = torch.utils.data.DataLoader(
         test_set, batch_size=batch_size, shuffle=True, pin_memory=True)
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # To train model
     model.train()
     for epoch in range(100):
@@ -123,16 +120,15 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
             else:
                 data, target = Variable(data), Variable(target)
             optimizer.zero_grad()
-            input = data.to(device)
-            output = model(input)
-            # print("Outside: input size", input.size(),
+            output = model(data)
+            # Check total batch size
+            # print("Outside: input size", data.size(),
             #       "output_size", output.size())
             loss = F.nll_loss(output, target)
             epoch_loss += loss.item()
             loss.backward()
             # NOTE: Scatter method was used in DistributedDataParallel
             if not (size == 1):
-                # print("ready")
                 #average_gradients(model)
                 #
                 # For multi-gpu per rank use case
