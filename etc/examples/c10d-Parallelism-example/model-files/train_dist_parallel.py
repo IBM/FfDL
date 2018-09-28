@@ -71,12 +71,15 @@ def average_gradients(model):
 def multigpu_average_gradients(model):
     """ Gradient averaging. """
     size = float(dist.get_world_size())
-    tensor_list = []
-    for dev_idx in range(torch.cuda.device_count()):
-        tensor_list.append(torch.FloatTensor([1]).cuda(dev_idx))
-    dist.all_reduce_multigpu(tensor_list, op=dist.reduce_op.SUM, group=dist.group.WORLD)
-    for tensor in tensor_list:
-        tensor /= (size*len(tensor_list))
+    # for dev_idx in range(torch.cuda.device_count()):
+    #     tensor_list.append(torch.FloatTensor([1]).cuda(dev_idx))
+    for param in model.parameters():
+        tensor_list = []
+        for dev_idx in range(torch.cuda.device_count()):
+            tensor_list.append(param.grad.data.cuda(dev_idx))
+            dist.all_reduce_multigpu(tensor_list, op=dist.reduce_op.SUM, group=dist.group.WORLD)
+            for tensor in tensor_list:
+                tensor /= (size*len(tensor_list))
 
 
 def run(rank, size, batch_size, is_gpu, is_distributed):
@@ -106,7 +109,7 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
     # To train model
     model.train()
-    for epoch in range(10):
+    for epoch in range(100):
         epoch_loss = 0.0
         if is_distributed:
             train_sampler.set_epoch(epoch)
@@ -124,16 +127,16 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
             # NOTE: Scatter method was used in DistributedDataParallel
             if not (size == 1):
                 # print("ready")
-                #average_gradients(model)
+                average_gradients(model)
                 #
                 # For multi-gpu per rank use case
-                multigpu_average_gradients(model)
+                #multigpu_average_gradients(model)
             optimizer.step()
         print('Process ', rank,
               ', epoch ', epoch, '. avg_loss: ',
               epoch_loss / len(train_set))
 
-    print("Done training and the id is ", str(int(os.environ.get("LEARNER_ID"))))
+
     # Test model
     if dist.get_rank() == 0:
         model.eval()
