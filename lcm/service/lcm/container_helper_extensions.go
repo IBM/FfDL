@@ -41,6 +41,8 @@ func extendLearnerContainer(learner *v1core.Container, req *service.JobDeploymen
 		learnerImage = "opsh2oai/h2o3-ffdl:" + req.Version
 	case horovodFrameworkName:
 		learnerImage = "uber/horovod:" + req.Version
+	case pytorchMPIFrameworkName:
+		learnerImage = "tomcli/pytorch:" + req.Version
 	case customFrameworkName:
 		learnerImage = req.Version
 	default:
@@ -48,7 +50,7 @@ func extendLearnerContainer(learner *v1core.Container, req *service.JobDeploymen
 	}
 
 	extCmd := ""
-	if req.Framework != horovodFrameworkName {
+	if req.Framework != horovodFrameworkName && req.Framework != pytorchMPIFrameworkName {
 		extCmd = "export PATH=/usr/local/bin/:$PATH; cp " + learnerEntrypointFilesPath + "/*.sh /usr/local/bin/; chmod +x /usr/local/bin/*.sh;"
 	} else {
 		extCmd = "export PATH=/usr/local/bin/:$PATH; cp " + learnerEntrypointFilesPath + "/*.sh /usr/local/bin/; chmod +x /usr/local/bin/*.sh; mv /usr/local/bin/train-horovod.sh /usr/local/bin/train.sh;"
@@ -76,7 +78,7 @@ func extendLearnerContainer(learner *v1core.Container, req *service.JobDeploymen
 
 	learner.Image = learnerImage
 	learner.Command[2] = extCmd + learner.Command[2]
-	if req.Framework == horovodFrameworkName {
+	if req.Framework == horovodFrameworkName || req.Framework == pytorchMPIFrameworkName {
 		RSApub := v1core.EnvVar{Name: "RSA_PUB_KEY", ValueFrom: &v1core.EnvVarSource{
 			SecretKeyRef: &v1core.SecretKeySelector{Key: "RSA_PUB_KEY", LocalObjectReference: v1core.LocalObjectReference{Name: "rsa-keys",},},},}
 		RSApri := v1core.EnvVar{Name: "RSA_PRI_KEY", ValueFrom: &v1core.EnvVarSource{
