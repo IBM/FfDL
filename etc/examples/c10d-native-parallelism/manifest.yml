@@ -34,10 +34,11 @@ data_stores:
   - id: test-datastore
     type: mount_cos
     training_data:
-      container: mnist_pytorch
+      container: trainingdata
     training_results:
-      container: mnist_trained_model
+      container: trainedmodel
     connection:
+      # Update the object storage credentials below
       auth_url: http://s3.default.svc.cluster.local
       user_name: test
       password: test

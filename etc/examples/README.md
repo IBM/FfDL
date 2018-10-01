@@ -18,7 +18,7 @@
 
 * `pytorch-dist-onnx`: PyTorch native distributed training with model exported in ONNX format. (Fashion MNIST model using 2 Convolutional Layers) (PyTorch 0.4.1)
 
-* `c10d-Parallelism-example`: PyTorch 1.0 Distributed Data Parallelism example with NCCL communication backend. This example will assign only one rank per node and demonstrate how to apply PyTorch's native Distributed Data Parallelism with multiple GPUs per node. (SEP 25 build)
+* `c10d-native-parallelism`: PyTorch 1.0 Distributed Data Parallelism example with NCCL communication backend. This example will assign only one rank per node and demonstrate how to apply PyTorch's native Distributed Data Parallelism with multiple GPUs per node. (SEP 25 build)
 
 * `c10d-onnx-mpi`: PyTorch 1.0 Distributed example with MPI communication backend and exported in ONNX. (SEP 25 build)
 

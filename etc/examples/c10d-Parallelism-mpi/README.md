@@ -1,4 +1,4 @@
-# PyTorch Fashion MNIST distributed training example using native data parallelism
+# PyTorch Fashion MNIST distributed training example using native data parallelism (Experimental)
 
 This is a 2 convolutional layers model using native pytorch method **dist.init_process_group** to sync and join all the worker nodes.
 - Tested with Syncing using Open-MPI where worker processes are executed with mpirun command.
