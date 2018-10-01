@@ -46,6 +46,6 @@ data_stores:
 # version: The version of the framework to be used
 # command: The command to initiate training
 framework:
-  name: custom
-  version: "tomcli/pytorch:0925mpi"
+  name: pytorchmpi
+  version: "0925mpi"
   command: /opt/conda/bin/python -u train_dist_parallel_mpi.py --batch_size 1024 --nodes 2 --data_dir $DATA_DIR --result_dir $RESULT_DIR
