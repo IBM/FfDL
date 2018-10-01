@@ -32,8 +32,8 @@ Create buckets to hold the training data and trained model
 ```shell
 # Replace trainingdata with what you want the bucket holding the training data to be named
 # Replace trainedmodel with what you want the bucket storing your model to be named
-$s3cmd mb s3://mnist_pytorch
-$s3cmd mb s3://mnist_trained_model
+$s3cmd mb s3://trainingdata
+$s3cmd mb s3://trainedmodel
 ```
 
 Run the below block of code in python to pre-process your data, then store them in your object storage bucket.
@@ -51,7 +51,7 @@ dataset = datasets.FashionMNIST(
 
 Upload the processed Fashion MNIST training data to your training data bucket.
 ```shell
-$s3cmd cp --recursive data s3://fashion_mnist/data
+$s3cmd cp --recursive data s3://trainingdata/data
 ```
 
 Now you should have all the necessary training data set in your training data bucket. Let's go ahead to set up your restapi endpoint and default credentials for Deep Learning as a Service. Once you done that, you can start running jobs using the FfDL CLI (executable binary).
@@ -64,26 +64,33 @@ CLI_CMD=$(pwd)/cli/bin/ffdl-$(if [ "$(uname)" = "Darwin" ]; then echo 'osx'; els
 ```
 
 ## Step 2 - Creating a Manifest File
-Create the code that will train your model. We will use `train_dist_onnx.py` in the folder "pytorch-dist-onnx" as an example
+Create the code that will train your model. We will use `train_dist_parallel_mpi.py` in the folder "c10d-mpi-parallelism" as an example
 
 Create a .yml file with the necessary information. manifest.yml has further instructions on creating an appropriate manifest file.
+
+* You need to update the object storage credentials at line 42 or use the below command.
+```bash
+if [ "$(uname)" = "Darwin" ]; then
+  sed -i '' s/s3.default.svc.cluster.local/$PUBLIC_IP:$s3_port/ manifest.yml
+else
+  sed -i s/s3.default.svc.cluster.local/$PUBLIC_IP:$s3_port/ manifest.yml
+fi
+```
 
 ## Step 3a - Deploying the training job to FfDL
 
 We will now go back to this directory and deploy our training job to FfDL using the path to the .yml and path to the folder containing the experiment.py
 ```bash
-cd <path to this demo repo>/pytorch-dist-onnx
-# Replace manifest.yml with the path to your .yml file
-# Replace Image with the path to the folder containing your file created in step 6
+cd <path to FfDL repo>/etc/example/c10d-mpi-parallelism
 $CLI_CMD train manifest.yml model-files
 ```
 ## Step 3b - Deploying the training job to FfDL using the FfDL UI
 
 Alternatively, the FfDL UI can be used to deploy jobs. First zip your model.
 ```bash
-# Replace fashion-training with the path to your training file folder
-# Replace fashion-training.zip with the path where you want the .zip file stored
-pushd model-file && zip ../fashion-data-parallel * && popd
+# Replace fashion-parallel with the path to your training file folder
+# Replace fashion-parallel.zip with the path where you want the .zip file stored
+pushd model-file && zip ../fashion-parallel * && popd
 ```
 
 Go to FfDL web UI. Upload the .zip to "Choose model definition zip to upload". Upload the .yml to "Choose manifest to upload". Then click Submit Training Job.

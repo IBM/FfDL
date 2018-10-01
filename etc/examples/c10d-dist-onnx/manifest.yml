@@ -5,6 +5,7 @@
 #       training your model
 # cpus: Replace with the number of cpus to be used in
 #       training your model
+# learners: Replace with the number of learner nodes to be used
 # memory: Replace with the amount of memory to be
 #         dedicated to training your model
 name: pytorch FashionMNIST
@@ -33,10 +34,11 @@ data_stores:
   - id: test-datastore
     type: mount_cos
     training_data:
-      container: mnist_pytorch
+      container: trainingdata
     training_results:
-      container: mnist_trained_model
+      container: trainedmodel
     connection:
+      # Update the object storage credentials below
       auth_url: http://s3.default.svc.cluster.local
       user_name: test
       password: test

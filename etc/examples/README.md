@@ -24,4 +24,4 @@
 
 * `c10d-dist-onnx`: (Experimental) This is an updated version of `pytorch-dist-onnx` example with PyTorch 1.0 native distributed training using GLOO communication backend with model exported in ONNX format. Will merge with `pytorch-dist-onnx` once PyTorch 1.0 is released. (SEP 25 build)
 
-* `c10d-Parallelism-mpi`: (Experimental since PyTorch didn't claim MPI is working on the native Distributed Data Parallelism function) PyTorch 1.0 Distributed Data Parallelism function example with MPI communication backend. (SEP 25 build)
+* `c10d-mpi-parallelism`: (Experimental since PyTorch didn't claim MPI is working on the native Distributed Data Parallelism function) PyTorch 1.0 Distributed Data Parallelism function example with MPI communication backend. (SEP 25 build)

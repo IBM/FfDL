@@ -4,7 +4,7 @@ This is a 2 convolutional layers model using native pytorch method **dist.init_p
 - Tested with Syncing using **Shared File System** where worker processes will share their location/group name information on a shared file. (currently using it on shared pvc among the ffdl learners)
 - Tested with GPU with both **Gloo** and **NCCL** Backend.
 - This example is able to handle multiple GPUs in one rank.
-- This example only assigns one rank per node.
+- This example only assigns one rank per node to demonstrate multi-gpu syncing scenario.
 - For more details on PyTorch distributed package, please refer to https://pytorch.org/tutorials/intermediate/dist_tuto.html
 
 ## Step 1 - Upload Fashion MNIST dataset and setup FfDL client
@@ -70,7 +70,14 @@ Create the code that will train your model. We will use `train_dist_parallel.py`
 
 Create a .yml file with the necessary information. manifest.yml has further instructions on creating an appropriate manifest file.
 
-* You need to update the object storage credentials at line 42-44.
+* You need to update the object storage credentials at line 42 or use the below command.
+```bash
+if [ "$(uname)" = "Darwin" ]; then
+  sed -i '' s/s3.default.svc.cluster.local/$PUBLIC_IP:$s3_port/ manifest.yml
+else
+  sed -i s/s3.default.svc.cluster.local/$PUBLIC_IP:$s3_port/ manifest.yml
+fi
+```
 
 ## Step 3a - Deploying the training job to FfDL
 

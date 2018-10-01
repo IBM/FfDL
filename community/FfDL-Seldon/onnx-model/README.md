@@ -1,4 +1,4 @@
-# PyTorch MNIST Classifier
+# ONNX MNIST Classifier
 
 # Assumptions
 
