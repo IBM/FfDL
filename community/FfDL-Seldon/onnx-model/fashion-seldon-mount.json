@@ -39,7 +39,7 @@
                   "env": [
                     {
                       "name": "TRAINING_ID",
-                      "value": "<TRAINING_ID>"
+                      "value": "%TRAINING_ID%"
                     },
                     {
                       "name": "MODEL_FILE_NAME",
@@ -59,12 +59,12 @@
                     "flexVolume": {
                       "driver": "ibm/ibmc-s3fs",
                       "options": {
-                        "bucket": "<BUCKER_NAME>",
+                        "bucket": "%BUCKET_NAME%",
                         "cache-size-gb": "0",
                         "chunk-size-mb": "52",
                         "curl-debug": "false",
                         "debug-level": "warn",
-                        "endpoint": "<Object storage endpoint>",
+                        "endpoint": "%OBJECT_STORAGE_ENDPOINT%",
                         "ensure-disk-free": "2048",
                         "kernel-cache": "false",
                         "multireq-max": "20",

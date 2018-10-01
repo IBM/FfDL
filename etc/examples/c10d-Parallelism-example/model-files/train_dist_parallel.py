@@ -129,37 +129,35 @@ def run(rank, size, batch_size, is_gpu, is_distributed):
             loss.backward()
             # NOTE: Scatter method was used in DistributedDataParallel
             if not (size == 1):
-                #average_gradients(model)
-                #
-                # For multi-gpu per rank use case
+                # For multi-process use case
+                # average_gradients(model)
                 multigpu_average_gradients(model)
             optimizer.step()
-        print('Process ', rank,
+        print('Process ', dist.get_rank(),
               ', epoch ', epoch + 1, '. avg_loss: ',
               epoch_loss / len(train_set))
 
-    print("done training")
     # Test model
-    model.eval()
-    test_loss = 0.0
-    correct = 0
-    with torch.no_grad():
-        for data, target in test_set:
-            # For GPU use
-            if is_gpu:
-                data, target = Variable(data).cuda(), Variable(target).cuda()
-            else:
-                data, target = Variable(data), Variable(target)
-            output = model(data)
-            test_loss += F.nll_loss(output, target, reduction="sum").item()
-            pred = output.data.max(1, keepdim=True)[1]
-            correct += pred.eq(target.data.view_as(pred)).sum().item()
-        print('Test_set:  avg_loss: ', test_loss / len(test_set.dataset),
-              ', accuracy: ', 100. * correct / len(test_set.dataset), '%')
+    if dist.get_rank() == 0:
+        model.eval()
+        test_loss = 0.0
+        correct = 0
+        with torch.no_grad():
+            for data, target in test_set:
+                # For GPU use
+                if is_gpu:
+                    data, target = Variable(data).cuda(), Variable(target).cuda()
+                else:
+                    data, target = Variable(data), Variable(target)
+                output = model(data)
+                test_loss += F.nll_loss(output, target, reduction="sum").item()
+                pred = output.data.max(1, keepdim=True)[1]
+                correct += pred.eq(target.data.view_as(pred)).sum().item()
+            print('Test_set:  avg_loss: ', test_loss / len(test_set.dataset),
+                  ', accuracy: ', 100. * correct / len(test_set.dataset), '%')
 
-
-    # Save model
-    torch.save(model.state_dict(), result_dir)
+        # Save model
+        torch.save(model.state_dict(), result_dir)
         # NOTE: ONNX doesn't support scatter operation yet.
         # dummy_input = ""
         # if is_gpu:
@@ -215,12 +213,12 @@ if __name__ == "__main__":
             p.start()
             processes.append(p)
         else:
+            # For multi-process use case
             # for process_num in range(0, num_gpus):
             #     p = local_process(init_processes, (process_num * int(os.environ.get("NUM_LEARNERS")) + int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'nccl'))
             #     p.start()
             #     processes.append(p)
             #
-            # For multi-gpu per rank use case
             p = local_process(init_processes, (int(os.environ.get("LEARNER_ID")) - 1, world_size, run, data_dir, batch_size, True, 'nccl'))
             p.start()
             processes.append(p)
