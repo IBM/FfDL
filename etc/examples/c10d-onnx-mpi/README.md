@@ -64,7 +64,7 @@ CLI_CMD=$(pwd)/cli/bin/ffdl-$(if [ "$(uname)" = "Darwin" ]; then echo 'osx'; els
 ```
 
 ## Step 2 - Creating a Manifest File
-Create the code that will train your model. We will use `train_dist_onnx.py` in the folder "pytorch-dist-onnx" as an example
+Create the code that will train your model. We will use `train_dist_onnx_mpi.py` in the folder "model-files" as an example
 
 Create a .yml file with the necessary information. manifest.yml has further instructions on creating an appropriate manifest file.
 
@@ -72,7 +72,7 @@ Create a .yml file with the necessary information. manifest.yml has further inst
 
 We will now go back to this directory and deploy our training job to FfDL using the path to the .yml and path to the folder containing the experiment.py
 ```bash
-cd <path to this demo repo>/pytorch-dist-onnx
+cd <path to this demo repo>/c10d-onnx-mpi
 # Replace manifest.yml with the path to your .yml file
 # Replace Image with the path to the folder containing your file created in step 6
 $CLI_CMD train manifest.yml model-files
