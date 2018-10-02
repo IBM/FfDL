@@ -16,8 +16,13 @@ We've fully tested FfDL with the new PyTorch distributed training mechanisms usi
 | CPU |   &#10004;  |  &#10004;  |   x  |
 | GPU |   &#10004;  |  &#10004;  |   &#10004;  |
 
-In addition, we also support [PyTorch 0.41 distributed training leveraging Uber's Horovod mechanism](https://developer.ibm.com/code/2018/07/18/scalable-distributed-training-using-horovod-in-ffdl/).
+PyTorch 1.0 tested examples have been added. Following are yTorch 1.0 distributed examples with 
 
+-  [NCCL communication backend](c10d-native-parallelism)
+-  [MPI communication backend](c10d-mpi-parallelism)
+-  [GLOO communication backend](c10d-dist-onnx)
+
+In addition, we also support [PyTorch 0.41 distributed training leveraging Uber's Horovod mechanism](https://developer.ibm.com/code/2018/07/18/scalable-distributed-training-using-horovod-in-ffdl/).
 
 ## Tech Preview for ONNX
 
