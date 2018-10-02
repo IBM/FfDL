@@ -12,7 +12,7 @@
 
 * `caffe-model`: Sample Caffe training job using MNIST.
 
-* `horovod`: Sample TensorFlow and PyTorch training job with [Horovod](https://github.com/uber/horovod)'s MPI distributed training approach.
+* `horovod`: Sample TensorFlow and PyTorch training job with [Horovod's](https://github.com/uber/horovod) MPI distributed training approach.
 
 * `pytorch-launch-dist`: Sample PyTorch distributed training job activated with PyTorch's native launch function. (PyTorch 0.4.1)
 
