@@ -4,6 +4,8 @@
 
 # Fabric for Deep Learning (FfDL)
 
+### [Latest: PyTorch 1.0 and ONNX support now in FfDL](/etc/examples/PyTorch.md)
+
 This repository contains the core services of the *FfDL* (Fabric for Deep Learning) platform. FfDL is an operating system "fabric" for Deep Learning. It is a collaboration platform for:
 - Framework-independent training of Deep Learning models on distributed hardware
 - Open Deep Learning APIs  
