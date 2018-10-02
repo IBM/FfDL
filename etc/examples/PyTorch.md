@@ -42,6 +42,6 @@ To save the models in ONNX format, you can run your usual model training functio
 
 To complete the pipeline, Fabric for Deep Learning has integration with [Seldon](https://www.seldon.io/). Apart from serving PyTorch and TensorFlow models, Seldon recently announced the ability to serve ONNX models with an [Intel's  nGraph back end](https://github.com/NervanaSystems/ngraph), designed to optimize the inferencing performance, using CPUs.
 
-- [Deploy ONNX models with Seldon and Intel nGraph](../community/FfDL-Seldon/onnx-model) 
+- [Deploy ONNX models with Seldon and Intel nGraph](../../community/FfDL-Seldon/onnx-model) 
 
 With this, we can craft an end-to-end pipeline to convert FfDL-trained models to ONNX and serve it with Seldon. Furthermore, because FfDL can save trained models to Object Storage using the Flex volume on Kubernetes, we have improved the integration with Seldon as well to load the saved model directly from the FLEX volume, which can save the serving image disk space, generalize model wrapper definition, and improve scalability.
