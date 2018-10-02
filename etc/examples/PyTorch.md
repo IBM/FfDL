@@ -16,7 +16,7 @@ We've fully tested FfDL with the new PyTorch distributed training mechanisms usi
 | CPU |   &#10004;  |  &#10004;  |   x  |
 | GPU |   &#10004;  |  &#10004;  |   &#10004;  |
 
-PyTorch 1.0 tested examples have been added. Following are yTorch 1.0 distributed examples with 
+PyTorch 1.0 tested examples have been added. Following are PyTorch 1.0 distributed examples with 
 
 -  [NCCL communication backend](c10d-native-parallelism)
 -  [MPI communication backend](c10d-mpi-parallelism)
@@ -38,5 +38,7 @@ To save the models in ONNX format, you can run your usual model training functio
 ## Complete the pipeline: Deploy your ONNX-based models using Seldon with Intel nGraph
 
 To complete the pipeline, Fabric for Deep Learning has integration with [Seldon](https://www.seldon.io/). Apart from serving PyTorch and TensorFlow models, Seldon recently announced the ability to serve ONNX models with an [Intel's  nGraph back end](https://github.com/NervanaSystems/ngraph), designed to optimize the inferencing performance, using CPUs.
+
+- [Deploy ONNX models with Seldon and Intel nGraph](../community/FfDL-Seldon/onnx-model) 
 
 With this, we can craft an end-to-end pipeline to convert FfDL-trained models to ONNX and serve it with Seldon. Furthermore, because FfDL can save trained models to Object Storage using the Flex volume on Kubernetes, we have improved the integration with Seldon as well to load the saved model directly from the FLEX volume, which can save the serving image disk space, generalize model wrapper definition, and improve scalability.
