@@ -1,0 +1,4 @@
+apiVersion: v1
+description: A Helm chart for FfDL storage config
+name: ffdl-storage-config
+version: 0.1

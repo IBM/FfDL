@@ -50,7 +50,7 @@ To know more about the architectural details, please read the [design document](
 
 ## 1. Quick Start
 
-There are multiple installation paths for installing FfDL into an existing Kubernetes cluster. Below are the steps for quick install. If you want to follow more detailed step by step instructions , please visit [the detailed installation guide](docs/detailed-installation-guide.md) 
+There are multiple installation paths for installing FfDL into an existing Kubernetes cluster. Below are the steps for quick install. If you want to follow more detailed step by step instructions , please visit [the detailed installation guide](docs/detailed-installation-guide.md)
 
 > If you are using bash shell, you can modify the necessary environment variables in `env.txt` and export all of them using the following commands
 >  ```shell
@@ -85,8 +85,10 @@ export NAMESPACE=default # If your namespace does not exist yet, please create t
 # Change the storage class to what's available on your Cloud Kubernetes Cluster.
 export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold";
 
-make deploy-plugin
-make quickstart-deploy
+helm install helm-charts/storage-plugin --set namespace=$NAMESPACE # Configure s3 driver on the cluster
+helm install helm-charts/storage-config --set namespace=$NAMESPACE,shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS # Prepare any local/static volume as the shared file system
+helm install helm-charts/ffdl-helper --set namespace=$NAMESPACE --wait # Deploy all the helper micro-services for ffdl
+helm install helm-charts/ffdl-core --set namespace=$NAMESPACE,lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS --wait # Deploy all the core ffdl services.
 ```
 
 ## 2. Test

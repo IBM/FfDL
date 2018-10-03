@@ -1,0 +1,28 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{.Values.static_volume_name}}
+  namespace: {{.Values.namespace}}
+  annotations:
+    volume.beta.kubernetes.io/storage-class: {{.Values.shared_volume_storage_class}}
+  labels:
+    type: dlaas-static-volume
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+
+---
+kind: ConfigMap
+apiVersion: v1
+data:
+  PVCs-v2.yaml: |
+    static-volumes-v2:
+      - name: {{.Values.static_volume_name}}
+        zlabel: {{.Values.static_volume_name}}
+        status: active
+metadata:
+  name: static-volumes-v2
+  namespace: {{.Values.namespace}}

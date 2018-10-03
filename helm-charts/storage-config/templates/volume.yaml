@@ -1,4 +1,4 @@
-{{ if .Values.dind }}
+{{ if .Values.localstorage }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
