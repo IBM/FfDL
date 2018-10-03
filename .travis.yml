@@ -44,7 +44,7 @@ script:
   - make $MAKE_ARGS build
   - make $MAKE_ARGS docker-build
   # Prepare any local/static volume as the shared file system
-  - helm install helm-charts/storage-config
+  - helm install helm-charts/storage-config --set localstorage=true
   # Deploy all the helper micro-services for ffdl
   - helm install helm-charts/ffdl-helper --wait
   # Deploy all the core ffdl services.
