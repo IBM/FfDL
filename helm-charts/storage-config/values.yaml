@@ -1,0 +1,5 @@
+replicaCount: 1
+static_volume_name: static-volume-1
+localstorage: false
+namespace: default
+shared_volume_storage_class: ""
