@@ -43,6 +43,8 @@ script:
   - make $MAKE_ARGS gen-certs
   - make $MAKE_ARGS build
   - make $MAKE_ARGS docker-build
+  # initialize helm tiller
+  - helm init && sleep 10
   # Prepare any local/static volume as the shared file system
   - helm install helm-charts/storage-config --set localstorage=true
   # Deploy all the helper micro-services for ffdl

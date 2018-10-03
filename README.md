@@ -77,6 +77,8 @@ To install FfDL to any proper Kubernetes cluster, make sure `kubectl` points to 
 then deploy the platform services:
 > Note: For PUBLIC_IP, put down one of your Cluster Public IP that can access your Cluster's NodePorts. For IBM Cloud, you can get your Public IP with `bx cs workers <cluster_name>`.
 
+> You need to initialize tiller with `helm init` before running the following commands.
+
 ``` shell
 export VM_TYPE=none
 export PUBLIC_IP=<Cluster Public IP>
