@@ -87,10 +87,10 @@ export NAMESPACE=default # If your namespace does not exist yet, please create t
 # Change the storage class to what's available on your Cloud Kubernetes Cluster.
 export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold";
 
-helm install helm-charts/storage-plugin --set namespace=$NAMESPACE # Configure s3 driver on the cluster
-helm install helm-charts/storage-config --set namespace=$NAMESPACE,shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS # Prepare any local/static volume as the shared file system
-helm install helm-charts/ffdl-helper --set namespace=$NAMESPACE --wait # Deploy all the helper micro-services for ffdl
-helm install helm-charts/ffdl-core --set namespace=$NAMESPACE,lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS --wait # Deploy all the core ffdl services.
+helm install docs/helm-charts/ibm-cloud-storage-plugin-0.1.tgz --set namespace=$NAMESPACE # Configure s3 driver on the cluster
+helm install docs/helm-charts/ffdl-storage-config-0.1.tgz --set namespace=$NAMESPACE,shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS # Prepare any local/static volume as the shared file system
+helm install docs/helm-charts/ffdl-helper-0.1.1.tgz --set namespace=$NAMESPACE --wait # Deploy all the helper micro-services for ffdl
+helm install docs/helm-charts/ffdl-core-0.1.1.tgz --set namespace=$NAMESPACE,lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS --wait # Deploy all the core ffdl services.
 ```
 
 ## 2. Test
