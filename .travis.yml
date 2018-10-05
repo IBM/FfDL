@@ -31,6 +31,7 @@ script:
   # fail fast
   - set -e
   - export MAKE_ARGS=--no-print-directory
+  - export VM_TYPE=minikube
   # Open SSH
   #  - echo travis:$sshpassword | sudo chpasswd
   #  - sudo sed -i 's/ChallengeResponseAuthentication no/ChallengeResponseAuthentication yes/' /etc/ssh/sshd_config
