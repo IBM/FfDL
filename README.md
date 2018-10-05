@@ -56,8 +56,6 @@ There are multiple installation paths for installing FfDL into an existing Kuber
 
 To install FfDL to any proper Kubernetes cluster, make sure `kubectl` points to the right namespace,
 then deploy the platform services:
-> Note: For PUBLIC_IP, put down one of your Cluster Public IP that can access your Cluster's NodePorts. You can check your Cluster Public IP with `kubectl get nodes -o wide`.
-> For IBM Cloud, you can get your Public IP with `bx cs workers <cluster_name>`.
 
 ``` shell
 export NAMESPACE=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $NAMESPACE` before running the make commands below
@@ -87,6 +85,8 @@ helm install ffdl-core --name ffdl-core --repo https://ibm.github.io/FfDL/helm-c
 ## 2. Test
 
 To submit a simple example training job that is included in this repo (see `etc/examples` folder):
+> Note: For PUBLIC_IP, put down one of your Cluster Public IP that can access your Cluster's NodePorts. You can check your Cluster Public IP with `kubectl get nodes -o wide`.
+> For IBM Cloud, you can get your Public IP with `bx cs workers <cluster_name>`.
 
 ``` shell
 export PUBLIC_IP=<Cluster Public IP> # Put down localhost if you are running with Kubeadm-DIND
@@ -105,7 +105,7 @@ Please refer to the [developer guide](docs/developer-guide.md) for more details.
 ## 5. Clean Up
 If you want to remove FfDL from your cluster, simply use the following commands.
 ```shell
-helm delete --purge ffdl-core ffdl-helper ffdl-storage-config
+helm delete --purge ffdl-core ffdl-helper
 ```
 If you want to remove the storage driver from your cluster, run:
 ```shell
