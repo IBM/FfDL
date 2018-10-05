@@ -14,49 +14,52 @@
 helm init
 ```
 
-2.1. Installation using Kubernetes Cluster
+2. Deploy FfDL on Kubernetes
 
-To install FfDL to any proper Kubernetes cluster, make sure `kubectl` points to the right namespace,
-then deploy the platform services:
 
-``` shell
-export NAMESPACE=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $NAMESPACE` before running the make commands below
-export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold" # Change the storage class to what's available on your Cloud Kubernetes Cluster.
+  * 2.a. Installation using Kubernetes Cluster
 
-# Configure s3 driver on the cluster
-helm install ibm-cloud-storage-plugin --name ibm-cloud-storage-plugin --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE
-# Deploy all the helper micro-services for ffdl
-helm install ffdl-helper --name ffdl-helper --repo https://ibm.github.io/FfDL/helm-charts \
-  --set namespace=$NAMESPACE \
-  --set shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS \
-  --set localstorage=false \ # set to true if your cluster doesn't have any storage class
-  --set prometheus.deploy=true \ # set to false if you don't need prometheus logging for ffdl
-  --wait
-# Deploy all the core ffdl services.
-helm install ffdl-core --name ffdl-core --repo https://ibm.github.io/FfDL/helm-charts \
-  --set namespace=$NAMESPACE \
-  --set lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS \
-  --wait
-```
+  To install FfDL to any proper Kubernetes cluster, make sure `kubectl` points to the right namespace,
+  then deploy the platform services:
 
-2.2 Installation using Kubeadm-DIND
+  ``` shell
+  export NAMESPACE=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $NAMESPACE` before running the make commands below
+  export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold" # Change the storage class to what's available on your Cloud Kubernetes Cluster.
 
-If you don't have a Kubernetes Cluster, you can create a [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) Kubernetes Cluster on your local machine. We recommend you give at least 4 CPUs and 8GB of memory to your Docker.
-> For Mac users, visit the instructions on the [Docker website](https://docs.docker.com/docker-for-mac/#advanced) and learn how to give more memory to your Docker.
+  # Configure s3 driver on the cluster
+  helm install ibm-cloud-storage-plugin --name ibm-cloud-storage-plugin --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE
+  # Deploy all the helper micro-services for ffdl
+  helm install ffdl-helper --name ffdl-helper --repo https://ibm.github.io/FfDL/helm-charts \
+    --set namespace=$NAMESPACE \
+    --set shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS \
+    --set localstorage=false \ # set to true if your cluster doesn't have any storage class
+    --set prometheus.deploy=true \ # set to false if you don't need prometheus logging for ffdl
+    --wait
+  # Deploy all the core ffdl services.
+  helm install ffdl-core --name ffdl-core --repo https://ibm.github.io/FfDL/helm-charts \
+    --set namespace=$NAMESPACE \
+    --set lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS \
+    --wait
+  ```
 
-If you have [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) installed on your machine, use these commands to deploy the FfDL platform:
-``` shell
-export SHARED_VOLUME_STORAGE_CLASS=""
-export NAMESPACE=default
+  * 2.b. Installation using Kubeadm-DIND
 
-./bin/s3_driver.sh # Copy the s3 drivers to each of the DIND node
-helm install ibm-cloud-storage-plugin --name ibm-cloud-storage-plugin --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,cloud=false
-helm install ffdl-helper --name ffdl-helper --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS,localstorage=true --wait
-helm install ffdl-core --name ffdl-core --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS --wait
+  If you don't have a Kubernetes Cluster, you can create a [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) Kubernetes Cluster on your local machine. We recommend you give at least 4 CPUs and 8GB of memory to your Docker.
+  > For Mac users, visit the instructions on the [Docker website](https://docs.docker.com/docker-for-mac/#advanced) and learn how to give more memory to your Docker.
 
-# Forward the necessary microservices from the DIND cluster to your localhost.
-./bin/dind-port-forward.sh
-```
+  If you have [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) installed on your machine, use these commands to deploy the FfDL platform:
+  ``` shell
+  export SHARED_VOLUME_STORAGE_CLASS=""
+  export NAMESPACE=default
+
+  ./bin/s3_driver.sh # Copy the s3 drivers to each of the DIND node
+  helm install ibm-cloud-storage-plugin --name ibm-cloud-storage-plugin --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,cloud=false
+  helm install ffdl-helper --name ffdl-helper --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS,localstorage=true --wait
+  helm install ffdl-core --name ffdl-core --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS --wait
+
+  # Forward the necessary microservices from the DIND cluster to your localhost.
+  ./bin/dind-port-forward.sh
+  ```
 
 Congratulation, FfDL is now running on your Cluster. Now you can go to [Step 2](#2-detailed-testing-instructions) to run some sample jobs or go to the [user guide](docs/user-guide.md) to learn about how to run and deploy your custom models.
 
