@@ -1,5 +1,8 @@
 namespace: default
 env: dev
+static_volume_name: static-volume-1
+localstorage: false
+shared_volume_storage_class: ""
 services:
   expose_node_port: true
 docker:

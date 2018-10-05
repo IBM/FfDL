@@ -21,10 +21,8 @@ To know more about the architectural details, please read the [design document](
 * `helm`: The Kubernetes package manager (https://helm.sh)
 * `docker`: The Docker command-line interface (https://www.docker.com/)
 * `S3 CLI`: The [command-line interface](https://aws.amazon.com/cli/) to configure your Object Storage
-* An existing Kubernetes cluster (e.g., [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) for local testing).
+* An existing Kubernetes cluster (e.g., [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) for local testing or Follow the appropriate instructions for standing up your Kubernetes cluster using [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) or [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)). The minimum capacity requirement for FfDL is 4GB Memory and 3 CPUs.
   <!-- For Minikube, use the command `make minikube` to start Minikube and set up local network routes. Minikube **v0.25.1** is tested with Travis CI. -->
-* Follow the appropriate instructions for standing up your Kubernetes cluster using [IBM Cloud Public](https://github.com/IBM/container-journey-template/blob/master/README.md) or [IBM Cloud Private](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/README.md)
-* The minimum capacity requirement for FfDL is 4GB Memory and 3 CPUs.
 
 ## Usage Scenarios
 
@@ -39,8 +37,8 @@ To know more about the architectural details, please read the [design document](
 ## Steps
 
 1. [Quick Start](#1-quick-start)
-  - 1.1 [Installation using Kubeadm-DIND](#11-installation-using-kubeadm-dind)
-  - 1.2 [Installation using Kubernetes Cluster](#12-installation-using-kubernetes-cluster)
+  - 1.1 [Installation using Kubernetes Cluster](#11-installation-using-kubernetes-cluster)
+  - 1.2 [Installation using Kubeadm-DIND](#12-installation-using-kubeadm-dind)
 2. [Test](#2-test)
 3. [Monitoring](#3-monitoring)
 4. [Development](#4-development)
@@ -52,45 +50,38 @@ To know more about the architectural details, please read the [design document](
 
 There are multiple installation paths for installing FfDL into an existing Kubernetes cluster. Below are the steps for quick install. If you want to follow more detailed step by step instructions , please visit [the detailed installation guide](docs/detailed-installation-guide.md)
 
-> If you are using bash shell, you can modify the necessary environment variables in `env.txt` and export all of them using the following commands
->  ```shell
->  source env.txt
->  export $(cut -d= -f1 env.txt)
->  ```
+* You need to initialize tiller with `helm init` before running the following commands.
 
-### 1.1 Installation using Kubeadm-DIND
-
-If you have [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) installed on your machine, use these commands to deploy the FfDL platform:
-``` shell
-export VM_TYPE=dind
-export PUBLIC_IP=localhost
-export SHARED_VOLUME_STORAGE_CLASS="";
-export NAMESPACE=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $NAMESPACE` before running the make commands below
-
-make deploy-plugin
-make quickstart-deploy
-```
-
-### 1.2 Installation using Kubernetes Cluster
+### 1.1 Installation using Kubernetes Cluster
 
 To install FfDL to any proper Kubernetes cluster, make sure `kubectl` points to the right namespace,
 then deploy the platform services:
-> Note: For PUBLIC_IP, put down one of your Cluster Public IP that can access your Cluster's NodePorts. For IBM Cloud, you can get your Public IP with `bx cs workers <cluster_name>`.
-
-> You need to initialize tiller with `helm init` before running the following commands.
+> Note: For PUBLIC_IP, put down one of your Cluster Public IP that can access your Cluster's NodePorts. You can check your Cluster Public IP with `kubectl get nodes -o wide`.
+> For IBM Cloud, you can get your Public IP with `bx cs workers <cluster_name>`.
 
 ``` shell
-export VM_TYPE=none
-export PUBLIC_IP=<Cluster Public IP>
 export NAMESPACE=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $NAMESPACE` before running the make commands below
+export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold" # Change the storage class to what's available on your Cloud Kubernetes Cluster.
 
-# Change the storage class to what's available on your Cloud Kubernetes Cluster.
-export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold";
+helm install ibm-cloud-storage-plugin --name ibm-cloud-storage-plugin --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE # Configure s3 driver on the cluster
+helm install ffdl-helper --name ffdl-helper --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS --wait # Deploy all the helper micro-services for ffdl
+helm install ffdl-core --name ffdl-core --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS --wait # Deploy all the core ffdl services.
+```
 
-helm install docs/helm-charts/ibm-cloud-storage-plugin-0.1.tgz --set namespace=$NAMESPACE # Configure s3 driver on the cluster
-helm install docs/helm-charts/ffdl-storage-config-0.1.tgz --set namespace=$NAMESPACE,shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS # Prepare any local/static volume as the shared file system
-helm install docs/helm-charts/ffdl-helper-0.1.1.tgz --set namespace=$NAMESPACE --wait # Deploy all the helper micro-services for ffdl
-helm install docs/helm-charts/ffdl-core-0.1.1.tgz --set namespace=$NAMESPACE,lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS --wait # Deploy all the core ffdl services.
+### 1.2 Installation using Kubeadm-DIND
+
+If you have [Kubeadm-DIND](https://github.com/kubernetes-sigs/kubeadm-dind-cluster#using-preconfigured-scripts) installed on your machine, use these commands to deploy the FfDL platform:
+``` shell
+export SHARED_VOLUME_STORAGE_CLASS=""
+export NAMESPACE=default
+
+./bin/s3_driver.sh # Copy the s3 drivers to each of the DIND node
+helm install ibm-cloud-storage-plugin --name ibm-cloud-storage-plugin --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,cloud=false
+helm install ffdl-helper --name ffdl-helper --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS,localstorage=true --wait
+helm install ffdl-core --name ffdl-core --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS --wait
+
+# Forward the necessary microservices from the DIND cluster to your localhost.
+./bin/dind-port-forward.sh
 ```
 
 ## 2. Test
@@ -98,13 +89,14 @@ helm install docs/helm-charts/ffdl-core-0.1.1.tgz --set namespace=$NAMESPACE,lcm
 To submit a simple example training job that is included in this repo (see `etc/examples` folder):
 
 ``` shell
+export PUBLIC_IP=<Cluster Public IP> # Put down localhost if you are running with Kubeadm-DIND
 make test-push-data-s3
 make test-job-submit
 ```
 
 ## 3. Monitoring
 
-The platform ships with a simple Grafana monitoring dashboard. The URL is printed out when running the `deploy` make target.
+The platform ships with a simple Grafana monitoring dashboard. The URL is printed out when running the `status` make target.
 
 ## 4. Development
 
@@ -113,12 +105,11 @@ Please refer to the [developer guide](docs/developer-guide.md) for more details.
 ## 5. Clean Up
 If you want to remove FfDL from your cluster, simply use the following commands.
 ```shell
-helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
+helm delete --purge ffdl-core ffdl-helper ffdl-storage-config
 ```
-If you want to remove the storage driver and pvc from your cluster, run:
+If you want to remove the storage driver from your cluster, run:
 ```shell
-kubectl delete pvc static-volume-1
-helm delete $(helm list | grep ibmcloud-object-storage-plugin | awk '{print $1}' | head -n 1)
+helm delete --purge ibmcloud-object-storage-plugin
 ```
 For Kubeadm-DIND, you need to kill your forwarded ports. Note that the below command will kill all the ports that are created with `kubectl`.
 ```shell

@@ -2,7 +2,7 @@ apiVersion: v1
 entries:
   ffdl-core:
   - appVersion: "3.3"
-    created: 2018-10-04T16:02:24.837491174-07:00
+    created: 2018-10-05T11:34:53.083833038-07:00
     description: Core service for Fabric for Deep Learning (FfDL)
     digest: 434566c653c8b6bace13546546553e4c9e9d6ece770f065c3cacfb3826680465
     name: ffdl-core
@@ -11,29 +11,20 @@ entries:
     version: 0.1.1
   ffdl-helper:
   - appVersion: "3.3"
-    created: 2018-10-04T16:02:24.837862694-07:00
+    created: 2018-10-05T11:34:53.084302812-07:00
     description: Helper Service for Fabric for Deep Learning (FfDL)
-    digest: f4ad8da7d4d49ce27675efc15df65d43aca41fe1e2c623aad59f51839c3097b4
+    digest: 746a8c90a18733bfda431effa480a4023f27062e9cf6b28064fd1365501e9952
     name: ffdl-helper
     urls:
     - https://ibm.github.io/FfDL/helm-charts/ffdl-helper-0.1.1.tgz
     version: 0.1.1
-  ffdl-storage-config:
-  - apiVersion: v1
-    created: 2018-10-04T16:02:24.838030521-07:00
-    description: A Helm chart for FfDL storage config
-    digest: 34c746c8cbb7e09a2c446dfa4bc6be9436c3a1d59a0a023be0939b4d3ee792fc
-    name: ffdl-storage-config
-    urls:
-    - https://ibm.github.io/FfDL/helm-charts/ffdl-storage-config-0.1.tgz
-    version: "0.1"
   ibmcloud-object-storage-plugin:
   - apiVersion: v1
-    created: 2018-10-04T16:02:24.838233145-07:00
+    created: 2018-10-05T11:34:53.084553812-07:00
     description: A Helm chart for ibmcloud-object-storage plugin
     digest: cf4e71e156937e9840eda00ffc7dc1120599bcf4ea9efaaa5e48631c0b83ae51
     name: ibmcloud-object-storage-plugin
     urls:
     - https://ibm.github.io/FfDL/helm-charts/ibmcloud-object-storage-plugin-0.1.tgz
     version: "0.1"
-generated: 2018-10-04T16:02:24.836744169-07:00
+generated: 2018-10-05T11:34:53.08294046-07:00
