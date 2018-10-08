@@ -69,6 +69,9 @@ data:
     ls -la $MODEL_DIR
     echo 'Contents of $DATA_DIR'
     ls -la $DATA_DIR
+    export LEARNER_ID=$((${DOWNWARD_API_POD_NAME##*-} + 1))
+    echo "export LEARNER_ID=$((${DOWNWARD_API_POD_NAME##*-} + 1))" >> ~/.bashrc
+    touch /job/$TRAINING_ID
     # Switch to model dir
     cd $MODEL_DIR
     export PYTHONPATH=$PYTHONPATH:$PWD
@@ -199,7 +202,7 @@ data:
     # Run training job.
     cd "$WORK_DIR"
 
-    echo "$(date): Running Tensorflow with horovod"
+    echo "$(date): Running Tensorflow with MPI"
     HOSTS_FILE=$PWD/hosts_file
     if [[ $LEARNER_ID == 1 ]]; then
        NUM_LEARNERS=${NUM_LEARNERS:-1} #single learner jobs don't have NUM_LEARNERS defined
@@ -241,7 +244,7 @@ data:
 
     if [[ ${PIPE[0]} -ne 0 ]];
     then
-      echo "horovod test exited with an error code ${PIPE[0]}"
+      echo "MPI test exited with an error code ${PIPE[0]}"
       echo ${PIPE[0]} > /tmp/error
       exit ${PIPE[0]}
     fi
