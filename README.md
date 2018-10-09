@@ -61,7 +61,7 @@ then deploy the platform services:
 export NAMESPACE=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $NAMESPACE` before running the make commands below
 export SHARED_VOLUME_STORAGE_CLASS="ibmc-file-gold" # Change the storage class to what's available on your Cloud Kubernetes Cluster.
 
-helm install ibm-cloud-storage-plugin --name ibm-cloud-storage-plugin --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE # Configure s3 driver on the cluster
+helm install ibmcloud-object-storage-plugin --name ibmcloud-object-storage-plugin --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE # Configure s3 driver on the cluster
 helm install ffdl-helper --name ffdl-helper --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS --wait # Deploy all the helper micro-services for ffdl
 helm install ffdl-core --name ffdl-core --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS --wait # Deploy all the core ffdl services.
 ```
@@ -74,7 +74,7 @@ export SHARED_VOLUME_STORAGE_CLASS=""
 export NAMESPACE=default
 
 ./bin/s3_driver.sh # Copy the s3 drivers to each of the DIND node
-helm install ibm-cloud-storage-plugin --name ibm-cloud-storage-plugin --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,cloud=false
+helm install ibmcloud-object-storage-plugin --name ibmcloud-object-storage-plugin --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,cloud=false
 helm install ffdl-helper --name ffdl-helper --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS,localstorage=true --wait
 helm install ffdl-core --name ffdl-core --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS --wait
 
