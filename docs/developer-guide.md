@@ -55,7 +55,7 @@ environment (using `helm`):
 kubectl config set-context $(kubectl config current-context) --namespace=$NAMESPACE # Set your current-context to the FfDL namespace
 
 # Configure s3 driver on the cluster
-helm install docs/helm-charts/ibm-cloud-storage-plugin --name ibm-cloud-storage-plugin --set namespace=$NAMESPACE
+helm install docs/helm-charts/ibmcloud-object-storage-plugin --name ibmcloud-object-storage-plugin --set namespace=$NAMESPACE
 # Deploy all the helper micro-services for ffdl
 helm install docs/helm-charts/ffdl-helper --name ffdl-helper \
 --set namespace=$NAMESPACE \
