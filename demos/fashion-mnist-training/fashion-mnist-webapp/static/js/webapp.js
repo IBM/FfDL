@@ -174,7 +174,7 @@ function set_img_picker() {
                 var img_file = $(this).children('img').attr('src');
                 $("<a href='#'/>")
                     .attr("class", "glyphicon glyphicon-resize-full more-info-icon")
-                    .attr("data-featherlight", "/detail?image=" + img_file + " .image-detail")
+                    .attr("data-featherlight", "/detail?image=" + escape(img_file) + " .image-detail")
                     .prependTo($(this));
             });
             $('a.more-info-icon').featherlight('ajax');
@@ -206,7 +206,7 @@ $(function() {
     select_all(true);
 
     // Image upload form submit functionality
-    $('#img-upload').on('submit', function(data){
+    $('#img-upload').on('submit', function(event){
         // Stop form from submitting normally
         event.preventDefault();
 
@@ -230,8 +230,12 @@ $(function() {
                     add_thumbnails(data);
                     set_img_picker();
                 },
-                error: function() {
-                    alert("Must submit a valid file (png, jpeg, jpg, or gif)");
+                error: function(jqXHR, status, error) {
+                    if (jqXHR.status == 400) {
+                        alert("Must submit a valid file (png, jpeg, or jpg)");
+                    } else if (jqXHR.status == 404) {
+                        alert("Cannot connect to model API server");
+                    }
                 },
                 complete: function() {
                     $("#file-submit").text("Submit");
