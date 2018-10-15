@@ -31,6 +31,10 @@
                 },
                 "env": [
                   {
+                    "name": "MODEL_FILE_NAME",
+                    "value": "model.h5"
+                  },
+                  {
                     "name": "TRAINING_ID",
                     "value": "<TRAINING_ID>"
                   },
