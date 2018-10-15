@@ -21,7 +21,7 @@
     </form>
   </div>
   <div>
-    <button id="back_button" class="button" (click)="showTraining()" style="border-radius: 25px; display: none; margin: 20px">Back</button>
+    <button id="back_button" class="button" (click)="showTraining()" style="border-radius: 25px; display: none; margin: 20px">Back to Training List</button>
     <h4 id="jobs_tag" style="color:#CCCCCC;">Training Jobs</h4>
     <div *ngIf="trainingsError" class="alert alert-danger" style="color: white; background-color:#c86464" role="alert">
       An error occurred while loading the training jobs!
@@ -42,7 +42,7 @@
               </tr>
             </thead>
             <tbody *ngFor="let t of trainings" style="border: 1px solid #CCCCCC">
-              <tr>
+              <tr *ngIf="t.name.includes('robustnesscheck_') == false">
                 <td style="word-wrap:break-word;">{{t.model_id}}</td>
                 <td style="word-wrap:break-word;">{{t.name}}</td>
                 <td style="word-wrap:break-word;">{{t.description}}</td>
@@ -53,6 +53,10 @@
                   <button class="btn btn-primary btn-sm" (click)="changeModel(t.model_id)"
                         tooltip="Show training details" tooltipTrigger="focus" tooltipPlacement="top">
                         <i class="fa fa-info" aria-hidden="true"></i>
+                  </button>
+                  <button class="btn btn-warning btn-sm" style="margin-left: 5px" (click)="changePipeline(t.model_id)"
+                        tooltip="Show training pipeline" tooltipTrigger="focus" tooltipPlacement="top">
+                        <i class="fa fa-cog" aria-hidden="true"></i>
                   </button>
                   <button class="btn btn-danger btn-sm" style="margin-left: 5px" (click)="delete(t.model_id)"
                         tooltip="Delete training record" tooltipTrigger="focus" tooltipPlacement="top">
@@ -78,7 +82,7 @@
                       <tr>
                         <th scope="row">Status:</th>
                         <td ng-init="setBlack()">{{current_model?.training.training_status.status}}
-                          <span id="status_bubble" style="font-size: 12px">&#9679;</span>
+                          <span id="status_bubble" style="font-size: 12px">&#9679;</span> &nbsp; &nbsp;
                         </td>
                       </tr>
                       <tr><th scope="row">Description:</th><td>{{ current_model?.description }}</td></tr>
@@ -102,13 +106,6 @@
                         <th scope="row">Completion Time:</th>
                         <td id="completion_time">{{current_model?.training?.training_status?.completed || "N/A" }}</td>
                       </tr>
-                      <tr>
-                        <th scope="row">Training data:</th>
-                        <td>
-                          <p><i>Storage ID</i>: <!-- {{training?.training.input_data }} !--> </p>
-                    <!--<p><i>Storage container</i>: {{training }}</p>-->
-                    </td>
-                  </tr>
                   </tbody>
                 </table>
               </div>
@@ -137,6 +134,63 @@
           </div>
         </tab>
       </tabset>
+    </div>
+  </div>
+  <div id="pipeline_manager" style="display: none; color:#CCCCCC" >
+    <h3>Training ID: {{current_model?.model_id}}</h3>
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-12">
+            <p></p>
+            <table class="table">
+              <tbody>
+                <tr><th scope="row">Name:</th><td>{{ current_model?.name }}</td></tr>
+                <tr>
+                  <th scope="row">Training Status:</th>
+                  <td ng-init="setBlack()">{{current_model?.training.training_status.status}}
+                    <span id="status_bubble_p" style="font-size: 12px">&#9679;</span> &nbsp; &nbsp;
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Robustness Status:</th>
+                  <td ng-init="setBlack()">
+                    <div *ngIf="current_model?.training.training_status.status != 'COMPLETED'">Training job is not yet done.</div>
+                    <div *ngIf="current_model?.training.training_status.status == 'COMPLETED' && art_check == false"><button style="display:inline;" id="art_button_p" (click)="ARTForm()">Robustness Check</button></div>
+                    <div id="art_result">
+                      Robustness Training ID: <b>{{art_current_model?.model_id}}</b> &nbsp; &nbsp;
+                      <button class="btn btn-primary btn-sm" (click)="changeModel(art_current_model?.model_id)"
+                            tooltip="Show training details" tooltipTrigger="focus" tooltipPlacement="top">
+                            <i class="fa fa-info" aria-hidden="true"></i>
+                      </button>
+                      <button class="btn btn-danger btn-sm" style="margin-left: 5px" (click)="delete(art_current_model?.model_id)"
+                            tooltip="Delete training record" tooltipTrigger="focus" tooltipPlacement="top">
+                          <i class="fa fa-trash-o" aria-hidden="true"></i>
+                      </button>
+                      <br>
+                      Status: <b>{{art_current_model?.training.training_status.status}}</b>
+                        <span id="status_bubble_art" style="font-size: 12px">&#9679;</span> &nbsp; &nbsp;
+                        <div *ngIf="current_model?.training.training_status.status == 'COMPLETED' && art_check == true && art_current_model?.training.training_status.status =='COMPLETED'">
+                          <br>
+                          <b> Robussness Check Metrics: </b>
+                          <br>
+                          <div *ngFor="let metric of metrics">
+                          {{metric}}
+                        </div>
+                        </div>
+                      </div>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Deployment Status:</th>
+                  <td ng-init="setBlack()">
+                  <div *ngIf="current_model?.training.training_status.status != 'COMPLETED'">Training job is not yet done.</div>
+                  <div *ngIf="current_model?.training.training_status.status == 'COMPLETED'"><button style="display:inline;" id="art_button_p" (click)="ARTForm()">Deploy Model on Kubernetes</button></div>
+                </td>
+                <tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>

@@ -43,7 +43,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.selectNavbarLoad();
+    // this.selectNavbarLoad();
   }
 
   ngOnDestroy() {
@@ -66,7 +66,6 @@ export class MenuComponent implements OnInit, OnDestroy {
   selectNavbarLoad() {
     var url = this.router.url;
     var page_start = url.indexOf("/#/") + 3;
-
     if (url[page_start].indexOf("trainings") == 0) {
       this.selectNavbar(0);
     }

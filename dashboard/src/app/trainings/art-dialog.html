@@ -1,0 +1,41 @@
+<h2 mat-dialog-title>Fill in the specs for the Robustness Check job</h2>
+<mat-dialog-content>
+  <mat-form-field>
+    <input matInput placeholder="CPUs" [(ngModel)]="data.cpu">
+  </mat-form-field>
+  <mat-form-field>
+    <input matInput placeholder="GPUs" [(ngModel)]="data.gpu">
+  </mat-form-field>
+  <br>
+  <mat-form-field>
+    <input matInput placeholder="Memory(GB)" [(ngModel)]="data.memory">
+  </mat-form-field>
+  <mat-form-field>
+    <input matInput placeholder="Learners" [(ngModel)]="data.learner">
+  </mat-form-field>
+  <br>
+  <mat-form-field style="width:100%">
+    <input matInput placeholder="Connection auth_url" [(ngModel)]="data.auth_url">
+  </mat-form-field>
+  <br>
+  <mat-form-field>
+    <input matInput placeholder="Connection user_name" [(ngModel)]="data.user_name">
+  </mat-form-field>
+  <mat-form-field>
+    <input matInput placeholder="Connection password" [(ngModel)]="data.password">
+  </mat-form-field>
+  <br>
+  <mat-form-field>
+    <input matInput placeholder="Training_data bucket" [(ngModel)]="data.training_data">
+  </mat-form-field>
+  <mat-form-field>
+    <input matInput placeholder="Training_results bucket" [(ngModel)]="data.training_result">
+  </mat-form-field>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="onNoClick()">Cancel</button>
+  <button mat-button [mat-dialog-close]="{cpu: data.cpu, gpu: data.gpu,
+    memory:data.memory, learner: data.learner, auth_url: data.auth_url,
+    user_name: data.user_name, password: data.password, training_data: data.training_data,
+    training_result: data.training_result}" cdkFocusInitial>Submit</button>
+</mat-dialog-actions>
