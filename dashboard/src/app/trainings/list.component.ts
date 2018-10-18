@@ -49,6 +49,7 @@ export class TrainingsListComponent implements OnInit, OnChanges {
     trainings: ModelData[];
     trainingsError: Boolean = false;
     art_check: Boolean = false;
+    deployment: Boolean = false;
     trainingId: string;
     artTrainingID: string;
     art_metrics: string = "";
@@ -56,6 +57,10 @@ export class TrainingsListComponent implements OnInit, OnChanges {
     art_current_model: ModelData;
     display_tabs: string = "none";
     metrics: string[];
+    deployment_status: string = "";
+    deployment_url: string = "";
+    on_pipeline_page: Boolean = false;
+
 
   constructor(private dlaas: DlaasService,
               private notificationService: NotificationsService,
@@ -121,6 +126,7 @@ export class TrainingsListComponent implements OnInit, OnChanges {
   }
 
   changePipeline(new_model){
+    this.on_pipeline_page = true;
     var tab_manager = document.getElementById("tab_manager");
     var pipeline_manager = document.getElementById("pipeline_manager");
     var jobs_tag = document.getElementById("jobs_tag");
@@ -131,10 +137,11 @@ export class TrainingsListComponent implements OnInit, OnChanges {
     tab_manager.style.display = "none";
     jobs_tag.style.display = "none";
     training_list.style.display = "none";
-    this.pipelineUpdate(new_model);
+    this.artUpdate(new_model);
+    this.deploymentUpdate(new_model);
   }
 
-  pipelineUpdate(new_model){
+  artUpdate(new_model){
     this.art_check = false;
     this.art_metrics = "";
     var training_num;
@@ -192,7 +199,46 @@ export class TrainingsListComponent implements OnInit, OnChanges {
     }
   }
 
+  deploymentUpdate(new_model){
+    this.deployment = false;
+    let header_json = {"Content-Type":"application/json"};
+    let headers = new HttpHeaders(header_json);
+    var formData = {
+      "public_ip": "169.61.33.83",
+      "deployment_name": "fashion-classifier",
+      "training_id": new_model,
+      "check_status_only": "true"
+    };
+    this.http.get("https://openwhisk.ng.bluemix.net/api/v1/web/ckadner_org_dev/default/deploy.json", { headers: headers, params: formData })
+          .subscribe(data => {
+          this.deployment_status = data['deployment_status'];
+          console.log(data);
+          if(this.deployment_status != undefined && this.deployment_status != "NONE"){
+            this.deployment = true;
+            var status_elem = document.getElementById("status_bubble_deployment");
+            if (this.deployment_status === 'ERROR') {
+              status_elem.style.color = "#ee0000";
+            } else if (this.deployment_status === 'READY') {
+              status_elem.style.color = "#00aa00";
+            } else {
+              status_elem.style.color = "#dddd00";
+            }
+            this.deployment_url = data['deployment_url'];
+          }
+          var status_elem_deploy_result = document.getElementById("deployment_result");
+          var status_deploy_buttom = document.getElementById("deploy_button");
+          if(this.deployment == false){
+            status_elem_deploy_result.style.display = "none";
+            status_deploy_buttom.style.display = "";
+          }else{
+            status_elem_deploy_result.style.display = "";
+            status_deploy_buttom.style.display = "none";
+          }
+          }, error => {console.log(error)});
+      }
+
   showTraining() {
+    this.on_pipeline_page = false;
     var tab_manager = document.getElementById("tab_manager");
     var back_button = document.getElementById("back_button");
     var jobs_tag = document.getElementById("jobs_tag");
@@ -267,7 +313,8 @@ export class TrainingsListComponent implements OnInit, OnChanges {
         height: '600px',
         data: { name: name, cpu: cpu, gpu: gpu,
                 memory: memory, learner: learner,
-                auth_url: "https://s3-api.us-geo.objectstorage.softlayer.net"}
+                auth_url: "https://s3-api.us-geo.objectstorage.softlayer.net"
+              }
       });
 
       dialogRef.afterClosed().subscribe(result => {
@@ -304,6 +351,47 @@ export class TrainingsListComponent implements OnInit, OnChanges {
                   }else{
                     alert("Your " + name + " Robustness Check job is started. " +
                     "Please go to the training job page and look for Training ID \"" + data['model_id'] + "\"");
+                  }
+                }, error => {console.log(error)});
+              }
+          });
+  }
+
+deployForm(){
+    var deploy_function_link = "https://openwhisk.ng.bluemix.net/api/v1/web/ckadner_org_dev/default/deploy.json"
+      const dialogRef = this.dialog.open(DeployDialog, {
+        height: '600px',
+        data: { auth_url: "https://s3-api.us-geo.objectstorage.softlayer.net"
+              }
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result == undefined){
+        }else{
+          let header_json = {"Content-Type":"application/json", "X-Require-Whisk-Auth":"fiddle"};
+          let headers = new HttpHeaders(header_json);
+          var formData = {
+            "public_ip": "169.61.33.83",
+            "aws_endpoint_url": result['auth_url'].toString(),
+            "aws_access_key_id": result['user_name'].toString(),
+            "aws_secret_access_key": result['password'].toString(),
+            "training_results_bucket": result['training_result'].toString(),
+            "model_file_name": "keras_original_model.hdf5",
+            "deployment_name": "fashion-classifier",
+            "training_id": this.current_model.model_id,
+            "check_status_only": false
+          };
+          var model_link = "http://169.61.33.83:30559/seldon/" + this.current_model.model_id + "/api/v0.1/predictions"
+          this.http.post(deploy_function_link, formData, { headers: headers, observe: "response" })
+              .map(response => {
+                return response.body
+              }).subscribe(data => {
+                  console.log(data);
+                  if (data['deployment_status'] == undefined){
+                    alert("This training job isn't satisfy for deployment.")
+                  }else{
+                    alert("Your " + name + " deployment is started. " +
+                    "Please go to the kubernetes cluster to check for your deployment. Your Model will be served at \"" + data["deployment_url"] + "\"");
                   }
                 }, error => {console.log(error)});
               }
@@ -371,8 +459,11 @@ export class TrainingsListComponent implements OnInit, OnChanges {
   startOngoingUpdate() {
     this.updateSubscription = Observable.interval(1000*20).subscribe(x => {
       this.find();
-      if(this.art_current_model.training.training_status.status != 'COMPLETED'){
-        this.pipelineUpdate(this.trainingId);
+      if(this.on_pipeline_page == true){
+        if(this.art_current_model != undefined && this.art_current_model.training.training_status.status != 'COMPLETED'){
+          this.artUpdate(this.trainingId);
+        }
+        this.deploymentUpdate(this.trainingId);
       }
     });
   }
@@ -448,5 +539,19 @@ export class ArtDialog {
     return this.cpu.hasError('required') ? 'You must enter a value' :
         this.cpu.hasError('min') ? 'Not a valid number' :
             '';
+  }
+}
+
+@Component({
+  selector: 'deploy-dialog',
+  templateUrl: './deploy-dialog.html',
+})
+export class DeployDialog {
+  constructor(
+    public dialogRef: MatDialogRef<DeployDialog>,
+    @Inject(MAT_DIALOG_DATA) public data: any) { }
+
+  onNoClick(): void {
+    this.dialogRef.close();
   }
 }

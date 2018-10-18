@@ -74,3 +74,9 @@ button {
   color:#ee0000;
   font-size: 12px
 }
+
+.column {
+    float: left;
+    width: 50%;
+    padding: 10px;
+}

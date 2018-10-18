@@ -30,7 +30,7 @@
     <div>
       <div id="training_list" *ngIf="trainings?.length > 0 ">
         <div style="color:#CCCCCC">
-          {{ trainings?.length }} records found
+          <!-- {{ trainings?.length }} records found -->
           <table class="table" style="table-layout: fixed;">
             <thead class="thead-default">
               <tr>
@@ -137,27 +137,33 @@
     </div>
   </div>
   <div id="pipeline_manager" style="display: none; color:#CCCCCC" >
-    <h3>Training ID: {{current_model?.model_id}}</h3>
+    <h4>Training ID: <b>{{current_model?.model_id}}</b></h4> <br>
+    <h4>Name: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <b>{{ current_model?.name }}</b></h4>
       <div class="container-fluid">
         <div class="row">
           <div class="col-md-12">
             <p></p>
-            <table class="table">
-              <tbody>
-                <tr><th scope="row">Name:</th><td>{{ current_model?.name }}</td></tr>
+            <table class="table" style="table-layout: fixed;">
+              <thead class="thead-default">
                 <tr>
-                  <th scope="row">Training Status:</th>
-                  <td ng-init="setBlack()">{{current_model?.training.training_status.status}}
+                  <th style="color: #CCCCCC;background-color:#101010">Training Status</th>
+                  <th style="color: #CCCCCC;background-color:#101010">Robustness Status</th>
+                  <!-- <th style="color: #CCCCCC;background-color:#101010">Fairness Status</th> -->
+                  <th style="color: #CCCCCC;background-color:#101010">Deployment Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="word-wrap:break-word;" ng-init="setBlack()">{{current_model?.training.training_status.status}}
                     <span id="status_bubble_p" style="font-size: 12px">&#9679;</span> &nbsp; &nbsp;
                   </td>
-                </tr>
-                <tr>
-                  <th scope="row">Robustness Status:</th>
-                  <td ng-init="setBlack()">
+                  <td style="word-wrap:break-word;" ng-init="setBlack()">
                     <div *ngIf="current_model?.training.training_status.status != 'COMPLETED'">Training job is not yet done.</div>
                     <div *ngIf="current_model?.training.training_status.status == 'COMPLETED' && art_check == false"><button style="display:inline;" id="art_button_p" (click)="ARTForm()">Robustness Check</button></div>
                     <div id="art_result">
-                      Robustness Training ID: <b>{{art_current_model?.model_id}}</b> &nbsp; &nbsp;
+                      {{art_current_model?.training.training_status.status}}
+                      <span id="status_bubble_art" style="font-size: 12px">&#9679;</span> <br> <br>
+                      Robustness Training ID: <br> <b>{{art_current_model?.model_id}}</b> &nbsp; &nbsp;
                       <button class="btn btn-primary btn-sm" (click)="changeModel(art_current_model?.model_id)"
                             tooltip="Show training details" tooltipTrigger="focus" tooltipPlacement="top">
                             <i class="fa fa-info" aria-hidden="true"></i>
@@ -167,8 +173,6 @@
                           <i class="fa fa-trash-o" aria-hidden="true"></i>
                       </button>
                       <br>
-                      Status: <b>{{art_current_model?.training.training_status.status}}</b>
-                        <span id="status_bubble_art" style="font-size: 12px">&#9679;</span> &nbsp; &nbsp;
                         <div *ngIf="current_model?.training.training_status.status == 'COMPLETED' && art_check == true && art_current_model?.training.training_status.status =='COMPLETED'">
                           <br>
                           <b> Robussness Check Metrics: </b>
@@ -179,14 +183,23 @@
                         </div>
                       </div>
                   </td>
-                </tr>
-                <tr>
-                  <th scope="row">Deployment Status:</th>
-                  <td ng-init="setBlack()">
+                  <!-- <td style="word-wrap:break-word;" ng-init="setBlack()">
                   <div *ngIf="current_model?.training.training_status.status != 'COMPLETED'">Training job is not yet done.</div>
-                  <div *ngIf="current_model?.training.training_status.status == 'COMPLETED'"><button style="display:inline;" id="art_button_p" (click)="ARTForm()">Deploy Model on Kubernetes</button></div>
+                  <div *ngIf="current_model?.training.training_status.status == 'COMPLETED'"><button style="display:inline;" id="art_button_p" (click)="ARTForm()">Fairness Check</button></div>
+                </td> -->
+                <td style="word-wrap:break-word;" ng-init="setBlack()">
+                  <div *ngIf="current_model?.training.training_status.status != 'COMPLETED'">Training job is not yet done.</div>
+                  <div *ngIf="current_model?.training.training_status.status == 'COMPLETED'"><button style="display:inline;" id="deploy_button" (click)="deployForm()">Deploy Model on Kubernetes</button>
+                  <div id="deployment_result" style="display: none;">
+                    {{deployment_status}}
+                    <span id="status_bubble_deployment" style="font-size: 12px;">&#9679;</span> <br><br>
+                    <b> Deployment Endpoint URL: </b>
+                    <br>
+                    {{deployment_url}}
+                  </div>
+                  </div>
                 </td>
-                <tr>
+              </tr>
             </tbody>
           </table>
         </div>

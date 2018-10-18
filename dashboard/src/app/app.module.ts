@@ -45,6 +45,7 @@ import { AuthGuard } from "./shared/services/auth-guard.service";
 import { EmitterService } from "./shared/services/emitter.service";
 import { Autofocus } from "./shared/directives/autofocus";
 import { ArtDialog } from "./trainings/list.component";
+import { DeployDialog } from "./trainings/list.component";
 
 // import { NG2D3Module } from "ng2d3";
 // import {SpinnerModule} from "angular2-spinner/dist";
@@ -72,7 +73,8 @@ import {MatDialogModule} from '@angular/material/dialog';
       ProfileListComponent,
       ProfileShowComponent,
       Autofocus,
-      ArtDialog
+      ArtDialog,
+      DeployDialog
     ],
     imports: [
       MatInputModule,
@@ -108,7 +110,10 @@ import {MatDialogModule} from '@angular/material/dialog';
     bootstrap: [
       AppComponent
     ],
-    entryComponents: [ArtDialog]
+    entryComponents: [
+      ArtDialog,
+      DeployDialog
+    ]
 })
 export class AppModule {
 }
