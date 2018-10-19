@@ -1,8 +1,10 @@
+language: python
+python: 3.6
 sudo: required
 
-branches:
-  only:
-    - master
+#branches:
+#  only:
+#    - master
 
 services:
   - docker
@@ -11,6 +13,9 @@ env:
   - CHANGE_MINIKUBE_NONE_USER=true
 
 before_script:
+  # lint Python for syntax errors and undefined names
+  - pip install flake8
+  - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
   # install Go
   - (sudo add-apt-repository -y ppa:gophers/archive; sudo apt-get -y update; sudo apt-get -y install golang-1.9-go) > /dev/null 2>&1
   - export PATH=/usr/lib/go-1.9/bin:$PATH; export GOROOT=/usr/lib/go-1.9/
