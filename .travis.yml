@@ -2,9 +2,9 @@ language: python
 python: 3.6
 sudo: required
 
-#branches:
-#  only:
-#    - master
+branches:
+  only:
+    - master
 
 services:
   - docker
