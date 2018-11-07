@@ -46,6 +46,7 @@ import { EmitterService } from "./shared/services/emitter.service";
 import { Autofocus } from "./shared/directives/autofocus";
 import { ArtDialog } from "./trainings/list.component";
 import { DeployDialog } from "./trainings/list.component";
+import { AIFDialog } from "./trainings/list.component";
 
 // import { NG2D3Module } from "ng2d3";
 // import {SpinnerModule} from "angular2-spinner/dist";
@@ -54,6 +55,7 @@ import {CookieModule, CookieOptions, CookieService} from "ngx-cookie";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import {MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule} from '@angular/material';
 import {MatDialogModule} from '@angular/material/dialog';
+import {MatSelectModule} from '@angular/material/select';
 
 
 @NgModule({
@@ -74,7 +76,8 @@ import {MatDialogModule} from '@angular/material/dialog';
       ProfileShowComponent,
       Autofocus,
       ArtDialog,
-      DeployDialog
+      DeployDialog,
+      AIFDialog
     ],
     imports: [
       MatInputModule,
@@ -82,6 +85,7 @@ import {MatDialogModule} from '@angular/material/dialog';
       MatDialogModule,
       MatButtonModule,
       MatCheckboxModule,
+      MatSelectModule,
       BrowserModule,
       FormsModule,
       ReactiveFormsModule,
@@ -112,7 +116,8 @@ import {MatDialogModule} from '@angular/material/dialog';
     ],
     entryComponents: [
       ArtDialog,
-      DeployDialog
+      DeployDialog,
+      AIFDialog
     ]
 })
 export class AppModule {

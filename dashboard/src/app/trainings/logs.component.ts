@@ -52,11 +52,10 @@ export enum KEY_CODE {
         <button class="button" (click)="end()">End</button>
         <button class="button" (click)="pageUp()">PgUp</button>
         <button class="button" (click)="pageDown()">PgDn</button>
-        <button class="button" (click)="decrement()">Up</button>
-        <button class="button" (click)="increment()">Dn</button>
       </div>
       <pre *ngIf="!showSpinner && !showError"  (keydown)="keyEvent($event)" tabindex="0">
         <!--<span *ngFor="let line of logs">{{line.line}}</span>-->
+        <div id="box" style="overflow: scroll; height: 600px;">
         <table>
           <tbody *ngFor="let t of logs">
             <tr>
@@ -66,18 +65,20 @@ export enum KEY_CODE {
             </tr>
           </tbody>
         </table>
+        </div>
       </pre>
-    </div>`,
+    </div>
+    `,
     styleUrls: ['./logs.component.css']
 })
-export class TrainingLogsComponent implements OnChanges {
+export class TrainingLogsComponent implements OnInit, OnChanges {
 
   private _trainingId: string;
 
   private logs: LogLine[];
   private logsError: Boolean = false;
 
-  private pagesize: number = 20;
+  private pagesize: number = 999;
   private relativePageIncrement = -this.pagesize;
   private pos: number = -1;
 
@@ -108,6 +109,10 @@ export class TrainingLogsComponent implements OnChanges {
 
   ngOnChanges(changes: any) {
     // console.log('ngOnChanges called in training list ')
+  }
+
+  ngOnInit() {
+    this.find(this.pos, this.pagesize, "");
   }
 
   ngOnDestroy() {
@@ -164,12 +169,16 @@ export class TrainingLogsComponent implements OnChanges {
     this.pos = this.home_pos;
     this.relativePageIncrement = this.pagesize;
     this.update()
+    var element = document.getElementById('box');
+    element.scrollTop = 0;
   }
 
   end() {
     this.pos = this.end_pos;
     this.relativePageIncrement = -this.pagesize;
     this.update()
+    var element = document.getElementById('box');
+    element.scrollTop = element.scrollHeight;
   }
 
   keyEvent(event: KeyboardEvent) {
@@ -232,7 +241,8 @@ export class TrainingLogsComponent implements OnChanges {
   }
 
   private find(pos: number, pagesize: number, since: string) {
-    this.findSub = this.dlaas.getTrainingLogs(this._trainingId, pos, pagesize, since).subscribe(
+    // this.findSub = this.dlaas.getTrainingLogs(this._trainingId, pos, pagesize, since).subscribe(
+    this.findSub = this.dlaas.getTrainingLogs(this._trainingId, pos, 999, since).subscribe(
       data => {
         // console.log("pos: "+pos+", pageszie: "+pagesize+", since:"+since)
         this.logs = data;
@@ -240,7 +250,7 @@ export class TrainingLogsComponent implements OnChanges {
           return;
         }
         this.prevTime = this.logs[this.logs.length - 1].meta.time
-        this.pos = parseInt(this.logs[0].meta.rindex)
+        // this.pos = parseInt(this.logs[0].meta.rindex)
       },
       err => {
         this.logsError = true;

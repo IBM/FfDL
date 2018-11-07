@@ -40,10 +40,9 @@ import {Observable} from "rxjs/Observable";
         <button class="button" (click)="end()">End</button>
         <button class="button" (click)="pageUp()">PgUp</button>
         <button class="button" (click)="pageDown()">PgDn</button>
-        <button class="button" (click)="decrement()">Up</button>
-        <button class="button" (click)="increment()">Dn</button>
       </div>
       <pre *ngIf="!showSpinner && !showError" (keydown)="keyEvent($event)" tabindex="0">
+      <div id="box" style="overflow: scroll; height: 600px;">
         <table>
            <tr>
              <th scope="row">rindex&nbsp;&nbsp;</th>
@@ -62,6 +61,7 @@ import {Observable} from "rxjs/Observable";
               </tr>
             </tbody>
           </table>
+        </div>
       </pre>
     </div>`,
     styleUrls: ['./emetricsraw.component.css']
@@ -165,12 +165,16 @@ export class TrainingEMetricsRawComponent implements OnChanges {
     this.pos = this.home_pos;
     this.relativePageIncrement = this.pagesize;
     this.update()
+    var element = document.getElementById('box');
+    element.scrollTop = 0;
   }
 
   end() {
     this.pos = this.end_pos;
     this.relativePageIncrement = -this.pagesize;
     this.update()
+    var element = document.getElementById('box');
+    element.scrollTop = element.scrollHeight;
   }
 
   // @HostListener('window:keyup', ['$event'])
@@ -233,7 +237,8 @@ export class TrainingEMetricsRawComponent implements OnChanges {
   }
 
   private find(pos: number, pagesize: number, since: string) {
-    this.findSub = this.dlaas.getTrainingMetrics(this._trainingId, pos, pagesize, since).subscribe(
+    // this.findSub = this.dlaas.getTrainingMetrics(this._trainingId, pos, pagesize, since).subscribe(
+    this.findSub = this.dlaas.getTrainingMetrics(this._trainingId, pos, 999, since).subscribe(
       data => {
         this.emetrics = data;
         if (this.emetrics.length == 0) {

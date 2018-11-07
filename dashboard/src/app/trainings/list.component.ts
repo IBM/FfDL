@@ -49,14 +49,17 @@ export class TrainingsListComponent implements OnInit, OnChanges {
     trainings: ModelData[];
     trainingsError: Boolean = false;
     art_check: Boolean = false;
+    fairness_check: Boolean = false;
     deployment: Boolean = false;
     trainingId: string;
     artTrainingID: string;
-    art_metrics: string = "";
+    aifTrainingID: string;
     current_model: ModelData;
     art_current_model: ModelData;
+    aif_current_model: ModelData;
     display_tabs: string = "none";
     metrics: string[];
+    f_metrics: string[];
     deployment_status: string = "";
     deployment_url: string = "";
     on_pipeline_page: Boolean = false;
@@ -89,6 +92,7 @@ export class TrainingsListComponent implements OnInit, OnChanges {
   zipEvent: HTMLInputElement;
   manifestEvent: HTMLInputElement;
   loading: boolean = false;
+
 
   @ViewChild('fileInput') fileInput: ElementRef;
 
@@ -143,48 +147,79 @@ export class TrainingsListComponent implements OnInit, OnChanges {
 
   artUpdate(new_model){
     this.art_check = false;
-    this.art_metrics = "";
+    this.fairness_check = false;
     var training_num;
     for (training_num = 0; training_num < this.trainings.length; training_num ++) {
       if (this.trainings[training_num].model_id == new_model){
         this.trainingId = new_model;
         this.current_model = this.trainings[training_num];
-        for (var training_num_art = 0; training_num_art < this.trainings.length; training_num_art ++) {
-          if (this.trainings[training_num_art].name == "robustnesscheck_" + new_model){
-              this.artTrainingID = this.trainings[training_num_art].model_id;
-              this.art_current_model = this.trainings[training_num_art];
-              this.art_check = true;
-              var status_elem_art_result = document.getElementById("art_result");
-              status_elem_art_result.style.display = "";
-              var status_elem_art = document.getElementById("status_bubble_art");
-              if (this.art_current_model.training.training_status.status === 'FAILED') {
-                status_elem_art.style.color = "#ee0000";
-              } else if (this.art_current_model.training.training_status.status === 'COMPLETED') {
-                status_elem_art.style.color = "#00aa00";
-                this.dlaas.getTrainingLogs(this.artTrainingID, -1, 20, "").subscribe(
-                  data => {
-                    for(var logline = 0; logline < data.length; logline++){
-                    if(data[logline]['line'].includes("metrics:")){
-                      var core_metric = data[logline]['line'].split("{")[1].split("}")[0]
-                      this.metrics = core_metric.split(",");
-                      break;
-                    }
-                  }
-                  },
-                  err => {
-                    alert("There's an error loading the metrics: Robustness Job or logs not found.")
-                  }
-                );
-              } else {
-                status_elem_art.style.color = "#dddd00";
-              }
-          }
         }
-        if(this.art_check == false){
+      if (this.trainings[training_num].name == "robustnesscheck_" + new_model){
+          this.artTrainingID = this.trainings[training_num].model_id;
+          this.art_current_model = this.trainings[training_num];
+          this.art_check = true;
           var status_elem_art_result = document.getElementById("art_result");
-          status_elem_art_result.style.display = "none";
+          status_elem_art_result.style.display = "";
+          var status_elem_art = document.getElementById("status_bubble_art");
+          if (this.art_current_model.training.training_status.status === 'FAILED') {
+            status_elem_art.style.color = "#ee0000";
+          } else if (this.art_current_model.training.training_status.status === 'COMPLETED') {
+            status_elem_art.style.color = "#00aa00";
+            this.dlaas.getTrainingLogs(this.artTrainingID, -1, 20, "").subscribe(
+              data => {
+                for(var logline = 0; logline < data.length; logline++){
+                if(data[logline]['line'].includes("metrics:")){
+                  var core_metric = data[logline]['line'].split("{")[1].split("}")[0].replace(/'/g,"")
+                  this.metrics = core_metric.split(",");
+                  break;
+                }
+              }
+              },
+              err => {
+                alert("There's an error loading the metrics: Robustness Job or logs not found.")
+              }
+            );
+          } else {
+            status_elem_art.style.color = "#dddd00";
+          }
+      }
+      if (this.trainings[training_num].name == "fairnesscheck_" + new_model){
+        this.fairness_check = true;
+        this.aifTrainingID = this.trainings[training_num].model_id;
+        this.aif_current_model = this.trainings[training_num];
+        var status_elem_aif_result = document.getElementById("aif_result");
+        status_elem_aif_result.style.display = "";
+        var status_elem_aif = document.getElementById("status_bubble_aif");
+        if (this.aif_current_model.training.training_status.status === 'FAILED') {
+          status_elem_aif.style.color = "#ee0000";
+        } else if (this.aif_current_model.training.training_status.status === 'COMPLETED') {
+          status_elem_aif.style.color = "#00aa00";
+          this.dlaas.getTrainingLogs(this.aifTrainingID, -1, 20, "").subscribe(
+            data => {
+              for(var logline = 0; logline < data.length; logline++){
+              if(data[logline]['line'].includes("metrics:")){
+                var core_metric = data[logline]['line'].split("{")[1].split("}")[0].replace(/'/g,"")
+                this.f_metrics = core_metric.split(",");
+                break;
+              }
+            }
+            },
+            err => {
+              alert("There's an error loading the metrics: Fairness Job or logs not found.")
+            }
+          );
+        } else {
+          status_elem_aif.style.color = "#dddd00";
         }
       }
+    }
+    if(this.art_check == false){
+      var status_elem_art_result = document.getElementById("art_result");
+      status_elem_art_result.style.display = "none";
+    }
+    if(this.fairness_check == false){
+      var status_elem_aif_result = document.getElementById("aif_result");
+      status_elem_aif_result.style.display = "none";
     }
     this.reformatTime();
 
@@ -205,20 +240,22 @@ export class TrainingsListComponent implements OnInit, OnChanges {
     let headers = new HttpHeaders(header_json);
     var formData = {
       "public_ip": "169.61.33.83",
-      "deployment_name": "fashion-classifier",
+      "deployment_name": new_model,
       "training_id": new_model,
       "check_status_only": "true"
     };
+    var sync_elem = document.getElementById("sync");
+    sync_elem.className = "fa fa-refresh fa-spin";
     this.http.get("https://openwhisk.ng.bluemix.net/api/v1/web/ckadner_org_dev/default/deploy.json", { headers: headers, params: formData })
           .subscribe(data => {
           this.deployment_status = data['deployment_status'];
           console.log(data);
-          if(this.deployment_status != undefined && this.deployment_status != "NONE"){
+          if(this.deployment_status != undefined && this.deployment_status != "NONE" && this.deployment_status != "UNKNOWN" && this.deployment_status != "CREATING"){
             this.deployment = true;
             var status_elem = document.getElementById("status_bubble_deployment");
             if (this.deployment_status === 'ERROR') {
               status_elem.style.color = "#ee0000";
-            } else if (this.deployment_status === 'READY') {
+            } else if (this.deployment_status === 'READY' || this.deployment_status === 'AVAILABLE') {
               status_elem.style.color = "#00aa00";
             } else {
               status_elem.style.color = "#dddd00";
@@ -234,8 +271,14 @@ export class TrainingsListComponent implements OnInit, OnChanges {
             status_elem_deploy_result.style.display = "";
             status_deploy_buttom.style.display = "none";
           }
-          }, error => {console.log(error)});
-      }
+          var sync = document.getElementById("sync");
+          sync.className = "fa fa-refresh";
+        }, error => {
+          console.log(error);
+          var sync = document.getElementById("sync");
+          sync.className = "fa fa-refresh";
+        });
+  }
 
   showTraining() {
     this.on_pipeline_page = false;
@@ -347,10 +390,62 @@ export class TrainingsListComponent implements OnInit, OnChanges {
                 return response.body
               }).subscribe(data => {
                   if (data['model_id'] == undefined){
-                    alert("This training job isn't satisfy for robustness check.")
+                    alert("This training job doesn't satisfy the requirements for robustness check.")
                   }else{
                     alert("Your " + name + " Robustness Check job is started. " +
-                    "Please go to the training job page and look for Training ID \"" + data['model_id'] + "\"");
+                    "The Training ID is \"" + data['model_id'] + "\"");
+                  }
+                }, error => {console.log(error)});
+              }
+          });
+  }
+
+  AIFForm(){
+    var cpu = 1;
+    var gpu = 0;
+    var memory = 4;
+    var learner = 1;
+    var name = this.current_model.name
+    var aif_function_link = "https://openwhisk.ng.bluemix.net/api/v1/web/ckadner_org_dev/default/fairness_check.json"
+      const dialogRef = this.dialog.open(AIFDialog, {
+        height: '600px',
+        data: { name: name, cpu: cpu, gpu: gpu,
+                memory: memory, learner: learner,
+                auth_url: "https://s3-api.us-geo.objectstorage.softlayer.net"
+              }
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result == undefined){
+        }else{
+          let header_json = {"Content-Type":"application/json", "X-Require-Whisk-Auth":"fiddle"};
+          let headers = new HttpHeaders(header_json);
+          var formData = {
+            "ffdl_service_url": this.loginData['environment'],
+            "basic_authtoken": "test",
+            "watson_auth_token": "bluemix-instance-id=test-user",
+            "aws_endpoint_url": result['auth_url'].toString(),
+            "aws_access_key_id": result['user_name'].toString(),
+            "aws_secret_access_key": result['password'].toString(),
+            "training_data_bucket": result['training_data'].toString(),
+            "training_results_bucket": result['training_result'].toString(),
+            "fairnesscheck_data_bucket": result['training_data'].toString(),
+            "fairnesscheck_results_bucket": result['training_result'].toString(),
+            "model_id": this.current_model.model_id,
+            "memory": result['memory'] + "Gb",
+            "cpus": Number(result['cpu']),
+            "gpus": Number(result['gpu']),
+            "training_job_name": "fairnesscheck_" + this.current_model.model_id
+          };
+          this.http.post(aif_function_link, formData, { headers: headers, observe: "response" })
+              .map(response => {
+                return response.body
+              }).subscribe(data => {
+                  if (data['model_id'] == undefined){
+                    alert("This training job doesn't satisfy the requirements for fairness check.")
+                  }else{
+                    alert("Your " + name + " Fairness Check job is started. " +
+                    "The Training ID is \"" + data['model_id'] + "\"");
                   }
                 }, error => {console.log(error)});
               }
@@ -376,8 +471,9 @@ deployForm(){
             "aws_access_key_id": result['user_name'].toString(),
             "aws_secret_access_key": result['password'].toString(),
             "training_results_bucket": result['training_result'].toString(),
+            // "framework": result['framework'].toString(),
             "model_file_name": "keras_original_model.hdf5",
-            "deployment_name": "fashion-classifier",
+            "deployment_name": this.current_model.model_id,
             "training_id": this.current_model.model_id,
             "check_status_only": false
           };
@@ -463,10 +559,12 @@ deployForm(){
         if(this.art_current_model != undefined && this.art_current_model.training.training_status.status != 'COMPLETED'){
           this.artUpdate(this.trainingId);
         }
-        this.deploymentUpdate(this.trainingId);
+        //this.deploymentUpdate(this.trainingId);
       }
     });
   }
+
+
 
   ngOnInit() {
     this.find();
@@ -508,6 +606,30 @@ deployForm(){
     }
   }
 
+  delete_deployment(id: String) {
+    var isConfirmed = confirm("Are you sure you want to delete " + id + " deployment?");
+    if (isConfirmed) {
+      this.notificationService.info('Deleting deployment', 'ID: ' + id);
+      let header_json = {"Content-Type":"application/json"};
+      let headers = new HttpHeaders(header_json);
+      var formData = {
+        "public_ip": "169.61.33.83",
+        "deployment_name": id.toString(),
+        "training_id": id.toString(),
+        "delete_deployment": "true"
+      };
+      this.http.delete("https://openwhisk.ng.bluemix.net/api/v1/web/ckadner_org_dev/default/deploy.json", { headers: headers, params: formData }).subscribe(
+        data => {
+          this.notificationService.success('Deployment deleted.', 'ID: ' + id);
+          console.log(data)
+        },
+        err => {
+          this.notificationService.error('Deletion failed', 'Message: ' + err);
+        }
+      );
+    }
+  }
+
   dotClass(model: ModelData) {
     if (model.training.training_status.status === 'FAILED') {
       return 'red_dot';
@@ -517,7 +639,6 @@ deployForm(){
       return 'yellow_dot';
     }
   }
-
 }
 
 @Component({
@@ -549,6 +670,20 @@ export class ArtDialog {
 export class DeployDialog {
   constructor(
     public dialogRef: MatDialogRef<DeployDialog>,
+    @Inject(MAT_DIALOG_DATA) public data: any) { }
+
+  onNoClick(): void {
+    this.dialogRef.close();
+  }
+}
+
+@Component({
+  selector: 'aif-dialog',
+  templateUrl: './aif-dialog.html',
+})
+export class AIFDialog {
+  constructor(
+    public dialogRef: MatDialogRef<AIFDialog>,
     @Inject(MAT_DIALOG_DATA) public data: any) { }
 
   onNoClick(): void {

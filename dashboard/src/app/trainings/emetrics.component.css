@@ -57,3 +57,16 @@ button {
 .button:active {
   background-color: #eeeeee;
 }
+
+.btn-1 {
+	border: 3px solid #000;
+	color: #000;
+  border-width: 1px;
+  border-color:#888888;
+}
+
+.btn-1a:hover,
+.btn-1a:active {
+	color: #ffffff;
+	background: #b7b7b7;
+}

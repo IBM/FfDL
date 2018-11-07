@@ -15,12 +15,18 @@
     <input matInput placeholder="Training_results bucket" [(ngModel)]="data.training_result">
   </mat-form-field>
   <!-- <mat-form-field>
-    <input matInput placeholder="public_ip" [(ngModel)]="data.ip">
+    <mat-select placeholder="Framework" [(ngModel)]="data.framework">
+      <mat-option value="keras">Keras</mat-option>
+      <mat-option value="tensorflow">TensorFlow</mat-option>
+      <mat-option value="pytorch">PyTorch</mat-option>
+      <mat-option value="onnx">ONNX</mat-option>
+    </mat-select>
   </mat-form-field> -->
 </mat-dialog-content>
 <mat-dialog-actions>
   <button mat-button (click)="onNoClick()">Cancel</button>
   <button mat-button [mat-dialog-close]="{auth_url: data.auth_url,
     user_name: data.user_name, password: data.password,
-    training_result: data.training_result}" cdkFocusInitial>Submit</button>
+    training_result: data.training_result, framework: data.framework}"
+    cdkFocusInitial>Submit</button>
 </mat-dialog-actions>

@@ -80,3 +80,58 @@ button {
     width: 50%;
     padding: 10px;
 }
+
+.btn-1 {
+	border: 3px solid #000;
+	color: #000;
+  border-width: 1px;
+  border-color:#888888;
+}
+
+.btn-1a:hover,
+.btn-1a:active {
+	color: #ffffff;
+	background: #b7b7b7;
+}
+
+.mat-dialog-container {
+      background-color: #1c1c1c;
+      color: #FFFFFF;
+}
+
+.mat-dialog-title {
+      color: #FFFFFF;
+}
+
+.mat-input-container {
+      color: #FFFFFF;
+}
+
+.mat-dialog-content {
+      color: #FFFFFF;
+}
+
+.mat-form-field-autofill-control{
+      color: #FFFFFF;
+}
+
+.mat-input-element{
+      color: #FFFFFF;
+}
+
+.mat-form-field-placeholder{
+  color: white;
+}
+
+.mat-form-field-underline{
+  background-color: white;
+  color: white;
+}
+
+.mat-focused{
+  color: white;
+}
+
+.mat-button{
+  background-color: #5b5b5b;
+}

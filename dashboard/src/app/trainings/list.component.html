@@ -8,7 +8,7 @@
             <input style="color:#CCCCCC" type="file" id="modelzip" name="modelzip" accept=".zip" (change)="onModelzipFileChange($event)">
           </td>
           <td style="border-color:#555555">
-            <button class="submit_button">Submit Training Job</button>
+            <button class="btn btn-1 btn-1a">Submit<br>Training<br>Job</button>
           </td>
         </tr>
         <tr>
@@ -21,7 +21,7 @@
     </form>
   </div>
   <div>
-    <button id="back_button" class="button" (click)="showTraining()" style="border-radius: 25px; display: none; margin: 20px">Back to Training List</button>
+    <button id="back_button" class="btn btn-1 btn-1a" (click)="showTraining()" style="border-radius: 25px; display: none; margin: 20px">Back to Training List</button>
     <h4 id="jobs_tag" style="color:#CCCCCC;">Training Jobs</h4>
     <div *ngIf="trainingsError" class="alert alert-danger" style="color: white; background-color:#c86464" role="alert">
       An error occurred while loading the training jobs!
@@ -42,7 +42,7 @@
               </tr>
             </thead>
             <tbody *ngFor="let t of trainings" style="border: 1px solid #CCCCCC">
-              <tr *ngIf="t.name.includes('robustnesscheck_') == false">
+              <tr *ngIf="t.name.includes('robustnesscheck_') == false && t.name.includes('fairnesscheck_') == false">
                 <td style="word-wrap:break-word;">{{t.model_id}}</td>
                 <td style="word-wrap:break-word;">{{t.name}}</td>
                 <td style="word-wrap:break-word;">{{t.description}}</td>
@@ -148,8 +148,13 @@
                 <tr>
                   <th style="color: #CCCCCC;background-color:#101010">Training Status</th>
                   <th style="color: #CCCCCC;background-color:#101010">Robustness Status</th>
-                  <!-- <th style="color: #CCCCCC;background-color:#101010">Fairness Status</th> -->
-                  <th style="color: #CCCCCC;background-color:#101010">Deployment Status</th>
+                  <th style="color: #CCCCCC;background-color:#101010">Fairness Status</th>
+                  <th style="color: #CCCCCC;background-color:#101010">Deployment Status
+                    <button class="btn btn-success btn-sm" style="margin-left: 5px" (click)="deploymentUpdate(trainingId)"
+                          tooltip="Show training pipeline" tooltipTrigger="focus" tooltipPlacement="top">
+                          <i id="sync" class="fa fa-refresh" aria-hidden="true"></i>
+                    </button>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -159,7 +164,7 @@
                   </td>
                   <td style="word-wrap:break-word;" ng-init="setBlack()">
                     <div *ngIf="current_model?.training.training_status.status != 'COMPLETED'">Training job is not yet done.</div>
-                    <div *ngIf="current_model?.training.training_status.status == 'COMPLETED' && art_check == false"><button style="display:inline;" id="art_button_p" (click)="ARTForm()">Robustness Check</button></div>
+                    <div *ngIf="current_model?.training.training_status.status == 'COMPLETED' && art_check == false"><button class="btn btn-1 btn-1a" style="display:inline;" id="art_button_p" (click)="ARTForm()">Robustness Check</button></div>
                     <div id="art_result">
                       {{art_current_model?.training.training_status.status}}
                       <span id="status_bubble_art" style="font-size: 12px">&#9679;</span> <br> <br>
@@ -177,22 +182,55 @@
                           <br>
                           <b> Robussness Check Metrics: </b>
                           <br>
+                          <table style="table-layout: fixed; word-wrap:break-word;">
                           <div *ngFor="let metric of metrics">
-                          {{metric}}
+                          {{metric.split(":")[0]}}: {{metric.split(":")[metric.split(":").length-1] | number}}
                         </div>
+                      </table>
                         </div>
                       </div>
                   </td>
-                  <!-- <td style="word-wrap:break-word;" ng-init="setBlack()">
+                  <td style="word-wrap:break-word;" ng-init="setBlack()">
                   <div *ngIf="current_model?.training.training_status.status != 'COMPLETED'">Training job is not yet done.</div>
-                  <div *ngIf="current_model?.training.training_status.status == 'COMPLETED'"><button style="display:inline;" id="art_button_p" (click)="ARTForm()">Fairness Check</button></div>
-                </td> -->
+                  <div *ngIf="current_model?.training.training_status.status == 'COMPLETED' && fairness_check == false">
+                    <button class="btn btn-1 btn-1a" style="display:inline;" id="aif_button" (click)="AIFForm()">Fairness Check</button></div>
+                    <div id="aif_result">
+                      {{aif_current_model?.training.training_status.status}}
+                      <span id="status_bubble_aif" style="font-size: 12px">&#9679;</span> <br> <br>
+                      Fairness Check ID: <br> <b>{{aif_current_model?.model_id}}</b> &nbsp; &nbsp;
+                      <button class="btn btn-primary btn-sm" (click)="changeModel(aif_current_model?.model_id)"
+                            tooltip="Show training details" tooltipTrigger="focus" tooltipPlacement="top">
+                            <i class="fa fa-info" aria-hidden="true"></i>
+                      </button>
+                      <button class="btn btn-danger btn-sm" style="margin-left: 5px" (click)="delete(aif_current_model?.model_id)"
+                            tooltip="Delete training record" tooltipTrigger="focus" tooltipPlacement="top">
+                          <i class="fa fa-trash-o" aria-hidden="true"></i>
+                      </button>
+                      <br>
+                        <div *ngIf="current_model?.training.training_status.status == 'COMPLETED' && fairness_check == true && aif_current_model?.training.training_status.status =='COMPLETED'">
+                          <br>
+                          <b> Fairness Check Metrics: </b>
+                          <br>
+                          <table style="table-layout: fixed; word-wrap:break-word;">
+                          <div *ngFor="let f_metric of f_metrics">
+                          {{f_metric.split(":")[0]}}: {{f_metric.split(":")[f_metric.split(":").length-1] | number}}
+                        </div>
+                        </table>
+                        </div>
+                      </div>
+                </td>
                 <td style="word-wrap:break-word;" ng-init="setBlack()">
                   <div *ngIf="current_model?.training.training_status.status != 'COMPLETED'">Training job is not yet done.</div>
-                  <div *ngIf="current_model?.training.training_status.status == 'COMPLETED'"><button style="display:inline;" id="deploy_button" (click)="deployForm()">Deploy Model on Kubernetes</button>
+                  <div *ngIf="current_model?.training.training_status.status == 'COMPLETED'">
+                    <button class="btn btn-1 btn-1a" style="display:none;" id="deploy_button" (click)="deployForm()">Deploy Model on Kubernetes</button>
                   <div id="deployment_result" style="display: none;">
                     {{deployment_status}}
-                    <span id="status_bubble_deployment" style="font-size: 12px;">&#9679;</span> <br><br>
+                    <span id="status_bubble_deployment" style="font-size: 12px;">&#9679;</span>
+                    <button class="btn btn-danger btn-sm" style="margin-left: 5px" (click)="delete_deployment(current_model?.model_id)"
+                          tooltip="Delete training record" tooltipTrigger="focus" tooltipPlacement="top">
+                        <i class="fa fa-trash-o" aria-hidden="true"></i>
+                    </button>
+                    <br><br>
                     <b> Deployment Endpoint URL: </b>
                     <br>
                     {{deployment_url}}
