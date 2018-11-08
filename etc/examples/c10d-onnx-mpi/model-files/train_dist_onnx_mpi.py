@@ -90,7 +90,7 @@ def run(rank, size, batch_size, is_gpu):
     test_set = torch.utils.data.DataLoader(
         test_set, batch_size=batch_size, shuffle=True, pin_memory=True)
 
-    num_batches = ceil(len(train_set.dataset) / float(bsz))
+    num_batches = ceil(len(train_set.dataset) / float(batch_size))
     # To train model
     model.train()
     for epoch in range(100):
