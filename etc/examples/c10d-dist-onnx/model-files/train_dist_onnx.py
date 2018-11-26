@@ -117,7 +117,7 @@ def run(rank, size, batch_size, is_gpu):
             if not (size == 1):
                 average_gradients(model)
             optimizer.step()
-        print('Process ', rank=dist.get_rank(),
+        print('Process ', dist.get_rank(),
               ', epoch ', epoch, '. avg_loss: ',
               epoch_loss / len(train_set))
 
