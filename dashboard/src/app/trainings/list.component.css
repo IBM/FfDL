@@ -60,6 +60,19 @@ button {
   background-color: #eeeeee;
 }
 
+label {
+  background: #1c1c1c;
+  border-color:#555555;
+}
+
+.label:hover {
+  background: #b7b7b7;
+}
+
+.label:active {
+  background: #b7b7b7;
+}
+
 .green_dot {
   color:#00aa00;
   font-size: 12px
@@ -92,6 +105,7 @@ button {
 .btn-1a:active {
 	color: #ffffff;
 	background: #b7b7b7;
+  background-color: #b7b7b7;
 }
 
 .mat-dialog-container {

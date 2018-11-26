@@ -239,17 +239,17 @@ export class TrainingsListComponent implements OnInit, OnChanges {
     let header_json = {"Content-Type":"application/json"};
     let headers = new HttpHeaders(header_json);
     var formData = {
-      "public_ip": "169.61.33.83",
+      "public_ip": "169.48.165.244",
       "deployment_name": new_model,
       "training_id": new_model,
       "check_status_only": "true"
     };
     var sync_elem = document.getElementById("sync");
     sync_elem.className = "fa fa-refresh fa-spin";
-    this.http.get("https://openwhisk.ng.bluemix.net/api/v1/web/ckadner_org_dev/default/deploy.json", { headers: headers, params: formData })
+    this.http.get("http://deployment-python.default.aisphere.info", { headers: headers, params: formData })
           .subscribe(data => {
-          this.deployment_status = data['deployment_status'];
           console.log(data);
+          this.deployment_status = data['deployment_status'];
           if(this.deployment_status != undefined && this.deployment_status != "NONE" && this.deployment_status != "UNKNOWN" && this.deployment_status != "CREATING"){
             this.deployment = true;
             var status_elem = document.getElementById("status_bubble_deployment");
@@ -356,7 +356,11 @@ export class TrainingsListComponent implements OnInit, OnChanges {
         height: '600px',
         data: { name: name, cpu: cpu, gpu: gpu,
                 memory: memory, learner: learner,
-                auth_url: "https://s3-api.us-geo.objectstorage.softlayer.net"
+                auth_url: "https://s3-api.us-geo.objectstorage.softlayer.net",
+                training_data: training_data,
+                training_result: training_result,
+                user_name: user_name,
+                password: password
               }
       });
 
@@ -453,31 +457,41 @@ export class TrainingsListComponent implements OnInit, OnChanges {
   }
 
 deployForm(){
-    var deploy_function_link = "https://openwhisk.ng.bluemix.net/api/v1/web/ckadner_org_dev/default/deploy.json"
+    var deploy_function_link = "http://deployment-python.default.aisphere.info"
       const dialogRef = this.dialog.open(DeployDialog, {
         height: '600px',
-        data: { auth_url: "https://s3-api.us-geo.objectstorage.softlayer.net"
+        data: { auth_url: "https://s3-api.us-geo.objectstorage.softlayer.net",
+                training_result: training_result,
+                user_name: user_name,
+                password: password
               }
       });
 
       dialogRef.afterClosed().subscribe(result => {
         if (result == undefined){
         }else{
-          let header_json = {"Content-Type":"application/json", "X-Require-Whisk-Auth":"fiddle"};
+          let header_json = {"Content-Type":"application/json", "Host" : "deployment-python.default.example.com"};
           let headers = new HttpHeaders(header_json);
+          var frameworkname = "tomcli/seldon-core-s2i-python3:0.4";
+          var model_file_name = "keras_original_model.hdf5";
+          if(this.current_model.framework.name == "pytorch"){
+              frameworkname = "tomcli/seldon-gender:0.5";
+              model_file_name = "model.pt"
+          }
           var formData = {
-            "public_ip": "169.61.33.83",
+            "public_ip": "169.48.165.244",
             "aws_endpoint_url": result['auth_url'].toString(),
             "aws_access_key_id": result['user_name'].toString(),
             "aws_secret_access_key": result['password'].toString(),
             "training_results_bucket": result['training_result'].toString(),
             // "framework": result['framework'].toString(),
-            "model_file_name": "keras_original_model.hdf5",
+            "model_file_name": model_file_name,
             "deployment_name": this.current_model.model_id,
             "training_id": this.current_model.model_id,
+            "container_image": frameworkname,
             "check_status_only": false
           };
-          var model_link = "http://169.61.33.83:30559/seldon/" + this.current_model.model_id + "/api/v0.1/predictions"
+          var model_link = "http://169.48.165.244:30559/seldon/" + this.current_model.model_id + "/api/v0.1/predictions"
           this.http.post(deploy_function_link, formData, { headers: headers, observe: "response" })
               .map(response => {
                 return response.body
@@ -613,12 +627,12 @@ deployForm(){
       let header_json = {"Content-Type":"application/json"};
       let headers = new HttpHeaders(header_json);
       var formData = {
-        "public_ip": "169.61.33.83",
+        "public_ip": "169.48.165.244",
         "deployment_name": id.toString(),
         "training_id": id.toString(),
         "delete_deployment": "true"
       };
-      this.http.delete("https://openwhisk.ng.bluemix.net/api/v1/web/ckadner_org_dev/default/deploy.json", { headers: headers, params: formData }).subscribe(
+      this.http.delete("http://deployment-python.default.aisphere.info", { headers: headers, params: formData }).subscribe(
         data => {
           this.notificationService.success('Deployment deleted.', 'ID: ' + id);
           console.log(data)
