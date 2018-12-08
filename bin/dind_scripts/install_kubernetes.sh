@@ -17,7 +17,7 @@ fi
 
 if [ ! -f ~/dind-cluster-v1.9.sh ]; then
     cd ~
-    wget https://cdn.rawgit.com/Mirantis/kubeadm-dind-cluster/master/fixed/dind-cluster-v1.9.sh
+    wget https://cdn.jsdelivr.net/gh/Mirantis/kubeadm-dind-cluster/fixed/dind-cluster-v1.9.sh
     chmod +x dind-cluster-v1.9.sh
 else
     echo "DIND Kubernetes script already exists. Nothing to do."
