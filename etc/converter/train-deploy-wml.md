@@ -6,9 +6,7 @@ Install [IBM Cloud CLI](https://console.bluemix.net/docs/cli/reference/bluemix_c
 
 ``` shell
 # Install Machine Learning Plugin using the IBM Cloud CLI
-ibmcloud plugin repo-add Bluemix https://plugins.ng.bluemix.net
-ibmcloud plugin install machine-learning -r bluemix
-ibmcloud target -o ORG -s SPACE
+ibmcloud plugin install machine-learning
 ```
 
 # Steps
@@ -37,13 +35,13 @@ ibmcloud target -o ORG -s SPACE
 ### 1.1 Create an instance of WML service and associated key using ibmcloud command line
 
 ``` shell
-ibmcloud cf create-service pm-20 lite watson-machine-learning
-ibmcloud cf create-service-key watson-machine-learning WML-Key
+ibmcloud resource service-instance-create watson-machine-learning pm-20 lite us-south
+ibmcloud resource service-key-create WML-Key Writer --instance-name watson-machine-learning
 ```
 
 ### 1.2 Get your service credentials
 ``` shell
-ibmcloud cf service-key watson-machine-learning WML-Key
+ibmcloud resource service-key WML-Key
 ```
 
 ### 1.3 Set the Machine Learning plugin it up with your creds obtained in step 1.2
