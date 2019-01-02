@@ -136,11 +136,6 @@ with a label from 10 classes.
 
 Special thanks to [Anupama-Murthi](https://github.ibm.com/Anupama-Murthi) and [Vijay Arya](https://github.ibm.com/vijay-arya)
 who created the original notebook which we modified here to showcase how to use *ART* with *FfDL*.
-If you would like to try *[Watson Machine Learning (WML) Service](https://console.bluemix.net/catalog/services/machine-learning)* 
-with *ART* check out Anupama and Vijay's notebook here:
-
-[https://github.ibm.com/robust-dlaas/ART-in-WML/Use ART to check robustness of deep learning models.ipynb](https://github.ibm.com/robust-dlaas/ART-in-WML/blob/master/Use%20ART%20to%20check%20robustness%20of%20deep%20learning%20models.ipynb)
-
 
 ## License
 [Apache 2.0](LICENSE)
