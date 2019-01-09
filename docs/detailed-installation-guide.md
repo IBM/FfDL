@@ -175,6 +175,11 @@ restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nod
 export DLAAS_URL=http://$node_ip:$restapi_port; export DLAAS_USERNAME=test-user; export DLAAS_PASSWORD=test;
 ```
 
+* With the recent changes in DIND, we need update the `node_ip` to its Host IP before proceeding to the below steps.
+  ```shell
+  export node_ip=$(kubectl get pods | grep restapi- | awk '{print $1}' | xargs -I '{}' kubectl get pod '{}' -o jsonpath='{.status.hostIP}')
+  ```
+
 Replace the default object storage path with your s3_url. You can skip this step if your already modified the object storage path with your s3_url.
 ```shell
 if [ "$(uname)" = "Darwin" ]; then
@@ -204,7 +209,7 @@ pushd etc/examples/tf-model && zip ../tf-model.zip * && popd
 Then, upload `tf-model.zip` and `manifest.yml` (The default TensorFlow model) in the `etc/examples/` repository as shown below.
 Then, click `Submit Training Job` to run your job.
 
-![ui-example](docs/images/ui-example.png)
+![ui-example](images/ui-example.png)
 
 6. (Optional) Since it's simple and straightforward to submit jobs with different deep learning framework on FfDL, let's try to run a Caffe Job. Download all the necessary training and testing images in [LMDB format](https://en.wikipedia.org/wiki/Lightning_Memory-Mapped_Database) for our Caffe model
 and upload those images to your mnist_lmdb_data bucket.
