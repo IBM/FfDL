@@ -48,15 +48,14 @@ export enum KEY_CODE {
         <label ngbButtonLabel style="vertical-align: middle; margin-top: 5px; margin-right: 3em">
           <input type="checkbox" ngbButton [(ngModel)]="follow" (click)="followEvent()" style="vertical-align: middle;" name="follow">&nbsp;&nbsp;Follow&nbsp;&nbsp;
         </label>
-        <button (click)="home()">Home</button>
-        <button (click)="end()">End</button>
-        <button (click)="pageUp()">PgUp</button>
-        <button (click)="pageDown()">PgDn</button>
-        <button (click)="decrement()">Up</button>
-        <button (click)="increment()">Dn</button>
+        <button class="button" (click)="home()">Home</button>
+        <button class="button" (click)="end()">End</button>
+        <button class="button" (click)="pageUp()">PgUp</button>
+        <button class="button" (click)="pageDown()">PgDn</button>
       </div>
       <pre *ngIf="!showSpinner && !showError"  (keydown)="keyEvent($event)" tabindex="0">
         <!--<span *ngFor="let line of logs">{{line.line}}</span>-->
+        <div id="box" style="overflow: scroll; height: 600px;">
         <table>
           <tbody *ngFor="let t of logs">
             <tr>
@@ -66,18 +65,20 @@ export enum KEY_CODE {
             </tr>
           </tbody>
         </table>
+        </div>
       </pre>
-    </div>`,
+    </div>
+    `,
     styleUrls: ['./logs.component.css']
 })
 export class TrainingLogsComponent implements OnInit, OnChanges {
 
-@Input() private trainingId: string;
+  private _trainingId: string;
 
   private logs: LogLine[];
   private logsError: Boolean = false;
 
-  private pagesize: number = 20;
+  private pagesize: number = 999;
   private relativePageIncrement = -this.pagesize;
   private pos: number = -1;
 
@@ -96,6 +97,14 @@ export class TrainingLogsComponent implements OnInit, OnChanges {
   public follow: boolean = false;
 
   constructor(private dlaas: DlaasService) {
+  }
+
+  @Input()
+  set trainingId(trainId: string) {
+
+    this._trainingId = trainId;
+    this.pos = -1
+    this.update();
   }
 
   ngOnChanges(changes: any) {
@@ -160,17 +169,20 @@ export class TrainingLogsComponent implements OnInit, OnChanges {
     this.pos = this.home_pos;
     this.relativePageIncrement = this.pagesize;
     this.update()
+    var element = document.getElementById('box');
+    element.scrollTop = 0;
   }
 
   end() {
     this.pos = this.end_pos;
     this.relativePageIncrement = -this.pagesize;
     this.update()
+    var element = document.getElementById('box');
+    element.scrollTop = element.scrollHeight;
   }
 
   keyEvent(event: KeyboardEvent) {
     // console.log(event);
-
     if (document.hidden) {
       return
     }
@@ -229,7 +241,8 @@ export class TrainingLogsComponent implements OnInit, OnChanges {
   }
 
   private find(pos: number, pagesize: number, since: string) {
-    this.findSub = this.dlaas.getTrainingLogs(this.trainingId, pos, pagesize, since).subscribe(
+    // this.findSub = this.dlaas.getTrainingLogs(this._trainingId, pos, pagesize, since).subscribe(
+    this.findSub = this.dlaas.getTrainingLogs(this._trainingId, pos, 999, since).subscribe(
       data => {
         // console.log("pos: "+pos+", pageszie: "+pagesize+", since:"+since)
         this.logs = data;
@@ -237,6 +250,7 @@ export class TrainingLogsComponent implements OnInit, OnChanges {
           return;
         }
         this.prevTime = this.logs[this.logs.length - 1].meta.time
+        // this.pos = parseInt(this.logs[0].meta.rindex)
       },
       err => {
         this.logsError = true;

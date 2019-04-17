@@ -1,5 +1,4 @@
-<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-primary" *ngIf="showMenu">
-
+<nav class="navbar navbar-expand-md fixed-top" style="background-color: #99bf00" *ngIf="showMenu">
 	<div>
 		<div>
 			<a class="navbar-brand" href="#" style="padding: 0px"> <img
@@ -17,6 +16,7 @@
 	</div>
 
 	<div class="collapse navbar-collapse" id="navbarsExampleDefault">
+
     <ul class="navbar-nav mr-auto">
       <!-- li class="nav-item active">
         <a class="nav-link" [routerLink]="['/models/create']" routerLinkActive="active"
@@ -27,16 +27,19 @@
            [routerLinkActiveOptions]="{ exact: true }">Models <span class="sr-only">(current)</span></a>
       </li -->
       <li class="nav-item active">
-        <a class="nav-link" [routerLink]="['/trainings/list']" routerLinkActive="active"
-           [routerLinkActiveOptions]="{ exact: true }">Trainings <span class="sr-only">(current)</span></a>
+        <a id="training_nav" class="nav-link" [routerLink]="['/trainings/list']" routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }" style="color:#000000; font-size:140%;"> Trainings <span class="sr-only">(current)</span></a>
+      </li>
+			<li class="nav-item">
+        <a id="publication_nav" class="nav-link" href="https://github.com/IBM/FfDL/wiki/FfDL-Related-Links-and-Publications" style="color:#000000; font-size:140%"> Publications </a>
       </li>
       <li class="nav-item" *ngIf="isAdmin()">
-        <a class="nav-link" [routerLink]="['/analytics/main']" routerLinkActive="active"
-           [routerLinkActiveOptions]="{ exact: true }">Analytics</a>
+        <a id="analytics_nav" class="nav-link" [routerLink]="['/analytics/main']" routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }" style="color:#000000; font-size:140%"> Analytics </a>
       </li>
     </ul>
     <div class="navbar-nav">
-      <a class="nav-link" [routerLink]="" (click)="logout()">Logout</a>
+      <a class="nav-link" [routerLink]="" (click)="logout()" style="color:#000000; font-size:140%">Logout</a>
     </div>
     <!-- <form class="form-inline mt-2 mt-md-0">
       <input class="form-control mr-sm-2" type="text" name="trainingId" [(ngModel)]="trainingId" placeholder="Training ID">

@@ -22,13 +22,16 @@ import {CookieService, CookieOptions} from "ngx-cookie";
 
 @Component({
   selector: 'login',
-  templateUrl: './login.component.html'
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css'],
 })
 export class LoginComponent implements OnInit, OnDestroy {
 
   @Input() endpoint: string;
   @Input() username: string;
   @Input() password: string;
+  @Input() noend:    string;
+  @Input() nouser:   string;
 
   private cookieService: CookieService;
   private cookieOptions: CookieOptions;
@@ -65,7 +68,31 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   login() {
-    this.authService.login(this.endpoint, this.username, this.password);
+
+    var attemptLogin = true
+    this.noend = ""
+    this.nouser = ""
+    if(!this.endpoint) {
+      this.noend = "Endpoint missing"
+      attemptLogin = false
+    }
+    if(!this.username){
+      this.nouser = "Username missing"
+      attemptLogin= false
+    }
+    if(attemptLogin){
+      this.authService.login(this.endpoint, this.username, this.password);
+    }
+  }
+
+  noEndpoint(){
+
+    return this.noend
+  }
+
+  noUsername(){
+
+    return this.nouser
   }
 
   ngOnDestroy() {}
