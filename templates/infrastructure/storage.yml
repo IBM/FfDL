@@ -52,7 +52,11 @@ spec:
     spec:
       containers:
         - name: storage
+{{ if eq .Values.arch "ppc64le" }}
+          image: {{.Values.docker.registry_ppc64le}}/localstack:0.8.6
+{{ else }}
           image: localstack/localstack:0.8.6
+{{ end }}
 {{ if .Values.docker.pullPolicy }}
           imagePullPolicy: {{.Values.docker.pullPolicy}}
 {{ end }}

@@ -18,7 +18,11 @@ spec:
     spec:
       containers:
       - name: alertmanager
+{{ if eq .Values.arch "ppc64le" }}
+        image: ibmcom/alertmanager-ppc64le:v0.8.0
+{{ else }}
         image: quay.io/prometheus/alertmanager:v0.8.0
+{{ end }}
         args:
           - -config.file=/etc/prometheus/alertmanager.yml
         ports:

@@ -15,13 +15,21 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
         - name: mongo
+{{ if eq .Values.arch "ppc64le" }}
+          image: ibmcom/mongodb-ppc64le:3.6.0
+{{ else }}
           image: mongo:3.0
+{{ end }}
+
 {{ if .Values.docker.pullPolicy }}
           imagePullPolicy: {{.Values.docker.pullPolicy}}
 {{ end }}
           command:
             - mongod
             - "--smallfiles"
+{{ if eq .Values.arch "ppc64le" }}
+            - "--bind_ip_all"
+{{ end }}
           ports:
             - containerPort: 27017
           resources:

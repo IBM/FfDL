@@ -18,7 +18,11 @@ spec:
     spec:
       containers:
       - name: prometheus
+{{ if eq .Values.arch "ppc64le" }}
+        image: ibmcom/prometheus-ppc64le:v1.7.1
+{{ else }}
         image: quay.io/prometheus/prometheus:v1.7.1
+{{ end }}
         args:
           - '-storage.local.retention=72h'
           - '-storage.local.memory-chunks=500000'
@@ -47,7 +51,11 @@ spec:
             timeoutSeconds: 5
 
       - name: grafana
+{{ if eq .Values.arch "ppc64le" }}
+        image: ibmcom/grafana-ppc64le:4.6.3
+{{ else }}
         image: grafana/grafana
+{{ end }}
         env:
           - name: GF_AUTH_BASIC_ENABLED
             value: "true"

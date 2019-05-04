@@ -19,7 +19,12 @@ DOCKER_NAMESPACE ?= ffdl
 WHOAMI ?= $(shell whoami)
 IMAGE_TAG ?= user-$(WHOAMI)
 
-IMAGE_NAME?=${DOCKER_REPO}/${DOCKER_NAMESPACE}/tensorboard_extract:${IMAGE_TAG}
+TARGET ?= $(shell uname -m)
+ARCHS ?= x86_64 ppc64le
+
+IMAGE_NAME_TARGET = -$(TARGET)
+
+IMAGE_NAME ?= ${DOCKER_REPO}/${DOCKER_NAMESPACE}/tensorboard_extract${IMAGE_NAME_TARGET}:${IMAGE_TAG}
 
 DOCKER_OPTIONS ?=
 
@@ -27,11 +32,11 @@ all: build push
 
 build:
 	cp -r ../training_data_service_client .
-	docker build -q ${DOCKER_OPTIONS} -t ${DOCKER_REPO}/${DOCKER_NAMESPACE}/tensorboard_extract:${IMAGE_TAG} -f Dockerfile .
+	docker build -q ${DOCKER_OPTIONS} -t ${IMAGE_NAME} --build-arg ARCH=$(TARGET) -f Dockerfile .
 	rm -r training_data_service_client
 
 push:
-	docker push ${REPO}/tensorboard_extract:${IMAGE_TAG}
+	docker push ${IMAGE_NAME}
 
 imagename:
 	echo ${IMAGE_NAME}

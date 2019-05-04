@@ -15,10 +15,17 @@
 #
 
 
-REPO=docker.io/ffdl
+REPO?=docker.io/ffdl
 IMAGE_NAME=dlaas-service-base
-IMAGE_TAG_ALPINE?=alpine3.3
+IMAGE_TAG_ALPINE?=alpine3.7
 IMAGE_TAG_UBUNTU?=ubuntu16.04
+
+TARGET ?= $(shell uname -m)
+ARCHS ?= x86_64 ppc64le
+
+IMAGE_NAME_TARGET = -$(TARGET)
+
+SERVICE_BASE_IMAGE_NAME = ${IMAGE_NAME}${IMAGE_NAME_TARGET}
 
 all: build push
 
@@ -30,17 +37,17 @@ build: build-deps build-ubuntu build-alpine
 push: push-alpine push-ubuntu
 
 build-alpine:
-	docker build -q -f Dockerfile.alpine -t ${IMAGE_NAME}:${IMAGE_TAG_ALPINE} .
-	docker tag ${IMAGE_NAME}:${IMAGE_TAG_ALPINE} ${REPO}/${IMAGE_NAME}:${IMAGE_TAG_ALPINE}
+	docker build -q -f Dockerfile.alpine --build-arg ARCH=$(TARGET) -t ${IMAGE_NAME}:${IMAGE_TAG_ALPINE} .
+	docker tag ${IMAGE_NAME}:${IMAGE_TAG_ALPINE} ${REPO}/${SERVICE_BASE_IMAGE_NAME}:${IMAGE_TAG_ALPINE}
 
 build-ubuntu:
-	docker build -q -f Dockerfile.ubuntu -t ${IMAGE_NAME}:${IMAGE_TAG_UBUNTU} .
-	docker tag ${IMAGE_NAME}:${IMAGE_TAG_UBUNTU} ${REPO}/${IMAGE_NAME}:${IMAGE_TAG_UBUNTU}
+	docker build -q -f Dockerfile.ubuntu --build-arg ARCH=$(TARGET) -t ${IMAGE_NAME}:${IMAGE_TAG_UBUNTU} .
+	docker tag ${IMAGE_NAME}:${IMAGE_TAG_UBUNTU} ${REPO}/${SERVICE_BASE_IMAGE_NAME}:${IMAGE_TAG_UBUNTU}
 
 push-alpine:
-	docker push ${REPO}/${IMAGE_NAME}:${IMAGE_TAG_ALPINE}
+	docker push ${REPO}/${SERVICE_BASE_IMAGE_NAME}:${IMAGE_TAG_ALPINE}
 
 push-ubuntu:
-	docker push ${REPO}/${IMAGE_NAME}:${IMAGE_TAG_UBUNTU}
+	docker push ${REPO}/${SERVICE_BASE_IMAGE_NAME}:${IMAGE_TAG_UBUNTU}
 
 .PHONY: build push clean

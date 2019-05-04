@@ -39,7 +39,11 @@ spec:
     - etcd0=http://etcd0:2380
     - --initial-cluster-state
     - new
+{{ if eq .Values.arch "ppc64le" }}
+    image: quay.io/coreos/etcd:v3.3.8-ppc64le
+{{ else }}
     image: quay.io/coreos/etcd:latest
+{{ end }}
     imagePullPolicy: IfNotPresent
     name: etcd0
     ports:

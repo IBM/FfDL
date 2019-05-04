@@ -21,7 +21,12 @@ GRPC_GIT=git@github.ibm.com:deep-learning-platform/grpc-parameter-server.git
 WHOAMI ?= $(shell whoami)
 IMAGE_TAG ?= user-$(WHOAMI)
 
-IMAGE_NAME?=${DOCKER_REPO}/${DOCKER_NAMESPACE}/emetrics_file_extractor:${IMAGE_TAG}
+TARGET ?= $(shell uname -m)
+ARCHS ?= x86_64 ppc64le
+
+IMAGE_NAME_TARGET := -$(TARGET)
+
+IMAGE_NAME?=${DOCKER_REPO}/${DOCKER_NAMESPACE}/emetrics_file_extractor${IMAGE_NAME_TARGET}:${IMAGE_TAG}
 
 DOCKER_OPTIONS ?=
 
@@ -30,7 +35,7 @@ all: build push
 build:
 	echo "Building ${IMAGE_NAME}"
 	cp -r ../training_data_service_client .
-	docker build -q ${DOCKER_OPTIONS} -t ${IMAGE_NAME} -f Dockerfile .
+	docker build -q ${DOCKER_OPTIONS} -t ${IMAGE_NAME} --build-arg ARCH=$(TARGET) -f Dockerfile .
 	rm -r training_data_service_client
 	echo "Success building ${IMAGE_NAME}"
 

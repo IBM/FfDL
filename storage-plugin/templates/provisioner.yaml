@@ -20,7 +20,11 @@ spec:
       serviceAccountName: ibmcloud-object-storage-plugin
       containers:
         - name: {{ .Chart.Name }}-container
+{{ if eq .Values.arch "ppc64le" }}
+          image: "{{ .Values.image.repository_ppc64le }}:{{ .Values.image.Build }}"
+{{ else }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.Build }}"
+{{ end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - "-provisioner=ibm.io/ibmc-s3fs"

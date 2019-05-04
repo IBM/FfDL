@@ -82,7 +82,7 @@ const (
 	storeResultsMilliCPU=20
 	storeResultsMemInMB=100
 	loadModelMilliCPU=20
-	loadModelMemInMB=50
+	loadModelMemInMB=100
 	loadTrainingDataMilliCPU=20
 	// FfDL Change: parameterized
 	//loadTrainingDataMemInMB=100
