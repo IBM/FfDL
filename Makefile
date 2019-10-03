@@ -36,6 +36,10 @@ CI_MINIKUBE_VERSION ?= v0.25.1
 CI_KUBECTL_VERSION ?= v1.9.4
 NAMESPACE ?= default
 
+TRAVIS_IMAGE_VERSION ?= v0.1
+TEST_IMAGES = $(addprefix $(DOCKER_NAMESPACE)/, $(TEST_IMAGES_SUFFIX))
+TEST_IMAGES_SUFFIX = $(shell cat bin/ffdl-microservices.txt)
+
 AWS_ACCESS_KEY_ID ?= test
 AWS_SECRET_ACCESS_KEY ?= test
 AWS_URL ?= http:\/\/s3\.default\.svc\.cluster\.local
@@ -643,6 +647,18 @@ test-s3:
 	export AWS_DEFAULT_REGION=us-west-1; \
 	s3cmd="aws --endpoint-url=${AWS_URL} s3" ; \
 	$$s3cmd ls
+
+pull-prebuilt-images:  ## Pull FfDL images from dockerhub
+pull-prebuilt-images: $(addprefix pull-, $(TEST_IMAGES))
+
+$(addprefix pull-, $(TEST_IMAGES)): pull-%: %
+	@TRAVIS_IMAGE=$< make .pull-prebuilt-images
+
+# Prebuilt images make targets
+$(TEST_IMAGES): ;
+
+.pull-prebuilt-images:
+	docker pull $(TRAVIS_IMAGE):$(TRAVIS_IMAGE_VERSION)
 
 
 .build-service:
