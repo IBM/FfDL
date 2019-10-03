@@ -29,7 +29,7 @@ To know more about the architectural details, please read the [design document](
 * If you are getting started and want to setup your own FfDL deployment, please follow the steps [below](#1-quick-start).
 * If you have a FfDL deployment up and running, you can jump to [FfDL User Guide](docs/user-guide.md) to use FfDL for training your deep learning models.
 * If you want to leverage Jupyter notebooks to launch training on your FfDL cluster, please follow [these instructions](etc/notebooks/art)
-* If you have FfDL confiugured to use GPUs, and want to train using GPUs, follow steps [here](docs/gpu-guide.md)
+* If you have FfDL configured to use GPUs, and want to train using GPUs, follow steps [here](docs/gpu-guide.md)
 * To invoke [Adversarial Robustness Toolbox](https://github.com/IBM/adversarial-robustness-toolbox) to find vulnerabilities in your models, follow the [instructions here](etc/notebooks/art)
 * To deploy your trained models, follow [the integration guide with Seldon](community/FfDL-Seldon)
 * If you have used FfDL to train your models, and want to use a GPU enabled public cloud hosted service for further training and serving, please follow instructions [here](etc/converter/ffdl-wml.md) to train and serve your models using [Watson Studio Deep Learning](https://www.ibm.com/cloud/deep-learning) service.

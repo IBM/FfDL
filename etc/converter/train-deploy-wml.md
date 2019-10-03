@@ -6,9 +6,7 @@ Install [IBM Cloud CLI](https://console.bluemix.net/docs/cli/reference/bluemix_c
 
 ``` shell
 # Install Machine Learning Plugin using the IBM Cloud CLI
-bx plugin repo-add Bluemix https://plugins.ng.bluemix.net
-bx plugin install machine-learning -r bluemix
-bx target -o ORG -s SPACE
+ibmcloud plugin install machine-learning
 ```
 
 # Steps
@@ -17,7 +15,7 @@ bx target -o ORG -s SPACE
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
   - [1. Provision your WML instance](#1-provision-your-wml-instance)
-    - [1.1 Create an instance of WML service and associated key using BX command line](#11-create-an-instance-of-wml-service-and-associated-key-using-bx-command-line)
+    - [1.1 Create an instance of WML service and associated key using ibmcloud command line](#11-create-an-instance-of-wml-service-and-associated-key-using-ibmcloud-command-line)
     - [1.2 Get your service credentials](#12-get-your-service-credentials)
     - [1.3 Set the Machine Learning plugin it up with your creds obtained in step 2](#13-set-the-machine-learning-plugin-it-up-with-your-creds-obtained-in-step-2)
     - [1.4 Test your WML instance](#14-test-your-wml-instance)
@@ -34,16 +32,16 @@ bx target -o ORG -s SPACE
 ## 1. Provision your WML instance
 
 
-### 1.1 Create an instance of WML service and associated key using BX command line
+### 1.1 Create an instance of WML service and associated key using ibmcloud command line
 
 ``` shell
-bx cf create-service pm-20 lite watson-machine-learning
-bx cf create-service-key watson-machine-learning WML-Key
+ibmcloud resource service-instance-create watson-machine-learning pm-20 lite us-south
+ibmcloud resource service-key-create WML-Key Writer --instance-name watson-machine-learning
 ```
 
 ### 1.2 Get your service credentials
 ``` shell
-bx cf service-key watson-machine-learning WML-Key
+ibmcloud resource service-key WML-Key
 ```
 
 ### 1.3 Set the Machine Learning plugin it up with your creds obtained in step 1.2
@@ -57,7 +55,7 @@ export ML_ENV=<url from credentials>
 ### 1.4 Test your WML instance
 
 ``` shell
-bx ml list training-runs
+ibmcloud ml list training-runs
 # Fetching the list of training runs ...
 # SI No   Name   guid   status   framework   version   submitted-at   
 #
@@ -76,7 +74,7 @@ zip sample-job.zip <model definition file1> <file2> ...
 
 Submit Training Run
 ``` shell
-bx ml train sample-job.zip manifest-WML.yaml
+ibmcloud ml train sample-job.zip manifest-WML.yaml
 ```
 
 ### 2.2 Monitor
@@ -84,8 +82,8 @@ bx ml train sample-job.zip manifest-WML.yaml
 Monitor Training Run
 
 ``` shell
-bx ml list training-runs
-bx ml show training-runs <training-guid>
+ibmcloud ml list training-runs
+ibmcloud ml show training-runs <training-guid>
 ```
 Sample Output
 ``` shell
@@ -108,17 +106,17 @@ Show training-runs details successful
 To continously monitor the logs logs of Training Run
 
 ``` shell
-bx ml monitor training-runs <training-guid>
+ibmcloud ml monitor training-runs <training-guid>
 ```
 
 When a training run has completed successfully (or failed) all files written to $RESULT_DIR and the logs from the run should be written to the Cloud Object Storage bucket specified in the setting training_results_reference within the training manifest file, under a folder with the same name as the model id.
 
 ### 2.3 Save the Trained Model
 
-Once a training run has completed successfully, the trained model can be permanently stored into the repository from from where it can be later deployed for scoring. To do this use the command bx ml store training-runs <model-id>:
+Once a training run has completed successfully, the trained model can be permanently stored into the repository from from where it can be later deployed for scoring. To do this use the command ibmcloud ml store training-runs <model-id>:
 
 ``` shell
-bx ml store training-runs training-DOl4q2LkR
+ibmcloud ml store training-runs training-DOl4q2LkR
 ```
 Sample Output:
 
@@ -151,7 +149,7 @@ aws --endpoint-url=<ibm-cos-endpoint-url> --profile ibm_cos s3 cp s3://test_data
 
 
 ``` shell
-bx ml deploy a8379aaa-ea31-4c22-824d-89a01315dd6d "my_deployment"
+ibmcloud ml deploy a8379aaa-ea31-4c22-824d-89a01315dd6d "my_deployment"
 
 Sample Output:
 
@@ -178,7 +176,7 @@ To score the model, the scoring_payload.json file must use the following format:
 To score, run the following command, which passes the scoring_payload.json file to the scoring processor:
 
 ``` shell
-bx ml score scoring_payload.json
+ibmcloud ml score scoring_payload.json
 ```
 
 Sample Output:

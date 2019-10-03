@@ -1,3 +1,5 @@
+# SHELL = bash -xv
+
 TMPDIR ?= /tmp
 UNAME = $(shell uname)
 UNAME_SHORT = $(shell if [ "$(UNAME)" = "Darwin" ]; then echo 'osx'; else echo 'linux'; fi)
@@ -122,7 +124,7 @@ deploy-plugin:
 	@echo Deploying services to Kubernetes. This may take a while.
 	@if ! helm list > /dev/null 2>&1; then \
 		echo 'Installing helm/tiller'; \
-		helm init > /dev/null 2>&1; \
+		helm init; \
 		sleep 5; \
 		echo "Waiting tiller to be ready"; \
 		while ! (kubectl get pods --all-namespaces | grep tiller-deploy | grep '1/1' > /dev/null); \
@@ -213,6 +215,7 @@ quickstart-deploy:
 	@echo System status:
 	@make status
 
+
 test-job-submit:      ## Submit test training job
 	@# make sure the buckets with training data exist
 	@echo Downloading Docker images and test training data. This may take a while.
@@ -221,7 +224,7 @@ test-job-submit:      ## Submit test training job
 			eval $(minikube docker-env); docker images | grep tensorflow | grep latest > /dev/null || docker pull tensorflow/tensorflow > /dev/null; \
 		fi
 	@node_ip=$$(make --no-print-directory kubernetes-ip); \
-                s3_ip=$$(make --no-print-directory kubernetes-ip); \
+        s3_ip=$$(kubectl get pods | grep restapi- | awk '{print $1}' | xargs -I '{}' kubectl get pod '{}' -o jsonpath='{.status.hostIP}'); \
 		s3_port=$$(kubectl get service s3 -o jsonpath='{.spec.ports[0].nodePort}'); \
 		s3_url=http://$$s3_ip:$$s3_port; \
 		s3_raw_url=$$s3_ip:$$s3_port; \
@@ -232,7 +235,7 @@ test-job-submit:      ## Submit test training job
 		export DLAAS_URL=http://$$node_ip:$$restapi_port; export DLAAS_USERNAME=$(TEST_USER); export DLAAS_PASSWORD=test; \
 		echo Executing in etc/examples/$(TEST_SAMPLE): DLAAS_URL=$$DLAAS_URL DLAAS_USERNAME=$$DLAAS_USERNAME DLAAS_PASSWORD=test $(CLI_CMD) train manifest.yml . ; \
 		cp etc/examples/tf-model/manifest.yml etc/examples/tf-model/manifest_testrun.yml ; \
-		sed -i '' -e "s/s3.default.svc.cluster.local/$$s3_raw_url/g" etc/examples/tf-model/manifest_testrun.yml ; \
+		sed -i '' -e "s/s3.default.svc.cluster.local/$$(kubectl get pods | grep restapi- | awk '{print $$1}' | xargs -I '{}' kubectl get pod '{}' -o jsonpath='{.status.hostIP}'):$$s3_port/g" etc/examples/tf-model/manifest_testrun.yml ; \
 		cat etc/examples/tf-model/manifest_testrun.yml ; \
 		(cd etc/examples/$(TEST_SAMPLE); pwd; $(CLI_CMD) train manifest_testrun.yml .); \
 		rm -f etc/examples/tf-model/manifest_testrun.yml ; \
