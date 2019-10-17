@@ -33,7 +33,7 @@ helm init
     --set namespace=$NAMESPACE \
     --set shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS \
     --set localstorage=false \ # set to true if your cluster doesn't have any storage class
-    --set prometheus.deploy=true \ # set to false if you don't need prometheus logging for ffdl
+    --set prometheus.deploy=false \ # set to true if you need prometheus logging for ffdl
     --wait
   # Deploy all the core ffdl services.
   helm install ffdl-core --name ffdl-core --repo https://ibm.github.io/FfDL/helm-charts \
@@ -54,14 +54,15 @@ helm init
 
   ./bin/s3_driver.sh # Copy the s3 drivers to each of the DIND node
   helm install ibmcloud-object-storage-plugin --name ibmcloud-object-storage-plugin --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,cloud=false
-  helm install ffdl-helper --name ffdl-helper --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS,localstorage=true --wait
-  helm install ffdl-core --name ffdl-core --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS --wait
+  helm install ffdl-helper --name ffdl-helper --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS,localstorage=true,prometheus.deploy=false
+  helm install ffdl-core --name ffdl-core --repo https://ibm.github.io/FfDL/helm-charts --set namespace=$NAMESPACE,lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS
 
   # Forward the necessary microservices from the DIND cluster to your localhost.
   ./bin/dind-port-forward.sh
   ```
 
 Congratulation, FfDL is now running on your Cluster. Now you can go to [Step 2](#2-detailed-testing-instructions) to run some sample jobs or go to the [user guide](docs/user-guide.md) to learn about how to run and deploy your custom models.
+
 
 ## 2. Detailed Testing Instructions
 
@@ -110,6 +111,11 @@ restapi_port=$(kubectl get service ffdl-restapi -o jsonpath='{.spec.ports[0].nod
 export DLAAS_URL=http://$PUBLIC_IP:$restapi_port; export DLAAS_USERNAME=test-user; export DLAAS_PASSWORD=test;
 ```
 
+* With the recent changes in DIND, we need update the `node_ip` to its Host IP before proceeding to the below steps.
+  ```shell
+  export node_ip=$(kubectl get pods | grep restapi- | awk '{print $1}' | xargs -I '{}' kubectl get pod '{}' -o jsonpath='{.status.hostIP}')
+  ```
+
 Replace the default object storage path with your s3_url. You can skip this step if your already modified the object storage path with your s3_url.
 ```shell
 if [ "$(uname)" = "Darwin" ]; then
@@ -127,7 +133,7 @@ $CLI_CMD train etc/examples/tf-model/manifest.yml etc/examples/tf-model
 
 Congratulations, you had submitted your first job on FfDL. You can check your FfDL status either from the FfDL UI or simply run `$CLI_CMD list`. To learn more about your job execution results, you can simply run `$CLI_CMD logs <MODEL_ID>`
 
-> You can learn about how to create your own model definition files and `manifest.yaml` at [user guild](docs/user-guide.md#2-create-new-models-with-ffdl).
+> You can learn about how to create your own model definition files and `manifest.yaml` at [user guild](user-guide.md#2-create-new-models-with-ffdl).
 
 5. If you want to run your job via the FfDL UI, simply run the below command to create your model zip file.
 
@@ -149,7 +155,7 @@ In this section we will demonstrate how to run a TensorFlow job with training da
 
 1. Provision an S3 based Object Storage from your Cloud provider. Take note of your Authentication Endpoints, Access Key ID and Secret.
 
-> For IBM Cloud, you can provision an Object Storage from [IBM Cloud Dashboard](https://console.bluemix.net/catalog/infrastructure/cloud-object-storage?taxonomyNavigation=apps) or from [SoftLayer Portal](https://control.softlayer.com/storage/objectstorage).
+> For IBM Cloud, you can provision an Object Storage from [IBM Cloud Dashboard](https://console.bluemix.net/catalog/services/cloud-object-storage) or from [SoftLayer Portal](https://control.softlayer.com/storage/objectstorage).
 
 2. Setup your S3 command with the Object Storage credentials you just obtained.
 
@@ -181,18 +187,25 @@ do
 done
 ```
 
-5. Next, we need to modify our example job to use your Cloud Object Storage using the following sed commands.
+5. Next, we need to modify our example job to use your Cloud Object Storage manually or using the following sed commands.
+
+* `data_stores.training_data.container`: training data bucket name
+* `data_stores.training_results.container`: training result bucket name
+* `data_stores.connection.auth_url`: Object Storage access endpoint
+* `data_stores.connection.user_name`: Object Storage access key ID
+* `data_stores.connection.password`: Object Storage secret access key
+
 ```shell
 if [ "$(uname)" = "Darwin" ]; then
   sed -i '' s/tf_training_data/$trainingDataBucket/ etc/examples/tf-model/manifest.yml
   sed -i '' s/tf_trained_model/$trainingResultBucket/ etc/examples/tf-model/manifest.yml
-  sed -i '' s/s3.default.svc.cluster.local/$node_ip:$s3_port/ etc/examples/tf-model/manifest.yml
+  sed -i '' s/s3.default.svc.cluster.local/$s3_url/ etc/examples/tf-model/manifest.yml
   sed -i '' s/user_name: test/user_name: $AWS_ACCESS_KEY_ID/ etc/examples/tf-model/manifest.yml
   sed -i '' s/password: test/password: $AWS_SECRET_ACCESS_KEY/ etc/examples/tf-model/manifest.yml
 else
   sed -i s/tf_training_data/$trainingDataBucket/ etc/examples/tf-model/manifest.yml
   sed -i s/tf_trained_model/$trainingResultBucket/ etc/examples/tf-model/manifest.yml
-  sed -i s/s3.default.svc.cluster.local/$node_ip:$s3_port/ etc/examples/tf-model/manifest.yml
+  sed -i s/s3.default.svc.cluster.local/$s3_url/ etc/examples/tf-model/manifest.yml
   sed -i s/user_name: test/user_name: $AWS_ACCESS_KEY_ID/ etc/examples/tf-model/manifest.yml
   sed -i s/password: test/password: $AWS_SECRET_ACCESS_KEY/ etc/examples/tf-model/manifest.yml
 fi
