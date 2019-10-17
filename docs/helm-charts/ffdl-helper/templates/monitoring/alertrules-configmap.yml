@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alertrules
+  namespace: {{.Values.namespace}}
+data:
+  alert.rules.yml: |-
+
+    groups:
+    - name: alert.rules
+      rules:
+      - alert: ControllerJobFailures
+        expr: increase(controller_training_failures[2m]) >= 1
+        labels:
+          criticality: S2
+        annotations:
+          description: Controller seems to have a rate > 1 of failed learnings over last
+            2 mins
+          summary: Controller indicates failing learnings
+      - alert: ControllerETCDFailures
+        expr: increase(controller_etcd_failures{attempt="4"}[2m]) >= 1
+        labels:
+          criticality: S2
+        annotations:
+          description: Controller seems to have a rate > 1 in connecting to etcd over
+            last 2 mins after 5 attempts
+          summary: Controller indicates failure to connect to etcd
+      - alert: SwiftObjectStoreFailures
+        expr: increase(databroker_upload_failures{attempt="4",store="swift"}[2m]) > 1
+        labels:
+          criticality: S2
+        annotations:
+          description: Databroker has had more than 1 failures after 5 attempts while
+            uploading/downloading data
+          summary: Swift upload/download failures
+      - alert: S3ObjectStoreFailures
+        expr: increase(databroker_upload_failures{attempt="4",store="s3"}[2m]) > 1
+        labels:
+          criticality: S2
+        annotations:
+          description: Databroker has had more than 1 failures after 5 attempts while
+            uploading/downloading data
+          summary: S3 upload/download failures
+      - alert: LCMRestarts
+        expr: increase(lcm_restart_total[2m]) > 1
+        labels:
+          criticality: S2
+        annotations:
+          description: LCM has restarted more than 1 in last 2mins because of failures
+          summary: LCM restarts because of failures
+      - alert: LCMTrainingsFailure
+        expr: sum by(reason, instance, job) (increase(lcm_trainings_launch_failed[2m]))
+          > 1
+        labels:
+          criticality: S2
+        annotations:
+          description: LCM failed to launch more than 1 trainings for last 2 mins because
+            of {{`{{$labels.reason}}`}}
+          summary: LCM failed to launch trainging because of {{`{{$labels.reason}}`}}
+      - alert: JobMonitorConnectivityFailure
+        expr: sum by(reason, instance, job) (increase(jobmonitor_connectivity_failures[2m]))
+          > 1
+        labels:
+          criticality: S2
+        annotations:
+          description: JobMonitor failed to launch more than 1 trainings for last 2 mins
+            because of {{`{{$labels.reason}}`}}
+          summary: JobMonitor failed to launch training because of {{`{{$labels.reason}}`}}
+      - alert: JobMonitorK8sAPIFailure
+        expr: sum by(reason, instance, job) (increase(jobmonitor_k8s_failures[2m])) >
+          1
+        labels:
+          criticality: S2
+        annotations:
+          description: JobMonitor failed to launch more than 1 trainings for last 2 mins
+            because of {{`{{$labels.reason}}`}}
+          summary: JobMonitor failed to launch training because of {{`{{$labels.reason}}`}}
+      - alert: TrainerRatelimitingInvoked
+        expr: increase(trainer_ratelimitinvocations_total[2m]) > 5
+        labels:
+          criticality: S2
+        annotations:
+          description: Trainer is running into rate limiting issues
+          summary: Invoked rate limiting on trainer for more than 5 times in a 2 minute
+            window

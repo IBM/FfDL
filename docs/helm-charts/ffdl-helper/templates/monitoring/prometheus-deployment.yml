@@ -18,12 +18,9 @@ spec:
     spec:
       containers:
       - name: prometheus
-        image: quay.io/prometheus/prometheus:v1.7.1
+        image: quay.io/prometheus/prometheus:v2.3.2
         args:
-          - '-storage.local.retention=72h'
-          - '-storage.local.memory-chunks=500000'
-          - '-config.file=/etc/prometheus/prometheus.yml'
-          - '-alertmanager.url=http://alertmanager:{{.Values.prometheus.alertmanager_port}}'
+          - '--config.file=/etc/prometheus/prometheus.yml'
         ports:
         - name: web
           containerPort: {{.Values.prometheus.port}}

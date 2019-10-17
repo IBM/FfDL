@@ -29,9 +29,6 @@ spec:
           configMap:
             name: learner-config
 {{ if (eq .Values.has_static_volumes true) }}
-        - name: static-volumes-config-volume
-          configMap:
-            name: static-volumes
         - name: static-volumes-config-volume-v2
           configMap:
             name: static-volumes-v2
@@ -43,10 +40,8 @@ spec:
               key: DLAAS_ETCD_CERT,
               path: etcd/etcd.cert
             }]
-{{ if .Values.k8s_1dot8_or_above }}
       serviceAccount: {{.Values.docker.image_prefix}}lcm
       serviceAccountName: {{.Values.docker.image_prefix}}lcm
-{{ end }}
       containers:
       - name: ffdl-lcm-container
         image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}/{{.Values.docker.image_prefix}}lcm:{{.Values.lcm.version}}
@@ -63,8 +58,6 @@ spec:
         - mountPath: /etc/learner-config
           name: learner-config-volume
 {{ if (eq .Values.has_static_volumes true) }}
-        - mountPath: /etc/static-volumes
-          name: static-volumes-config-volume
         - mountPath: /etc/static-volumes-v2
           name: static-volumes-config-volume-v2
 {{ end }}

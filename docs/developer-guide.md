@@ -32,6 +32,7 @@ export DOCKER_NAMESPACE=<NAMESPACE_ON_IBM_CLOUD> # Container Registry Namespace
 export DOCKER_PULL_POLICY=Always # Keep IfNotPresent if not pushing to registry, e.g. for Minikube
 export VM_TYPE=none
 export HAS_STATIC_VOLUMES=True
+export IMAGE_TAG=user-$(whoami)
 export NAMESPACE=default # If your namespace does not exist yet, please create the namespace `kubectl create namespace $NAMESPACE` before proceeding to the next step
 ```
 
@@ -52,9 +53,25 @@ Make sure `kubectl` points to the right target context/namespace, then deploy th
 environment (using `helm`):
 ```shell
 kubectl config set-context $(kubectl config current-context) --namespace=$NAMESPACE # Set your current-context to the FfDL namespace
-make create-volumes # Create static volumes for sharing across pods
-make deploy-plugin # Deploy S3 storage plugin
-make deploy # Deploy FfDL
+
+# Configure s3 driver on the cluster
+helm install docs/helm-charts/ibmcloud-object-storage-plugin --name ibmcloud-object-storage-plugin --set namespace=$NAMESPACE
+# Deploy all the helper micro-services for ffdl
+helm install docs/helm-charts/ffdl-helper --name ffdl-helper \
+--set namespace=$NAMESPACE \
+--set shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS \
+--set localstorage=false \ # set to true if your cluster doesn't have any storage class
+--set prometheus.deploy=true \ # set to false if you don't need prometheus logging for ffdl
+--wait
+# Deploy all the core ffdl services.
+helm install docs/helm-charts/ffdl-core --name ffdl-core \
+--set namespace=$NAMESPACE \
+--set lcm.shared_volume_storage_class=$SHARED_VOLUME_STORAGE_CLASS \
+--set docker.registry=$DOCKER_REPO \
+--set docker.namespace=$DOCKER_NAMESPACE \
+--set docker.pullPolicy=$DOCKER_PULL_POLICY \
+--set trainer.version=${IMAGE_TAG},restapi.version=${IMAGE_TAG},lcm.version=${IMAGE_TAG},trainingdata.version=${IMAGE_TAG},databroker.tag=${IMAGE_TAG},databroker.version=${IMAGE_TAG},webui.version=${IMAGE_TAG} \
+--wait
 ```
 
 ## Troubleshooting
@@ -86,10 +103,4 @@ Please refer to the [gpu-guide.md](gpu-guide.md) for more details.
 
 ## Enable custom learner images with development build
 
-Please add the following section under [trainer/trainer/frameworks.go](../trainer/trainer/frameworks.go#L42) and rebuild the trainer image to enable custom learner images from any users.
-
-``` go
-if fwName == "custom" {
-  return true, ""
-}
-```
+Custom learner is enabled by default. To use it, simply put `custom` as your framework name and set your custom learner image path as the framework version.

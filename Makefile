@@ -20,7 +20,7 @@ WHOAMI ?= $(shell whoami)
 IMAGE_TAG ?= user-$(WHOAMI)
 TEST_SAMPLE ?= tf-model
 # VM_TYPE is "vagrant", "minikube" or "none"
-VM_TYPE ?= minikube
+VM_TYPE ?= none
 HAS_STATIC_VOLUMES?=false
 TEST_USER = test-user
 SET_LOCAL_ROUTES ?= 0

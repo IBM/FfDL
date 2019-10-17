@@ -8,12 +8,16 @@ data:
     global:
       scrape_interval: 15s
     rule_files:
-    - '/etc/prometheus-rules/alert.rules'
+    - '/etc/prometheus-rules/alert.rules.yml'
+    alerting:
+      alertmanagers:
+      - static_configs:
+        - targets: ['alertmanager:{{.Values.prometheus.alertmanager_port}}']
     scrape_configs:
-    # etcd is living outside of our cluster and we configure
-    # it directly.
+      # etcd is living outside of our cluster and we configure
+      # it directly.
     - job_name: 'etcd_compose'
-      scheme: https
+      scheme: http
       tls_config:
         insecure_skip_verify: true
       static_configs:

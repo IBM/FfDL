@@ -1,6 +1,5 @@
 namespace: default
 env: dev
-k8s_1dot8_or_above: true
 has_static_volumes: true
 services:
   expose_node_port: true
@@ -50,15 +49,6 @@ webui:
   port: 0
   cpus: 50m
   memory: 64Mi
-mongo:
-  address: localhost:27017
-  username: test
-  password: test
-etcd:
-  address: http://etcd:2379
-  username: test
-  password: test
-  prefix: test
 objectstore:
   type: s3_datastore
   username: test
@@ -68,14 +58,15 @@ elasticsearch:
   username: test
   password: test
   scheme: http
-prometheus:
-  deploy: true
-  etcd_urls: localhost:2379
-  cluster_name: FfDL
-  port: 9090
-  alertmanager_port: 9093
-grafana:
-  port: 3000
+mongo:
+  address: localhost:27017
+  username: test
+  password: test
+etcd:
+  address: http://etcd:2379
+  username: test
+  password: test
+  prefix: test
 log:
   level: INFO
 # Default RSA Creds for Horovod

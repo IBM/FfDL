@@ -5,6 +5,5 @@ image:
   Build: v0.1
   pluginBuild: v0.1
   pullPolicy: IfNotPresent
-dind: false
 cloud: true
 namespace: default

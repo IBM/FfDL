@@ -18,9 +18,9 @@ spec:
     spec:
       containers:
       - name: alertmanager
-        image: quay.io/prometheus/alertmanager:v0.8.0
+        image: quay.io/prometheus/alertmanager:v0.15.2
         args:
-          - -config.file=/etc/prometheus/alertmanager.yml
+          - --config.file=/etc/prometheus/alertmanager.yml
         ports:
         - name: alertmanager
           containerPort: {{.Values.prometheus.alertmanager_port}}

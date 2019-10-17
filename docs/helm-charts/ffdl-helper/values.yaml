@@ -1,0 +1,17 @@
+namespace: default
+env: dev
+static_volume_name: static-volume-1
+localstorage: false
+shared_volume_storage_class: ""
+services:
+  expose_node_port: true
+docker:
+  pullPolicy: IfNotPresent
+prometheus:
+  deploy: true
+  etcd_urls: etcd:2379
+  cluster_name: FfDL
+  port: 9090
+  alertmanager_port: 9093
+grafana:
+  port: 3000

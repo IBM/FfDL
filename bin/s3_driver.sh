@@ -3,8 +3,8 @@
 declare -a arrNodes=($(docker ps --format '{{.Names}}' | grep "kube-node-\|kube-master"))
 for node in "${arrNodes[@]}"
 do
-docker cp $FFDL_PATH/bin/ibmc-s3fs $node:/root/ibmc-s3fs
-docker cp $FFDL_PATH/bin/s3fs $node:/usr/local/bin/s3fs
+docker cp ./bin/ibmc-s3fs $node:/root/ibmc-s3fs
+docker cp ./bin/s3fs $node:/usr/local/bin/s3fs
 docker exec -i $node /bin/bash <<_EOF
 apt-get -y update
 apt-get -y install s3fs
