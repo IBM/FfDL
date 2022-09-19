@@ -36,6 +36,7 @@ script:
   # fail fast
   - set -e
   - export MAKE_ARGS=--no-print-directory
+  - export VM_TYPE=minikube
   # Open SSH
   #  - echo travis:$sshpassword | sudo chpasswd
   #  - sudo sed -i 's/ChallengeResponseAuthentication no/ChallengeResponseAuthentication yes/' /etc/ssh/sshd_config
@@ -48,9 +49,14 @@ script:
   - make $MAKE_ARGS gen-certs
   - make $MAKE_ARGS build
   - make $MAKE_ARGS docker-build
-  - make $MAKE_ARGS create-volumes
-  # deploy services
-  - make $MAKE_ARGS deploy
+  # initialize helm tiller
+  - helm init
+  - while ! (kubectl get pods --all-namespaces | grep tiller-deploy | grep '1/1'); do sleep 5; done
+  # Prepare any local/static volume as the shared file system and deploy all the helper micro-services for ffdl
+  - helm install docs/helm-charts/ffdl-helper-0.1.1.tgz --set prometheus.deploy=false,localstorage=true --wait
+  # Deploy all the core ffdl services.
+  - export IMAGE_TAG=user-$(whoami)
+  - helm install docs/helm-charts/ffdl-core-0.1.1.tgz --set trainer.version=${IMAGE_TAG},restapi.version=${IMAGE_TAG},lcm.version=${IMAGE_TAG},trainingdata.version=${IMAGE_TAG},databroker.tag=${IMAGE_TAG},databroker.version=${IMAGE_TAG},webui.version=${IMAGE_TAG} --wait
   # submit a test job
   - make $MAKE_ARGS test-submit-minikube-ci
 
