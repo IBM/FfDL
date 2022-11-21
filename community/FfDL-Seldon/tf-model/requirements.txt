@@ -1,2 +1,2 @@
-tensorflow==1.6.0
+tensorflow==2.9.3
 boto3==1.7.28
