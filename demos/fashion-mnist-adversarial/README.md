@@ -1,3 +1,7 @@
+# WARNING: This repository is no longer maintained
+
+> This repository will not be updated. The repository will be kept available in read-only mode.
+
 # Jupyter Notebook using FfDL with Adversarial Robustness Toolbox to test the robustness of Deep Learning Models
 
 The [Adversarial Robustness Toolbox (ART)](https://github.com/IBM/adversarial-robustness-toolbox), an open source software library, supports both researchers and developers in defending deep neural networks against adversarial attacks, making AI systems more secure. Its purpose is to allow rapid crafting and analysis of attack and defense methods for machine learning models.
