@@ -18,28 +18,28 @@ FROM ubuntu:16.04
 
 # TODO: Just use community Python 3.6 image per conversation with Atin.
 
-RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common
+RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common=0.96.*
 
 RUN add-apt-repository ppa:deadsnakes/ppa
 # runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-		tcl \
-		tk \
-		vim \
-		mlocate \
-		wget \
-		gcc \
+		tcl=8.6.* \
+		tk=8.6.* \
+		vim=2:7.4.* \
+		mlocate=0.26-* \
+		wget=1.17.* \
+		gcc=4:5.3.* \
 	&& rm -rf /var/lib/apt/lists/*
 
 ENV PYTHON_VERSION 3.6.3
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    make \
-    musl-dev \
+    gcc=4:5.3.* \
+    make=4.1-* \
+    musl-dev=1.1.* \
     "python3.6" \
-    python3-pip \
-	cron
+    python3-pip=8.1.* \
+	cron=3.0pl1-*
 
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.5 1
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 3
