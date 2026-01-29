@@ -1,3 +1,8 @@
+
+
+> This repository will not be updated. The repository will be kept available in read-only mode.
+
+
 *阅读本文的其他语言版本：[English](README.md)。*
 
 [![构建状态](https://travis-ci.org/IBM/FfDL.svg?branch=master)](https://travis-ci.org/IBM/FfDL)
@@ -371,3 +376,4 @@ helm delete $(helm list | grep ffdl | awk '{print $1}' | head -n 1)
 * B. Bhattacharjee 等人，“IBM Deep Learning Service”，IBM Journal of Research and Development，第 61 卷，第 4 号，第 10:1-10:11 页，2017 年 7 月 - 9 月 1 日。https://arxiv.org/abs/1709.05871
 
 * Scott Boag 等人，Scalable Multi-Framework Multi-Tenant Lifecycle Management of Deep Learning Training Jobs，NIPS'17 会议上有关 ML 系统的研讨会成果，2017 年。http://learningsys.org/nips17/assets/papers/paper_29.pdf
+
