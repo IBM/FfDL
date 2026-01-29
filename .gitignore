@@ -1,3 +1,7 @@
+# Do not reintroduce these removed files
+docs/helm-charts/ffdl-core/values.yaml
+docs/helm-charts/ffdl-core-0.1.1.tgz
+
 /build/
 vendor/
 cli/bin
